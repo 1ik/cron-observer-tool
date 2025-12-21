@@ -1,158 +1,70 @@
-# Cron Observer Backend
+# Cron Observer
+
+An open-source task scheduling and execution tracking system where external systems execute tasks and report status/logs via SDK.
 
 ## Quick Start
 
-### 1. Start MongoDB
+1. Read the [Master Plan](MASTER_PLAN.md) for project overview
+2. Follow modules in order:
+   - [Module 1: Project Structure](docs/MODULE_01_PROJECT_STRUCTURE.md)
+   - [Module 2: Data Models](docs/MODULE_02_DATA_MODELS.md)
+   - [Module 3: Database Setup](docs/MODULE_03_DATABASE.md)
+   - [Module 4: API Endpoints](docs/MODULE_04_API_ENDPOINTS.md) (Coming soon)
+   - [Module 5: Scheduler Engine](docs/MODULE_05_SCHEDULER.md) (Coming soon)
+   - [Module 6: SDK/API](docs/MODULE_06_SDK_API.md) (Coming soon)
+   - [Module 7: Execution Tracking](docs/MODULE_07_EXECUTION_TRACKING.md) (Coming soon)
+   - [Module 8: Frontend](docs/MODULE_08_FRONTEND.md) (Coming soon)
+   - [Module 9: Testing](docs/MODULE_09_TESTING.md) (Coming soon)
+   - [Module 10: Deployment](docs/MODULE_10_DEPLOYMENT.md) (Coming soon)
 
-```bash
-# From project root
-docker-compose up -d
-```
+## Project Status
 
-This will start MongoDB on `localhost:27017` with data persisted in a Docker volume.
+🚧 **Planning Phase** - Documentation and architecture design
 
-### 2. Run Migrations
+## Key Features
 
-```bash
-# From backend directory
-go run cmd/migrate/main.go create-collections
-```
+- **Task Scheduling**: Complex cron-like scheduling with timezone support
+- **External Execution**: Tasks executed by external systems, not by Cron Observer
+- **Status Tracking**: Real-time execution status updates via SDK
+- **Log Management**: Append-only logs with timestamps and levels
+- **Execution History**: Complete history with date-based navigation
+- **UUID-Based**: Tasks and executions use UUIDs for external reference
 
-This will:
-- Create the `projects` collection with indexes
-- Create the `tasks` collection with indexes
-
-### 3. Start the Server
-
-```bash
-# From backend directory
-go run cmd/server/main.go
-```
-
-The server will start on `http://localhost:8080`
-
-### 4. Test the API
-
-```bash
-# Health check with database status
-curl http://localhost:8080/api/v1/health
-
-# Hello World endpoint
-curl http://localhost:8080/api/v1/hello
-```
-
-## Environment Variables
-
-Create a `.env` file in the backend directory (optional):
-
-```bash
-MONGODB_URI=mongodb://localhost:27017
-DB_NAME=cronobserver
-```
-
-Default values are used if not specified.
-
-## Project Structure
+## Architecture
 
 ```
-backend/
-├── cmd/
-│   ├── server/          # Main API server
-│   │   └── main.go
-│   └── migrate/         # Migration CLI
-│       └── main.go
-├── internal/
-│   ├── database/        # Database connection & collections
-│   │   ├── mongo.go
-│   │   └── collections.go
-│   └── models/          # Data models
-│       ├── project.go
-│       └── task.go
-├── go.mod
-└── go.sum
+Cron Observer (Scheduler & Tracker)
+    ↓ Creates execution records (PENDING)
+    ↓
+External Systems (Execute actual work)
+    ↓ Report status & logs via SDK
+    ↓
+Cron Observer (Tracks & Displays)
 ```
 
-## Database Schema
+## Documentation Structure
 
-### Collections
+- **MASTER_PLAN.md**: Complete project overview, goals, requirements
+- **docs/MODULE_XX_*.md**: Phase-by-phase implementation guides
+- Each module is self-contained and can be implemented independently
 
-#### Projects
-- `uuid` (string, unique) - Public identifier
-- `name` (string) - Project name
-- `description` (string) - Optional description
-- `api_key` (string, unique) - API key for authentication
-- `created_at` (timestamp)
-- `updated_at` (timestamp)
+## Development Approach
 
-**Indexes**: uuid, api_key, created_at
+This project follows a **modular, phase-by-phase** development approach:
 
-#### Tasks
-- `uuid` (string, unique) - Public identifier
-- `project_id` (ObjectID) - Reference to project
-- `name` (string) - Task name
-- `description` (string) - Optional description
-- `schedule_type` (enum) - RECURRING or ONEOFF
-- `status` (enum) - ACTIVE, PAUSED, or DISABLED
-- `schedule_config` (object) - Schedule configuration
-- `metadata` (object) - Custom metadata
-- `notification_config` (object) - Notification settings
-- `created_at` (timestamp)
-- `updated_at` (timestamp)
+1. **Plan First**: Each module has complete documentation before implementation
+2. **Incremental**: Build and test each module before moving to the next
+3. **Documentation-Driven**: Code follows documented specifications
 
-**Indexes**: uuid, project_id, status, schedule_type, created_at, project_status (compound), project_created (compound)
+## License
 
-## Development Commands
+[To be determined - Open source license]
 
-```bash
-# Build server binary
-go build -o server cmd/server/main.go
+## Contributing
 
-# Build migration CLI
-go build -o migrate cmd/migrate/main.go
+[Contributing guidelines to be added]
 
-# Run tests
-go test ./...
+---
 
-# Format code
-go fmt ./...
-
-# Vet code
-go vet ./...
-```
-
-## Docker Commands
-
-```bash
-# Start MongoDB
-docker-compose up -d
-
-# Stop MongoDB
-docker-compose down
-
-# Stop MongoDB and remove data
-docker-compose down -v
-
-# View MongoDB logs
-docker-compose logs -f mongodb
-
-# Access MongoDB shell
-docker exec -it cronobserver-mongodb mongosh
-```
-
-## Migration Commands
-
-```bash
-# Create collections and indexes
-go run cmd/migrate/main.go create-collections
-
-# View available commands
-go run cmd/migrate/main.go --help
-```
-
-## Next Steps
-
-- Add API handlers for Project CRUD operations
-- Add API handlers for Task CRUD operations
-- Implement API key authentication middleware
-- Add repository pattern for database operations
+**Note**: This project is in early planning phase. Implementation will begin after completing all module documentation.
 
