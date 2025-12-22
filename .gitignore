@@ -32,3 +32,6 @@ go.work
 .DS_Store
 Thumbs.db
 
+# Docker volumes
+mongo-data/
+

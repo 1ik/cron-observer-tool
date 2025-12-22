@@ -29,6 +29,24 @@ func (r *MongoRepository) GetAllProjects(ctx context.Context) ([]*models.Project
 	return projects, nil
 }
 
+func (r *MongoRepository) CreateProject(ctx context.Context, project *models.Project) error {
+	collection := r.db.Collection(database.CollectionProjects)
+	_, err := collection.InsertOne(ctx, project)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *MongoRepository) CreateTask(ctx context.Context, projectID string, task *models.Task) error {
+	collection := r.db.Collection(database.CollectionTasks)
+	_, err := collection.InsertOne(ctx, task)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func NewMongoRepository(db *mongo.Database) *MongoRepository {
 	return &MongoRepository{
 		db: db,
