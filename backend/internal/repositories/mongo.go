@@ -6,6 +6,7 @@ import (
 	"github.com/yourusername/cron-observer/backend/internal/database"
 	"github.com/yourusername/cron-observer/backend/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -45,6 +46,22 @@ func (r *MongoRepository) CreateTask(ctx context.Context, projectID string, task
 		return err
 	}
 	return nil
+}
+
+func (r *MongoRepository) GetTasksByProjectID(ctx context.Context, projectID primitive.ObjectID) ([]*models.Task, error) {
+	collection := r.db.Collection(database.CollectionTasks)
+	cursor, err := collection.Find(ctx, bson.M{"project_id": projectID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var tasks []*models.Task
+	err = cursor.All(ctx, &tasks)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }
 
 func NewMongoRepository(db *mongo.Database) *MongoRepository {

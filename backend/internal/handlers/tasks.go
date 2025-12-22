@@ -114,3 +114,39 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, task)
 }
+
+func (h *TaskHandler) GetTasksByProject(c *gin.Context) {
+	// Get project_id from path parameter
+	projectIDParam := c.Param("project_id")
+	if projectIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "project_id is required in path",
+		})
+		return
+	}
+
+	// Convert project_id path parameter to ObjectID
+	projectID, err := primitive.ObjectIDFromHex(projectIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid project_id format in path",
+		})
+		return
+	}
+
+	// Get tasks by project ID
+	tasks, err := h.repo.GetTasksByProjectID(c.Request.Context(), projectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch tasks",
+		})
+		return
+	}
+
+	// Return empty slice if nil (following GetAllProjects pattern)
+	if tasks == nil {
+		tasks = []*models.Task{}
+	}
+
+	c.JSON(http.StatusOK, tasks)
+}
