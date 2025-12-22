@@ -16,6 +16,7 @@ type Task struct {
 	ScheduleType   ScheduleType           `json:"schedule_type" bson:"schedule_type"`
 	Status         TaskStatus             `json:"status" bson:"status"`
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" bson:"schedule_config"`
+	TriggerConfig  TriggerConfig          `json:"trigger_config" bson:"trigger_config"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty" bson:"metadata,omitempty"`
 
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
@@ -81,6 +82,7 @@ type CreateTaskRequest struct {
 	ScheduleType   ScheduleType           `json:"schedule_type" binding:"required,oneof=RECURRING ONEOFF"`
 	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE PAUSED DISABLED"`
 	ScheduleConfig CreateScheduleConfig   `json:"schedule_config" binding:"required"`
+	TriggerConfig  CreateTriggerConfig    `json:"trigger_config" binding:"required"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -104,4 +106,41 @@ type CreateTimeRange struct {
 type CreateFrequency struct {
 	Value int           `json:"value" binding:"required,min=1"`
 	Unit  FrequencyUnit `json:"unit" binding:"required,oneof=s m h"`
+}
+
+// TriggerType defines the type of trigger
+type TriggerType string
+
+const (
+	TriggerTypeHTTP TriggerType = "HTTP"
+)
+
+// HTTPTriggerConfig holds the HTTP trigger configuration
+type HTTPTriggerConfig struct {
+	URL     string            `json:"url" bson:"url"`
+	Method  string            `json:"method" bson:"method"`
+	Headers map[string]string `json:"headers,omitempty" bson:"headers,omitempty"`
+	Body    interface{}       `json:"body,omitempty" bson:"body,omitempty"`
+	Timeout int               `json:"timeout,omitempty" bson:"timeout,omitempty"`
+}
+
+// TriggerConfig holds the trigger configuration for a task
+type TriggerConfig struct {
+	Type TriggerType        `json:"type" bson:"type"`
+	HTTP *HTTPTriggerConfig `json:"http" bson:"http"`
+}
+
+// CreateHTTPTriggerConfig represents the HTTP trigger configuration in the request
+type CreateHTTPTriggerConfig struct {
+	URL     string            `json:"url" binding:"required,url"`
+	Method  string            `json:"method" binding:"required,http_method"`
+	Headers map[string]string `json:"headers,omitempty"`
+	Body    interface{}       `json:"body,omitempty"`
+	Timeout int               `json:"timeout,omitempty" binding:"omitempty,min=1,max=300"`
+}
+
+// CreateTriggerConfig represents the trigger configuration in the request
+type CreateTriggerConfig struct {
+	Type TriggerType             `json:"type" binding:"required,oneof=HTTP"`
+	HTTP CreateHTTPTriggerConfig `json:"http" binding:"required"`
 }

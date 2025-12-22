@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -83,6 +84,34 @@ var validateTimeFormat validator.Func = func(fl validator.FieldLevel) bool {
 	return err == nil
 }
 
+// validateURL checks if the string is a valid URL format
+var validateURL validator.Func = func(fl validator.FieldLevel) bool {
+	urlStr := fl.Field().String()
+	if urlStr == "" {
+		return true // Let required tag handle empty values
+	}
+	_, err := url.ParseRequestURI(urlStr)
+	return err == nil
+}
+
+// validateHTTPMethod checks if the string is a valid HTTP method
+var validateHTTPMethod validator.Func = func(fl validator.FieldLevel) bool {
+	method := strings.ToUpper(fl.Field().String())
+	if method == "" {
+		return true // Let required tag handle empty values
+	}
+	validMethods := map[string]bool{
+		"GET":     true,
+		"POST":    true,
+		"PUT":     true,
+		"DELETE":  true,
+		"PATCH":   true,
+		"HEAD":    true,
+		"OPTIONS": true,
+	}
+	return validMethods[method]
+}
+
 // RegisterCustomValidators registers all custom validators with the validator instance
 func RegisterCustomValidators(v *validator.Validate) error {
 	if err := v.RegisterValidation("uuid", validateUUID); err != nil {
@@ -98,6 +127,12 @@ func RegisterCustomValidators(v *validator.Validate) error {
 		return err
 	}
 	if err := v.RegisterValidation("time_format", validateTimeFormat); err != nil {
+		return err
+	}
+	if err := v.RegisterValidation("url", validateURL); err != nil {
+		return err
+	}
+	if err := v.RegisterValidation("http_method", validateHTTPMethod); err != nil {
 		return err
 	}
 	return nil

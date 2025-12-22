@@ -103,6 +103,18 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		}
 	}
 
+	// Convert TriggerConfig from request DTO to model
+	task.TriggerConfig = models.TriggerConfig{
+		Type: req.TriggerConfig.Type,
+		HTTP: &models.HTTPTriggerConfig{
+			URL:     req.TriggerConfig.HTTP.URL,
+			Method:  req.TriggerConfig.HTTP.Method,
+			Headers: req.TriggerConfig.HTTP.Headers,
+			Body:    req.TriggerConfig.HTTP.Body,
+			Timeout: req.TriggerConfig.HTTP.Timeout,
+		},
+	}
+
 	// Create the task
 	err = h.repo.CreateTask(c.Request.Context(), projectIDParam, task)
 	if err != nil {
