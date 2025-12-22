@@ -37,7 +37,19 @@ func formatValidationError(fieldError validator.FieldError) string {
 		return field + " exceeds maximum length of " + fieldError.Param()
 	case "min":
 		return field + " must be at least " + fieldError.Param()
+	case "oneof":
+		return field + " must be one of: " + fieldError.Param()
+	case "objectid":
+		return field + " must be a valid MongoDB ObjectID"
+	case "cron":
+		return field + " must be a valid cron expression"
+	case "timezone":
+		return field + " must be a valid timezone (e.g., America/New_York, UTC)"
+	case "time_format":
+		return field + " must be in HH:MM format (24-hour)"
+	case "dive":
+		return field + " contains invalid values"
 	default:
-		return field + " is invalid"
+		return field + " is invalid: " + tag
 	}
 }

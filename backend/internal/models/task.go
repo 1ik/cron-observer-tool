@@ -72,3 +72,36 @@ type TimeRange struct {
 	End       string     `json:"end" bson:"end"`             // Format: "HH:MM"
 	Frequency *Frequency `json:"frequency" bson:"frequency"` // Frequency with value and unit (e.g., {value: 15, unit: "m"})
 }
+
+// CreateTaskRequest represents the request DTO for creating a task
+type CreateTaskRequest struct {
+	ProjectID      string                 `json:"project_id" binding:"required,objectid"`
+	Name           string                 `json:"name" binding:"required,min=1,max=255"`
+	Description    string                 `json:"description,omitempty" binding:"omitempty,max=1000"`
+	ScheduleType   ScheduleType           `json:"schedule_type" binding:"required,oneof=RECURRING ONEOFF"`
+	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE PAUSED DISABLED"`
+	ScheduleConfig CreateScheduleConfig   `json:"schedule_config" binding:"required"`
+	Metadata       map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// CreateScheduleConfig represents the schedule configuration in the request
+type CreateScheduleConfig struct {
+	CronExpression string           `json:"cron_expression,omitempty" binding:"omitempty,cron"`
+	Timezone       string           `json:"timezone" binding:"required,timezone"`
+	TimeRange      *CreateTimeRange `json:"time_range,omitempty" binding:"omitempty"`
+	DaysOfWeek     []int            `json:"days_of_week,omitempty" binding:"omitempty,dive,min=0,max=6"`
+	Exclusions     []int            `json:"exclusions,omitempty" binding:"omitempty,dive,min=0,max=6"`
+}
+
+// CreateTimeRange represents the time range in the request
+type CreateTimeRange struct {
+	Start     string           `json:"start" binding:"required,time_format"`
+	End       string           `json:"end" binding:"required,time_format"`
+	Frequency *CreateFrequency `json:"frequency" binding:"required"`
+}
+
+// CreateFrequency represents the frequency in the request
+type CreateFrequency struct {
+	Value int           `json:"value" binding:"required,min=1"`
+	Unit  FrequencyUnit `json:"unit" binding:"required,oneof=s m h"`
+}
