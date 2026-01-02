@@ -13,4 +13,8 @@ type Repository interface {
 
 	// tasks
 	CreateTask(ctx context.Context, projectID string, task *models.Task) error
+	GetAllActiveTasks(ctx context.Context) ([]*models.Task, error)
+	GetTaskByUUID(ctx context.Context, taskUUID string) (*models.Task, error)
+	UpdateTask(ctx context.Context, taskUUID string, task *models.Task) error
+	DeleteTask(ctx context.Context, taskUUID string) error
 }
