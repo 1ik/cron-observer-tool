@@ -11,6 +11,7 @@ type Task struct {
 	ID             primitive.ObjectID     `json:"id" bson:"_id,omitempty"`
 	UUID           string                 `json:"uuid" bson:"uuid"`
 	ProjectID      primitive.ObjectID     `json:"project_id" bson:"project_id"`
+	TaskGroupID    *primitive.ObjectID    `json:"task_group_id,omitempty" bson:"task_group_id,omitempty"` // Optional reference to task group
 	Name           string                 `json:"name" bson:"name"`
 	Description    string                 `json:"description,omitempty" bson:"description,omitempty"`
 	ScheduleType   ScheduleType           `json:"schedule_type" bson:"schedule_type"`
@@ -77,6 +78,7 @@ type TimeRange struct {
 // CreateTaskRequest represents the request DTO for creating a task
 type CreateTaskRequest struct {
 	ProjectID      string                 `json:"project_id" binding:"required,objectid"`
+	TaskGroupID    string                 `json:"task_group_id,omitempty" binding:"omitempty,objectid"` // Optional task group ID
 	Name           string                 `json:"name" binding:"required,min=1,max=255"`
 	Description    string                 `json:"description,omitempty" binding:"omitempty,max=1000"`
 	ScheduleType   ScheduleType           `json:"schedule_type" binding:"required,oneof=RECURRING ONEOFF"`
@@ -89,6 +91,7 @@ type CreateTaskRequest struct {
 // UpdateTaskRequest represents the request DTO for full task update (PUT)
 // Same structure as CreateTaskRequest but without ProjectID (comes from path parameter)
 type UpdateTaskRequest struct {
+	TaskGroupID    string                 `json:"task_group_id,omitempty" binding:"omitempty,objectid"` // Optional task group ID
 	Name           string                 `json:"name" binding:"required,min=1,max=255"`
 	Description    string                 `json:"description,omitempty" binding:"omitempty,max=1000"`
 	ScheduleType   ScheduleType           `json:"schedule_type" binding:"required,oneof=RECURRING ONEOFF"`

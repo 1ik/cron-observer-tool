@@ -75,9 +75,23 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		status = models.TaskStatusActive
 	}
 
+	// Convert TaskGroupID if provided
+	var taskGroupID *primitive.ObjectID
+	if req.TaskGroupID != "" {
+		groupID, err := primitive.ObjectIDFromHex(req.TaskGroupID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid task_group_id format",
+			})
+			return
+		}
+		taskGroupID = &groupID
+	}
+
 	// Convert request DTO to Task model
 	task := &models.Task{
 		ProjectID:    projectID,
+		TaskGroupID:  taskGroupID,
 		UUID:         uuid.New().String(),
 		Name:         req.Name,
 		Description:  req.Description,

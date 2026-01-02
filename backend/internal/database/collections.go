@@ -12,8 +12,9 @@ import (
 
 const (
 	// Collection names
-	CollectionProjects = "projects"
-	CollectionTasks    = "tasks"
+	CollectionProjects   = "projects"
+	CollectionTasks      = "tasks"
+	CollectionTaskGroups = "task_groups"
 )
 
 // GetProjectsCollection returns the projects collection
@@ -26,6 +27,11 @@ func (d *Database) GetTasksCollection() *mongo.Collection {
 	return d.DB.Collection(CollectionTasks)
 }
 
+// GetTaskGroupsCollection returns the task_groups collection
+func (d *Database) GetTaskGroupsCollection() *mongo.Collection {
+	return d.DB.Collection(CollectionTaskGroups)
+}
+
 // CreateIndexes creates all necessary indexes for collections
 func (d *Database) CreateIndexes(ctx context.Context) error {
 	// Create indexes for projects collection
@@ -36,6 +42,11 @@ func (d *Database) CreateIndexes(ctx context.Context) error {
 	// Create indexes for tasks collection
 	if err := d.createTaskIndexes(ctx); err != nil {
 		return fmt.Errorf("failed to create task indexes: %w", err)
+	}
+
+	// Create indexes for task_groups collection
+	if err := d.createTaskGroupIndexes(ctx); err != nil {
+		return fmt.Errorf("failed to create task group indexes: %w", err)
 	}
 
 	return nil
@@ -107,6 +118,43 @@ func (d *Database) createTaskIndexes(ctx context.Context) error {
 				{Key: "created_at", Value: -1},
 			},
 			Options: options.Index().SetName("idx_project_created"),
+		},
+		{
+			Keys:    bson.D{{Key: "task_group_id", Value: 1}},
+			Options: options.Index().SetName("idx_task_group_id"),
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	_, err := collection.Indexes().CreateMany(ctx, indexes)
+	if err != nil {
+		return fmt.Errorf("failed to create indexes: %w", err)
+	}
+
+	return nil
+}
+
+// createTaskGroupIndexes creates indexes for the task_groups collection
+func (d *Database) createTaskGroupIndexes(ctx context.Context) error {
+	collection := d.GetTaskGroupsCollection()
+	indexes := []mongo.IndexModel{
+		{
+			Keys:    bson.D{{Key: "uuid", Value: 1}},
+			Options: options.Index().SetUnique(true).SetName("idx_uuid"),
+		},
+		{
+			Keys:    bson.D{{Key: "project_id", Value: 1}},
+			Options: options.Index().SetName("idx_project_id"),
+		},
+		{
+			Keys:    bson.D{{Key: "status", Value: 1}},
+			Options: options.Index().SetName("idx_status"),
+		},
+		{
+			Keys:    bson.D{{Key: "created_at", Value: -1}},
+			Options: options.Index().SetName("idx_created_at"),
 		},
 	}
 

@@ -6,6 +6,7 @@ import (
 	"github.com/yourusername/cron-observer/backend/internal/database"
 	"github.com/yourusername/cron-observer/backend/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -96,6 +97,99 @@ func (r *MongoRepository) DeleteTask(ctx context.Context, taskUUID string) error
 
 	_, err := collection.DeleteOne(ctx, bson.M{"uuid": taskUUID})
 	return err
+}
+
+// TaskGroup repository methods
+
+func (r *MongoRepository) CreateTaskGroup(ctx context.Context, projectID string, taskGroup *models.TaskGroup) error {
+	collection := r.db.Collection(database.CollectionTaskGroups)
+	_, err := collection.InsertOne(ctx, taskGroup)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *MongoRepository) GetTaskGroupByUUID(ctx context.Context, taskGroupUUID string) (*models.TaskGroup, error) {
+	collection := r.db.Collection(database.CollectionTaskGroups)
+
+	var taskGroup models.TaskGroup
+	err := collection.FindOne(ctx, bson.M{"uuid": taskGroupUUID}).Decode(&taskGroup)
+	if err != nil {
+		return nil, err
+	}
+	return &taskGroup, nil
+}
+
+func (r *MongoRepository) GetTaskGroupByID(ctx context.Context, taskGroupID primitive.ObjectID) (*models.TaskGroup, error) {
+	collection := r.db.Collection(database.CollectionTaskGroups)
+
+	var taskGroup models.TaskGroup
+	err := collection.FindOne(ctx, bson.M{"_id": taskGroupID}).Decode(&taskGroup)
+	if err != nil {
+		return nil, err
+	}
+	return &taskGroup, nil
+}
+
+func (r *MongoRepository) UpdateTaskGroup(ctx context.Context, taskGroupUUID string, taskGroup *models.TaskGroup) error {
+	collection := r.db.Collection(database.CollectionTaskGroups)
+
+	filter := bson.M{"uuid": taskGroupUUID}
+	update := bson.M{"$set": taskGroup}
+
+	_, err := collection.UpdateOne(ctx, filter, update)
+	return err
+}
+
+func (r *MongoRepository) DeleteTaskGroup(ctx context.Context, taskGroupUUID string) error {
+	collection := r.db.Collection(database.CollectionTaskGroups)
+
+	_, err := collection.DeleteOne(ctx, bson.M{"uuid": taskGroupUUID})
+	return err
+}
+
+func (r *MongoRepository) GetTasksByGroupID(ctx context.Context, taskGroupID primitive.ObjectID) ([]*models.Task, error) {
+	collection := r.db.Collection(database.CollectionTasks)
+
+	filter := bson.M{"task_group_id": taskGroupID}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var tasks []*models.Task
+	err = cursor.All(ctx, &tasks)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
+func (r *MongoRepository) GetActiveTaskGroupsWithWindows(ctx context.Context) ([]*models.TaskGroup, error) {
+	collection := r.db.Collection(database.CollectionTaskGroups)
+
+	// Filter for active groups with start and end times
+	filter := bson.M{
+		"status":     models.TaskGroupStatusActive,
+		"start_time": bson.M{"$ne": ""},
+		"end_time":   bson.M{"$ne": ""},
+	}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var taskGroups []*models.TaskGroup
+	err = cursor.All(ctx, &taskGroups)
+	if err != nil {
+		return nil, err
+	}
+	return taskGroups, nil
 }
 
 func NewMongoRepository(db *mongo.Database) *MongoRepository {
