@@ -7,18 +7,19 @@ import (
 )
 
 // TaskGroup represents a group of tasks that can be controlled together
+// @Description TaskGroup represents a group of tasks that can be controlled together
 type TaskGroup struct {
-	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	UUID        string             `json:"uuid" bson:"uuid"`
-	ProjectID   primitive.ObjectID `json:"project_id" bson:"project_id"`
-	Name        string             `json:"name" bson:"name"`
-	Description string             `json:"description,omitempty" bson:"description,omitempty"`
-	Status      TaskGroupStatus    `json:"status" bson:"status"`
-	StartTime   string             `json:"start_time,omitempty" bson:"start_time,omitempty"` // Format: "HH:MM"
-	EndTime     string             `json:"end_time,omitempty" bson:"end_time,omitempty"`     // Format: "HH:MM"
-	Timezone    string             `json:"timezone,omitempty" bson:"timezone,omitempty"`     // IANA timezone (e.g., "America/New_York")
-	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
-	UpdatedAt   time.Time          `json:"updated_at" bson:"updated_at"`
+	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty" example:"507f1f77bcf86cd799439011"`
+	UUID        string             `json:"uuid" bson:"uuid" example:"550e8400-e29b-41d4-a716-446655440000"`
+	ProjectID   primitive.ObjectID `json:"project_id" bson:"project_id" example:"507f1f77bcf86cd799439011"`
+	Name        string             `json:"name" bson:"name" example:"Morning Tasks"`
+	Description string             `json:"description,omitempty" bson:"description,omitempty" example:"Tasks that run in the morning"`
+	Status      TaskGroupStatus    `json:"status" bson:"status" enums:"ACTIVE,PAUSED,DISABLED" example:"ACTIVE"`
+	StartTime   string             `json:"start_time,omitempty" bson:"start_time,omitempty" example:"09:00"`        // Format: "HH:MM"
+	EndTime     string             `json:"end_time,omitempty" bson:"end_time,omitempty" example:"17:00"`            // Format: "HH:MM"
+	Timezone    string             `json:"timezone,omitempty" bson:"timezone,omitempty" example:"America/New_York"` // IANA timezone (e.g., "America/New_York")
+	CreatedAt   time.Time          `json:"created_at" bson:"created_at" example:"2025-01-15T10:00:00Z"`
+	UpdatedAt   time.Time          `json:"updated_at" bson:"updated_at" example:"2025-01-15T10:00:00Z"`
 }
 
 // TaskGroupStatus defines the status of a task group

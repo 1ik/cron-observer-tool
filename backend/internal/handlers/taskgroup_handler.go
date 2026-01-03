@@ -28,6 +28,18 @@ func NewTaskGroupHandler(repo repositories.Repository, eventBus *events.EventBus
 	}
 }
 
+// CreateTaskGroup creates a new task group
+// @Summary      Create a new task group
+// @Description  Create a new task group in a project
+// @Tags         task-groups
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        task_group body models.CreateTaskGroupRequest true "Task group creation request"
+// @Success      201  {object}  models.TaskGroup
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/task-groups [post]
 func (h *TaskGroupHandler) CreateTaskGroup(c *gin.Context) {
 	var req models.CreateTaskGroupRequest
 
@@ -116,6 +128,18 @@ func (h *TaskGroupHandler) CreateTaskGroup(c *gin.Context) {
 	c.JSON(http.StatusCreated, taskGroup)
 }
 
+// GetTaskGroup retrieves a task group by UUID
+// @Summary      Get a task group
+// @Description  Retrieve a task group by its UUID
+// @Tags         task-groups
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        group_uuid path string true "Task Group UUID"
+// @Success      200  {object}  models.TaskGroup
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      404  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/task-groups/{group_uuid} [get]
 func (h *TaskGroupHandler) GetTaskGroup(c *gin.Context) {
 	taskGroupUUID := c.Param("group_uuid")
 	if taskGroupUUID == "" {
@@ -136,6 +160,20 @@ func (h *TaskGroupHandler) GetTaskGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, taskGroup)
 }
 
+// UpdateTaskGroup updates an existing task group
+// @Summary      Update a task group
+// @Description  Update an existing task group
+// @Tags         task-groups
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        group_uuid path string true "Task Group UUID"
+// @Param        task_group body models.UpdateTaskGroupRequest true "Task group update request"
+// @Success      200  {object}  models.TaskGroup
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      404  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/task-groups/{group_uuid} [put]
 func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 	var req models.UpdateTaskGroupRequest
 
@@ -229,6 +267,18 @@ func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, taskGroup)
 }
 
+// DeleteTaskGroup deletes a task group
+// @Summary      Delete a task group
+// @Description  Delete an existing task group
+// @Tags         task-groups
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        group_uuid path string true "Task Group UUID"
+// @Success      204  "No Content"
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/task-groups/{group_uuid} [delete]
 func (h *TaskGroupHandler) DeleteTaskGroup(c *gin.Context) {
 	taskGroupUUIDParam := c.Param("group_uuid")
 
@@ -257,6 +307,18 @@ func (h *TaskGroupHandler) DeleteTaskGroup(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// StartGroup starts all tasks in a task group
+// @Summary      Start a task group
+// @Description  Manually start all tasks in a task group
+// @Tags         task-groups
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        group_uuid path string true "Task Group UUID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/task-groups/{group_uuid}/start [post]
 func (h *TaskGroupHandler) StartGroup(c *gin.Context) {
 	taskGroupUUIDParam := c.Param("group_uuid")
 
@@ -281,6 +343,18 @@ func (h *TaskGroupHandler) StartGroup(c *gin.Context) {
 	})
 }
 
+// StopGroup stops all tasks in a task group
+// @Summary      Stop a task group
+// @Description  Manually stop all tasks in a task group
+// @Tags         task-groups
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        group_uuid path string true "Task Group UUID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/task-groups/{group_uuid}/stop [post]
 func (h *TaskGroupHandler) StopGroup(c *gin.Context) {
 	taskGroupUUIDParam := c.Param("group_uuid")
 
@@ -305,6 +379,19 @@ func (h *TaskGroupHandler) StopGroup(c *gin.Context) {
 	})
 }
 
+// GetTasksByGroup retrieves all tasks in a task group
+// @Summary      Get tasks in a group
+// @Description  Retrieve all tasks belonging to a task group
+// @Tags         task-groups
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        group_uuid path string true "Task Group UUID"
+// @Success      200  {array}   models.Task
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      404  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/task-groups/{group_uuid}/tasks [get]
 func (h *TaskGroupHandler) GetTasksByGroup(c *gin.Context) {
 	taskGroupUUIDParam := c.Param("group_uuid")
 

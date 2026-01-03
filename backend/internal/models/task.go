@@ -7,21 +7,22 @@ import (
 )
 
 // Task represents a scheduled task entity
+// @Description Task represents a scheduled task entity
 type Task struct {
-	ID             primitive.ObjectID     `json:"id" bson:"_id,omitempty"`
-	UUID           string                 `json:"uuid" bson:"uuid"`
-	ProjectID      primitive.ObjectID     `json:"project_id" bson:"project_id"`
-	TaskGroupID    *primitive.ObjectID    `json:"task_group_id,omitempty" bson:"task_group_id,omitempty"` // Optional reference to task group
-	Name           string                 `json:"name" bson:"name"`
-	Description    string                 `json:"description,omitempty" bson:"description,omitempty"`
-	ScheduleType   ScheduleType           `json:"schedule_type" bson:"schedule_type"`
-	Status         TaskStatus             `json:"status" bson:"status"`
+	ID             primitive.ObjectID     `json:"id" bson:"_id,omitempty" example:"507f1f77bcf86cd799439011"`
+	UUID           string                 `json:"uuid" bson:"uuid" example:"550e8400-e29b-41d4-a716-446655440000"`
+	ProjectID      primitive.ObjectID     `json:"project_id" bson:"project_id" example:"507f1f77bcf86cd799439011"`
+	TaskGroupID    *primitive.ObjectID    `json:"task_group_id,omitempty" bson:"task_group_id,omitempty" example:"507f1f77bcf86cd799439011"` // Optional reference to task group
+	Name           string                 `json:"name" bson:"name" example:"Daily Backup"`
+	Description    string                 `json:"description,omitempty" bson:"description,omitempty" example:"Backup database daily"`
+	ScheduleType   ScheduleType           `json:"schedule_type" bson:"schedule_type" enums:"RECURRING,ONEOFF" example:"RECURRING"`
+	Status         TaskStatus             `json:"status" bson:"status" enums:"ACTIVE,PAUSED,DISABLED" example:"ACTIVE"`
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" bson:"schedule_config"`
 	TriggerConfig  TriggerConfig          `json:"trigger_config" bson:"trigger_config"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty" bson:"metadata,omitempty"`
 
-	CreatedAt time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
+	CreatedAt time.Time `json:"created_at" bson:"created_at" example:"2025-01-15T10:00:00Z"`
+	UpdatedAt time.Time `json:"updated_at" bson:"updated_at" example:"2025-01-15T10:00:00Z"`
 }
 
 // ScheduleType defines the type of schedule

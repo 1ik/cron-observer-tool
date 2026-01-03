@@ -21,6 +21,15 @@ func NewProjectHandler(repo repositories.Repository) *ProjectHandler {
 	}
 }
 
+// GetAllProjects retrieves all projects
+// @Summary      Get all projects
+// @Description  Retrieve a list of all projects
+// @Tags         projects
+// @Accept       json
+// @Produce      json
+// @Success      200  {array}   models.Project
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects [get]
 func (h *ProjectHandler) GetAllProjects(c *gin.Context) {
 
 	projects, err := h.repo.GetAllProjects(c.Request.Context())
@@ -38,6 +47,17 @@ func (h *ProjectHandler) GetAllProjects(c *gin.Context) {
 	c.JSON(http.StatusOK, projects)
 }
 
+// CreateProject creates a new project
+// @Summary      Create a new project
+// @Description  Create a new project with auto-generated UUID and API key
+// @Tags         projects
+// @Accept       json
+// @Produce      json
+// @Param        project body models.Project true "Project creation request"
+// @Success      201  {object}  models.Project
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects [post]
 func (h *ProjectHandler) CreateProject(c *gin.Context) {
 	var project models.Project
 	if err := c.ShouldBindJSON(&project); err != nil {

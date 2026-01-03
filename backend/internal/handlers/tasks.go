@@ -25,6 +25,18 @@ func NewTaskHandler(repo repositories.Repository, eventBus *events.EventBus) *Ta
 	}
 }
 
+// CreateTask creates a new task
+// @Summary      Create a new task
+// @Description  Create a new scheduled task in a project
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        task body models.CreateTaskRequest true "Task creation request"
+// @Success      201  {object}  models.Task
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/tasks [post]
 func (h *TaskHandler) CreateTask(c *gin.Context) {
 	var req models.CreateTaskRequest
 
@@ -150,6 +162,20 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 	c.JSON(http.StatusCreated, task)
 }
 
+// UpdateTask updates an existing task
+// @Summary      Update a task
+// @Description  Update an existing scheduled task
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        task_uuid path string true "Task UUID"
+// @Param        task body models.UpdateTaskRequest true "Task update request"
+// @Success      200  {object}  models.Task
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      404  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/tasks/{task_uuid} [put]
 func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	var req models.UpdateTaskRequest
 
@@ -263,6 +289,18 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	c.JSON(http.StatusOK, task)
 }
 
+// DeleteTask deletes a task
+// @Summary      Delete a task
+// @Description  Delete an existing scheduled task
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        task_uuid path string true "Task UUID"
+// @Success      204  "No Content"
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/tasks/{task_uuid} [delete]
 func (h *TaskHandler) DeleteTask(c *gin.Context) {
 	// Get task_uuid from path parameter
 	taskUUIDParam := c.Param("task_uuid")
