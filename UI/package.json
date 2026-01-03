@@ -1,0 +1,21 @@
+{
+  "name": "cron-observer-ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cron Observer Frontend Monorepo",
+  "scripts": {
+    "dev": "pnpm --filter './apps/*' dev",
+    "build": "pnpm --filter './packages/*' build && pnpm --filter './apps/*' build",
+    "lint": "pnpm --filter './packages/*' lint && pnpm --filter './apps/*' lint",
+    "type-check": "pnpm --filter './packages/*' type-check && pnpm --filter './apps/*' type-check",
+    "clean": "pnpm --filter './packages/*' clean && pnpm --filter './apps/*' clean"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
+
