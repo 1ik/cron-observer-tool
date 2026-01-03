@@ -1,10 +1,12 @@
 'use client'
 
-import { Box, Flex, Heading, Text } from '@radix-ui/themes'
-import { TaskGroup } from '../lib/types/taskgroup'
+import * as Accordion from '@radix-ui/react-accordion'
+import { Box, Text } from '@radix-ui/themes'
+import { useState } from 'react'
 import { Task } from '../lib/types/task'
-import { TaskGroupItem } from './TaskGroupItem'
-import { TaskItem } from './TaskItem'
+import { TaskGroup } from '../lib/types/taskgroup'
+import { TaskGroupAccordionItem } from './TaskGroupAccordionItem'
+import { TaskListItem } from './TaskListItem'
 
 interface TaskGroupsListProps {
   projectId: string
@@ -17,6 +19,8 @@ export function TaskGroupsList({
   taskGroups,
   tasks,
 }: TaskGroupsListProps) {
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+
   // Group tasks by task_group_id
   const tasksByGroup = new Map<string, Task[]>()
   const ungroupedTasks: Task[] = []
@@ -31,42 +35,54 @@ export function TaskGroupsList({
     }
   })
 
-  return (
-    <Box p="4">
-      <Heading size="6" mb="4">
-        Task Groups & Tasks
-      </Heading>
+  const handleTaskSelect = (taskId: string) => {
+    setSelectedTaskId(taskId === selectedTaskId ? null : taskId)
+  }
 
-      {/* Task Groups */}
+  return (
+    <Box
+      style={{
+        width: '100%',
+        height: '100%',
+        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       {taskGroups.length > 0 && (
-        <Flex direction="column" gap="3" mb="6">
+        <Accordion.Root type="multiple" style={{ width: '100%' }}>
           {taskGroups.map((group) => (
-            <TaskGroupItem
+            <TaskGroupAccordionItem
               key={group.id}
               taskGroup={group}
               tasks={tasksByGroup.get(group.id) || []}
+              selectedTaskId={selectedTaskId}
+              onTaskSelect={handleTaskSelect}
             />
           ))}
-        </Flex>
+        </Accordion.Root>
       )}
 
-      {/* Ungrouped Tasks */}
       {ungroupedTasks.length > 0 && (
-        <Box>
-          <Heading size="5" mb="3">
+        <Box p="3" style={{ borderTop: '1px solid var(--gray-6)' }}>
+          <Text size="2" weight="medium" color="gray" mb="2">
             Tasks
-          </Heading>
-          <Flex direction="column" gap="2">
+          </Text>
+          <Box style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {ungroupedTasks.map((task) => (
-              <TaskItem key={task.id} task={task} />
+              <TaskListItem
+                key={task.id}
+                task={task}
+                isSelected={selectedTaskId === task.id}
+                onSelect={() => handleTaskSelect(task.id)}
+              />
             ))}
-          </Flex>
+          </Box>
         </Box>
       )}
 
-      {/* Empty state */}
       {taskGroups.length === 0 && ungroupedTasks.length === 0 && (
-        <Box>
+        <Box p="4">
           <Text size="3" color="gray" align="center">
             No task groups or tasks yet
           </Text>
@@ -75,4 +91,3 @@ export function TaskGroupsList({
     </Box>
   )
 }
-

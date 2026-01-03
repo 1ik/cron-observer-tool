@@ -11,3 +11,8 @@ html, body {
   padding: 0;
 }
 
+/* Accordion chevron rotation */
+[data-state="open"] .accordion-chevron {
+  transform: rotate(0deg) !important;
+}
+
