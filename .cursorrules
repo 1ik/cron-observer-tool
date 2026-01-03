@@ -1,0 +1,187 @@
+# Frontend Architecture Rules
+
+## ⚠️ CRITICAL: Design System Components Only - MANDATORY ENFORCEMENT
+
+**ABSOLUTE RULE**: Raw HTML elements are STRICTLY FORBIDDEN in all frontend code. This is a non-negotiable architectural requirement.
+
+### ❌ FORBIDDEN Elements (NEVER USE THESE)
+- **Layout**: `div`, `section`, `article`, `main`, `aside`, `header`, `footer`, `nav`
+- **Typography**: `p`, `span`, `h1`, `h2`, `h3`, `h4`, `h5`, `h6`, `strong`, `em`, `b`, `i`
+- **Interactive**: `button`, `a` (unless using Next.js Link with Radix styling)
+- **Forms**: `input`, `select`, `textarea`, `label`, `form`
+- **Lists**: `ul`, `ol`, `li`, `dl`, `dt`, `dd`
+- **Media**: `img`, `video`, `audio`
+- **Tables**: `table`, `thead`, `tbody`, `tr`, `td`, `th`
+- **Other**: `br`, `hr`, `pre`, `code`, `blockquote`
+
+### ✅ REQUIRED: Use Radix UI Components
+
+**Radix UI Themes** (import from `@radix-ui/themes`):
+- **Layout**: `Box`, `Flex`, `Grid`, `Container`
+- **Typography**: `Text`, `Heading`, `Strong`, `Em`
+- **Buttons**: `Button`, `IconButton`
+- **Cards**: `Card`, `Inset`
+- **Feedback**: `Spinner`, `Badge`, `Separator`
+
+**Radix UI Primitives** (import from individual `@radix-ui/react-*` packages):
+- **Dialogs**: `@radix-ui/react-dialog`, `@radix-ui/react-alert-dialog`
+- **Forms**: `@radix-ui/react-checkbox`, `@radix-ui/react-radio-group`, `@radix-ui/react-switch`, `@radix-ui/react-select`
+- **Overlays**: `@radix-ui/react-dropdown-menu`, `@radix-ui/react-popover`, `@radix-ui/react-tooltip`
+- **Navigation**: `@radix-ui/react-tabs`, `@radix-ui/react-accordion`
+- **Feedback**: `@radix-ui/react-toast`
+- **Data Display**: `@radix-ui/react-avatar`, `@radix-ui/react-slider`
+
+**Business Components** (from `@cron-observer/ui` package):
+- **ONLY** for composite components that combine multiple Radix components with business logic
+- Examples: `TaskCard`, `ProjectList`, `EntityForm`
+- **NOT** for design system components (use `@radix-ui/themes` instead)
+
+**Import Patterns:**
+```typescript
+// Radix UI Themes (design system)
+import { Box, Flex, Text, Button, Card, Spinner } from '@radix-ui/themes'
+
+// Radix UI primitives (interactive components)
+import * as Dialog from '@radix-ui/react-dialog'
+import * as AlertDialog from '@radix-ui/react-alert-dialog'
+import * as Select from '@radix-ui/react-select'
+
+// Business components (composite with business logic)
+import { TaskCard, ProjectList } from '@cron-observer/ui'
+```
+
+## Theme System - MANDATORY
+
+**CRITICAL RULE**: All styling is COMPLETELY controlled from centralized theme settings. This ensures the application is easily themeable.
+
+**Theme controls EVERYTHING:**
+- **Colors**: Primary, secondary, accent, neutral, semantic (success, error, warning, info)
+- **Spacing**: Padding, margin, gap scales (consistent spacing system)
+- **Typography**: Font families, sizes, weights, line heights
+- **Borders**: Border radius, border widths, border styles
+- **Shadows**: Elevation system, shadow tokens
+- **Transitions**: Animation durations, easing functions
+- **Component Variants**: All component styling
+
+**❌ ABSOLUTELY FORBIDDEN:**
+```typescript
+// Hardcoded values
+style={{ color: '#ff0000', padding: '16px', fontSize: '14px', backgroundColor: '#fff' }}
+className="text-red-500 p-4 text-sm bg-white"
+style={{ margin: '20px', borderRadius: '8px' }}
+```
+
+**✅ REQUIRED:**
+```typescript
+// Theme tokens only
+<Text color="red" p="4" size="3">Content</Text>
+<Box m="5" radius="2" style={{ backgroundColor: 'var(--color-primary)' }}>
+<Button variant="solid" size="3">Action</Button>
+```
+
+**Why this matters:**
+- Theme can be switched entirely (light/dark mode, brand themes) without touching component code
+- Centralized design system ensures consistency
+- Easy customization and theming
+- No hardcoded values means components are theme-agnostic
+
+## TanStack Query Patterns
+
+### Query Keys Structure
+- Use hierarchical query keys for proper cache invalidation
+- Pattern: `['resource', 'list' | 'detail', ...filters]`
+
+### Service Layer
+- All API calls must go through TanStack Query hooks
+- Create service files in `apps/web/src/services/`
+- Export query hooks: `useEntity`, `useEntities`, `useCreateEntity`, etc.
+
+### ❌ FORBIDDEN:
+```typescript
+const [data, setData] = useState([])
+useEffect(() => {
+  fetch('/api/entities').then(res => res.json()).then(setData)
+}, [])
+```
+
+**✅ REQUIRED:**
+```typescript
+const { data, isLoading, error } = useEntities()
+```
+
+## State Management
+
+### URL State (Preferred for Simple State)
+- Use for bookmarkable, shareable state
+- Use `useSearchParams()` and `router.push()` with query params
+- Pattern: Read from URL → Update local state → Update URL on change
+
+### Context API
+- Use for complex global state that doesn't belong in URL
+- Keep contexts focused and minimal
+
+### State Management Libraries
+- Use Zustand or similar only when needed for frequently changing state
+- Avoid Redux unless absolutely necessary
+
+## Component Patterns
+
+### Loading States
+- Always show loading indicators using `Spinner` component
+- Use `Flex` with `justify="center"` and `align="center"` for centering
+
+### Error States
+- Use `AlertDialog` or `Toast` for error messages
+- Always provide retry/refresh action
+
+### Empty States
+- Show meaningful empty state messages
+- Use `Box`, `Heading`, `Text`, and `Button` components
+
+## File Organization
+
+### Structure
+```
+apps/web/src/
+├── app/              # Next.js pages (App Router)
+├── components/       # App-specific components
+├── services/         # TanStack Query hooks
+├── lib/              # Utilities, API client
+├── providers/        # React context providers
+└── hooks/            # Custom React hooks
+```
+
+### Naming Conventions
+- Components: PascalCase (e.g., `EntityGrid.tsx`)
+- Services: kebab-case with `.service.ts` suffix (e.g., `entity.service.ts`)
+- Hooks: camelCase with `use` prefix (e.g., `useEntity.ts`)
+- Utilities: kebab-case (e.g., `format-date.ts`)
+
+## TypeScript
+
+- All components must have proper TypeScript types
+- Use interfaces for props
+- Type all API responses
+- Use `as const` for query keys
+
+## Code Review Checklist
+
+When reviewing frontend code, verify:
+- [ ] No raw HTML elements (`div`, `p`, `span`, etc.)
+- [ ] Layout/typography components imported from `@radix-ui/themes`
+- [ ] Interactive components imported from `@radix-ui/react-*` packages
+- [ ] Business components from `@cron-observer/ui` are composite components with business logic (not design system components)
+- [ ] No hardcoded colors, spacing, or typography values
+- [ ] All API calls use TanStack Query hooks
+- [ ] Proper loading, error, and empty states
+- [ ] TypeScript types for all components and functions
+- [ ] Query keys follow hierarchical structure
+- [ ] Theme tokens used for all styling
+
+## Enforcement
+
+**These rules are MANDATORY and must be followed strictly.**
+- Code that violates these rules will be rejected
+- All PRs must pass architecture compliance checks
+- Use linting rules to catch violations automatically
+

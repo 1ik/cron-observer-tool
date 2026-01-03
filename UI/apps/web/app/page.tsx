@@ -1,6 +1,6 @@
 // Test import from workspace packages
-import '@cron-observer/ui';
 import '@cron-observer/lib';
+import '@cron-observer/ui';
 
 export default function Home() {
   return (
