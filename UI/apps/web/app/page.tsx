@@ -1,19 +1,17 @@
-// Test import from workspace packages
-import '@cron-observer/lib';
-import '@cron-observer/ui';
+import { Box, Flex, Heading, Text } from '@radix-ui/themes'
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-center font-mono text-sm">
-        <h1 className="text-4xl font-bold text-center mb-8">
+    <Box p="9">
+      <Flex direction="column" align="center" gap="4">
+        <Heading size="9" align="center">
           Cron Observer
-        </h1>
-        <p className="text-center text-gray-600">
+        </Heading>
+        <Text size="4" color="gray" align="center">
           Task scheduling and execution tracking system
-        </p>
-      </div>
-    </main>
+        </Text>
+      </Flex>
+    </Box>
   )
 }
 
