@@ -35,6 +35,10 @@ Cron Observer is an open-source task scheduling and execution tracking system. U
   - One-off (single execution at future datetime)
 - **Task Status**: ACTIVE, PAUSED, DISABLED
 - **Task Control**: Pause, resume, manual trigger, cancel
+- **Task Groups**: Group tasks together for coordinated control
+  - Time windows (start/end times) for automatic registration/deregistration
+  - Manual start/stop of all tasks in a group
+  - Tasks can optionally belong to a task group
 
 #### Scheduling Engine
 - **Cron Support**: Standard cron expression evaluation
@@ -208,17 +212,17 @@ The implementation is divided into separate modules that can be developed phase 
 
 ## Development Phases
 
-### Phase 1: Foundation (Modules 1-3)
-- Project structure setup
-- Data models definition
-- Database setup and migrations
-- Basic project scaffolding
+### Phase 1: Foundation (Modules 1-3) ✅ **COMPLETED**
+- ✅ Project structure setup
+- ✅ Data models definition (Project, Task, TaskGroup)
+- ✅ Database setup and migrations (MongoDB with indexes)
+- ✅ Basic project scaffolding
 
-### Phase 2: Core Backend (Modules 4-7)
-- API endpoints implementation
-- Scheduler engine
-- SDK/API for external systems
-- Execution tracking
+### Phase 2: Core Backend (Modules 4-7) 🔄 **IN PROGRESS**
+- ✅ API endpoints implementation (Projects, Tasks, TaskGroups)
+- ✅ Scheduler engine (cron support, event-driven architecture)
+- 🚧 SDK/API for external systems (pending)
+- 🚧 Execution tracking (pending)
 
 ### Phase 3: Frontend (Module 8)
 - UI components
@@ -253,23 +257,24 @@ The implementation is divided into separate modules that can be developed phase 
 ## Success Criteria
 
 ### MVP Success Criteria
-- [ ] Can create tasks with UUIDs
-- [ ] Can schedule recurring and one-off tasks
-- [ ] Scheduler creates execution records with PENDING status
-- [ ] External systems can update execution status via API
-- [ ] External systems can append logs via API
-- [ ] Can view execution history
-- [ ] Can pause/resume tasks
-- [ ] Can manually trigger tasks
+- [x] Can create tasks with UUIDs
+- [x] Can schedule recurring and one-off tasks
+- [ ] Scheduler creates execution records with PENDING status (pending execution tracking module)
+- [ ] External systems can update execution status via API (pending SDK module)
+- [ ] External systems can append logs via API (pending SDK module)
+- [ ] Can view execution history (pending execution tracking module)
+- [x] Can pause/resume tasks (via status updates)
+- [x] Can manually trigger tasks (via scheduler)
+- [x] TaskGroup functionality (create groups, start/stop groups, time windows)
 
 ### Full Feature Success Criteria
-- [ ] Complex scheduling patterns work correctly
-- [ ] Date-based navigation in UI
-- [ ] Complete execution tracking
+- [x] Complex scheduling patterns work correctly (cron expressions, timezone support)
+- [ ] Date-based navigation in UI (pending frontend)
+- [ ] Complete execution tracking (pending execution tracking module)
 - [ ] Notification system (future)
 - [ ] Multi-user support (future)
-- [ ] Comprehensive documentation
-- [ ] Open-source ready
+- [x] Comprehensive documentation (API documentation via OpenAPI spec)
+- [ ] Open-source ready (in progress)
 
 ## Open Source Considerations
 
@@ -280,16 +285,47 @@ The implementation is divided into separate modules that can be developed phase 
 - SDK client libraries (future)
 - Community-friendly architecture
 
+## Implementation Status
+
+### Completed Features
+
+**Phase 1 - Foundation (✅ Complete)**
+- Project structure with Go modules
+- Data models: Project, Task, TaskGroup
+- MongoDB database with indexes
+- Migration system
+- Repository pattern implementation
+- Custom validators (cron, timezone, time_format, objectid)
+
+**Phase 2 - Core Backend (🔄 In Progress)**
+- REST API endpoints for Projects, Tasks, and TaskGroups
+- Scheduler engine with cron support (robfig/cron/v3)
+- Event-driven architecture (EventBus)
+- TaskGroup functionality:
+  - CRUD operations
+  - Time windows (start/end times with timezone)
+  - Manual start/stop controls
+  - Automatic task registration/deregistration based on time windows
+- OpenAPI v3 specification generation (swag tool)
+
+**Remaining Work**
+- SDK/API endpoints for external systems (Module 6)
+- Execution tracking system (Module 7)
+- Frontend UI (Module 8)
+- Comprehensive testing (Module 9)
+- Deployment setup (Module 10)
+
 ## Notes
 
 - Authentication is deferred to later phases (manual token for MVP)
 - Multi-user support is planned for Phase 3
 - Notifications are planned for Phase 2
 - Advanced features (dependencies, chaining) are future considerations
+- OpenAPI specification is auto-generated from code annotations and available in `backend/api-docs/`
 
 ---
 
-**Last Updated**: 2025-01-XX
+**Last Updated**: 2026-01-03
 **Version**: 1.0.0
-**Status**: Planning Phase
+**Status**: Active Development - Phase 2 (Core Backend)
 

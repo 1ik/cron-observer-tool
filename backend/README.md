@@ -21,6 +21,7 @@ go run cmd/migrate/main.go create-collections
 This will:
 - Create the `projects` collection with indexes
 - Create the `tasks` collection with indexes
+- Create the `task_groups` collection with indexes
 
 ### 3. Start the Server
 
@@ -36,10 +37,9 @@ The server will start on `http://localhost:8080`
 ```bash
 # Health check with database status
 curl http://localhost:8080/api/v1/health
-
-# Hello World endpoint
-curl http://localhost:8080/api/v1/hello
 ```
+
+See [API Endpoints](#api-endpoints) section below for all available endpoints.
 
 ## Environment Variables
 
@@ -56,6 +56,10 @@ Default values are used if not specified.
 
 ```
 backend/
+├── api-docs/            # Generated OpenAPI specification
+│   ├── docs.go
+│   ├── swagger.json
+│   └── swagger.yaml
 ├── cmd/
 │   ├── server/          # Main API server
 │   │   └── main.go
@@ -65,9 +69,30 @@ backend/
 │   ├── database/        # Database connection & collections
 │   │   ├── mongo.go
 │   │   └── collections.go
-│   └── models/          # Data models
-│       ├── project.go
-│       └── task.go
+│   ├── events/          # Event bus for event-driven architecture
+│   │   ├── bus.go
+│   │   └── event.go
+│   ├── handlers/        # HTTP request handlers
+│   │   ├── project_handler.go
+│   │   ├── tasks.go
+│   │   └── taskgroup_handler.go
+│   ├── models/          # Data models
+│   │   ├── error.go
+│   │   ├── project.go
+│   │   ├── task.go
+│   │   └── taskgroup.go
+│   ├── repositories/    # Repository pattern implementation
+│   │   ├── mongo.go
+│   │   └── repository.go
+│   ├── scheduler/       # Scheduler engine
+│   │   ├── group_job.go
+│   │   ├── job.go
+│   │   └── scheduler.go
+│   ├── utils/           # Utility functions
+│   │   ├── api_key.go
+│   │   └── validation.go
+│   └── validators/      # Custom validators
+│       └── custom.go
 ├── go.mod
 └── go.sum
 ```
@@ -89,17 +114,37 @@ backend/
 #### Tasks
 - `uuid` (string, unique) - Public identifier
 - `project_id` (ObjectID) - Reference to project
+- `task_group_id` (ObjectID, optional) - Reference to task group
 - `name` (string) - Task name
 - `description` (string) - Optional description
 - `schedule_type` (enum) - RECURRING or ONEOFF
 - `status` (enum) - ACTIVE, PAUSED, or DISABLED
 - `schedule_config` (object) - Schedule configuration
-- `metadata` (object) - Custom metadata
-- `notification_config` (object) - Notification settings
+  - `cron_expression` (string, optional) - Cron expression
+  - `timezone` (string) - IANA timezone
+  - `time_range` (object, optional) - Time range with frequency
+  - `days_of_week` (array, optional) - Days of week (0-6)
+  - `exclusions` (array, optional) - Excluded days
+- `trigger_config` (object) - Trigger configuration (HTTP)
+- `metadata` (object, optional) - Custom metadata
 - `created_at` (timestamp)
 - `updated_at` (timestamp)
 
-**Indexes**: uuid, project_id, status, schedule_type, created_at, project_status (compound), project_created (compound)
+**Indexes**: uuid, project_id, task_group_id, status, schedule_type, created_at, project_status (compound), project_created (compound)
+
+#### Task Groups
+- `uuid` (string, unique) - Public identifier
+- `project_id` (ObjectID) - Reference to project
+- `name` (string) - Task group name
+- `description` (string, optional) - Optional description
+- `status` (enum) - ACTIVE, PAUSED, or DISABLED
+- `start_time` (string, optional) - Start time (HH:MM format)
+- `end_time` (string, optional) - End time (HH:MM format)
+- `timezone` (string, optional) - IANA timezone for time windows
+- `created_at` (timestamp)
+- `updated_at` (timestamp)
+
+**Indexes**: uuid, project_id, status, created_at
 
 ## Development Commands
 
@@ -143,16 +188,77 @@ docker exec -it cronobserver-mongodb mongosh
 
 ```bash
 # Create collections and indexes
+# This creates: projects, tasks, and task_groups collections with all indexes
 go run cmd/migrate/main.go create-collections
 
 # View available commands
 go run cmd/migrate/main.go --help
 ```
 
+## API Endpoints
+
+All endpoints are under `/api/v1` base path.
+
+### Projects
+
+- `GET /projects` - Get all projects
+- `POST /projects` - Create a new project
+
+### Tasks
+
+- `POST /projects/{project_id}/tasks` - Create a new task
+- `PUT /projects/{project_id}/tasks/{task_uuid}` - Update a task
+- `DELETE /projects/{project_id}/tasks/{task_uuid}` - Delete a task
+
+### Task Groups
+
+- `POST /projects/{project_id}/task-groups` - Create a new task group
+- `GET /projects/{project_id}/task-groups/{group_uuid}` - Get a task group
+- `PUT /projects/{project_id}/task-groups/{group_uuid}` - Update a task group
+- `DELETE /projects/{project_id}/task-groups/{group_uuid}` - Delete a task group
+- `POST /projects/{project_id}/task-groups/{group_uuid}/start` - Start all tasks in a group
+- `POST /projects/{project_id}/task-groups/{group_uuid}/stop` - Stop all tasks in a group
+- `GET /projects/{project_id}/task-groups/{group_uuid}/tasks` - Get all tasks in a group
+
+### Health Check
+
+- `GET /health` - Health check with database status
+
+## OpenAPI Specification
+
+The API is documented using OpenAPI v3 specification. The specification is auto-generated from code annotations using the `swag` tool.
+
+### Generate OpenAPI Specification
+
+```bash
+# Install swag tool (if not already installed)
+go install github.com/swaggo/swag/cmd/swag@latest
+
+# Generate specification
+export PATH=$PATH:$(go env GOPATH)/bin
+swag init -g ./cmd/server/main.go -o api-docs
+```
+
+This generates:
+- `api-docs/swagger.json` - OpenAPI specification in JSON format
+- `api-docs/swagger.yaml` - OpenAPI specification in YAML format
+- `api-docs/docs.go` - Generated Go code (can be ignored)
+
+The specification documents all endpoints, request/response schemas, and error responses.
+
+### Viewing the Specification
+
+You can use the generated `swagger.json` file with:
+- Postman (import OpenAPI spec)
+- Insomnia (import OpenAPI spec)
+- Swagger UI (if configured)
+- API documentation tools
+
 ## Next Steps
 
-- Add API handlers for Project CRUD operations
-- Add API handlers for Task CRUD operations
-- Implement API key authentication middleware
-- Add repository pattern for database operations
+- Implement SDK/API endpoints for external systems to report execution status
+- Implement execution tracking system
+- Add comprehensive testing
+- Implement frontend UI
+- Add API key authentication middleware
 
