@@ -6,6 +6,8 @@ import { Box, Flex, IconButton, Text } from '@radix-ui/themes'
 import { Task } from '../lib/types/task'
 import { TaskGroup } from '../lib/types/taskgroup'
 import { TaskListItem } from './TaskListItem'
+import { TaskRuntimeStatus, getStatusDotColor, getStatusTooltip } from '../lib/utils/task-status'
+import { StatusDot } from './StatusDot'
 
 interface TaskGroupAccordionItemProps {
   taskGroup: TaskGroup
@@ -24,18 +26,19 @@ export function TaskGroupAccordionItem({
   onSettingsClick,
   onTaskSettingsClick,
 }: TaskGroupAccordionItemProps) {
-  const getStatusDotColor = (status: string) => {
+  // Map TaskGroup status to TaskRuntimeStatus for consistency
+  const getTaskGroupRuntimeStatus = (status: string): TaskRuntimeStatus => {
     switch (status) {
       case 'ACTIVE':
-        return 'var(--green-9)'
+        return 'success' // Task groups are either active (success) or paused
       case 'PAUSED':
-        return 'var(--yellow-9)'
-      case 'DISABLED':
-        return 'var(--gray-9)'
+        return 'paused'
       default:
-        return 'var(--gray-9)'
+        return 'not-running'
     }
   }
+
+  const runtimeStatus = getTaskGroupRuntimeStatus(taskGroup.status)
 
   const handleSettingsClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -84,14 +87,16 @@ export function TaskGroupAccordionItem({
                 </Text>
               )}
             </Flex>
-            <Box
-              style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: getStatusDotColor(taskGroup.status),
-                flexShrink: 0,
-              }}
+            <StatusDot
+              status={runtimeStatus}
+              size={8}
+              tooltip={
+                taskGroup.status === 'ACTIVE'
+                  ? 'Task group is active'
+                  : taskGroup.status === 'PAUSED'
+                    ? 'Task group is paused'
+                    : 'Task group is disabled'
+              }
             />
           </Accordion.Trigger>
           <IconButton

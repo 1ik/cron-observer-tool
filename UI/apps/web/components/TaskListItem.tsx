@@ -4,6 +4,8 @@ import { Box, Flex, Text, IconButton } from '@radix-ui/themes'
 import { GearIcon } from '@radix-ui/react-icons'
 import { useRouter } from 'next/navigation'
 import { Task } from '../lib/types/task'
+import { getTaskRuntimeStatus } from '../lib/utils/task-status'
+import { StatusDot } from './StatusDot'
 
 interface TaskListItemProps {
   task: Task
@@ -23,18 +25,8 @@ export function TaskListItem({ task, projectUuid, isSelected, onSettingsClick }:
     e.stopPropagation()
     onSettingsClick?.(task)
   }
-  const getStatusDotColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'var(--green-9)'
-      case 'PAUSED':
-        return 'var(--yellow-9)'
-      case 'DISABLED':
-        return 'var(--gray-9)'
-      default:
-        return 'var(--gray-9)'
-    }
-  }
+
+  const runtimeStatus = getTaskRuntimeStatus(task)
 
   return (
     <Box
@@ -82,15 +74,7 @@ export function TaskListItem({ task, projectUuid, isSelected, onSettingsClick }:
               <GearIcon width="14" height="14" />
             </IconButton>
           )}
-          <Box
-            style={{
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              backgroundColor: getStatusDotColor(task.status),
-              flexShrink: 0,
-            }}
-          />
+          <StatusDot status={runtimeStatus} size={6} />
         </Flex>
       </Flex>
       {task.description && (
