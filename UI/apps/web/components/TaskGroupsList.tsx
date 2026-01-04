@@ -13,6 +13,7 @@ interface TaskGroupsListProps {
   taskGroups: TaskGroup[]
   tasks: Task[]
   selectedTaskId?: string | null
+  onSettingsClick: (taskGroup: TaskGroup) => void
 }
 
 export function TaskGroupsList({
@@ -21,8 +22,8 @@ export function TaskGroupsList({
   taskGroups,
   tasks,
   selectedTaskId,
+  onSettingsClick,
 }: TaskGroupsListProps) {
-
   // Group tasks by task_group_id
   const tasksByGroup = new Map<string, Task[]>()
   const ungroupedTasks: Task[] = []
@@ -57,6 +58,7 @@ export function TaskGroupsList({
               tasks={tasksByGroup.get(group.id) || []}
               projectUuid={projectUuid}
               selectedTaskId={selectedTaskId}
+              onSettingsClick={onSettingsClick}
             />
           ))}
         </Accordion.Root>

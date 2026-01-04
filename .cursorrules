@@ -164,6 +164,30 @@ apps/web/src/
 - Type all API responses
 - Use `as const` for query keys
 
+## Form Handling - MANDATORY
+
+**CRITICAL RULE**: All forms MUST use React Hook Form with Zod validation. This is strictly enforced.
+
+**❌ FORBIDDEN:**
+- Manual form state management with `useState` for individual fields
+- Manual validation logic
+- Isolated form state tracking
+
+**✅ REQUIRED:**
+- React Hook Form (`useForm` hook)
+- Zod schemas for validation (in `lib/validations/`)
+- `zodResolver` from `@hookform/resolvers`
+- `Controller` for complex components (Select, Checkbox, RadioGroup, etc.)
+- Error display using `errors.fieldName?.message`
+
+**Pattern:**
+1. Create Zod schema in `lib/validations/`
+2. Use `useForm` with `zodResolver`
+3. Use `register` for TextField/TextArea
+4. Use `Controller` for Select/Checkbox/RadioGroup
+5. Display errors from `formState.errors`
+6. Transform form data to API request format
+
 ## Code Review Checklist
 
 When reviewing frontend code, verify:
@@ -173,6 +197,9 @@ When reviewing frontend code, verify:
 - [ ] Business components from `@cron-observer/ui` are composite components with business logic (not design system components)
 - [ ] No hardcoded colors, spacing, or typography values
 - [ ] All API calls use TanStack Query hooks
+- [ ] **All forms use React Hook Form + Zod validation**
+- [ ] **No manual form state management with useState**
+- [ ] **Zod schemas exist in `lib/validations/` directory**
 - [ ] Proper loading, error, and empty states
 - [ ] TypeScript types for all components and functions
 - [ ] Query keys follow hierarchical structure

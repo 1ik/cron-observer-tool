@@ -24,3 +24,12 @@ export interface CreateTaskGroupRequest {
   timezone?: string
 }
 
+export interface UpdateTaskGroupRequest {
+  name: string
+  description?: string
+  status?: TaskGroupStatus
+  start_time?: string
+  end_time?: string
+  timezone?: string
+}
+

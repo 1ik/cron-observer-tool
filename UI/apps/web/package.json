@@ -13,16 +13,20 @@
   "dependencies": {
     "@cron-observer/lib": "workspace:*",
     "@cron-observer/ui": "workspace:*",
+    "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-icons": "^1.3.2",
     "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/themes": "^3.2.1",
     "next": "^14.1.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.70.0",
+    "zod": "^4.3.4"
   },
   "devDependencies": {
     "@types/node": "^20.11.5",

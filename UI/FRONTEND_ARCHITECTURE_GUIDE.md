@@ -351,7 +351,185 @@ router.push(`/next-page?value=${state}`)
 
 ---
 
-## 4. Loading & Error State Patterns
+## 4. Form Handling with React Hook Form + Zod
+
+### ⚠️ CRITICAL: React Hook Form + Zod Validation - MANDATORY ENFORCEMENT
+
+**ABSOLUTE RULE**: All forms MUST use React Hook Form with Zod validation. This is a non-negotiable architectural requirement.
+
+**Why this rule exists:**
+- **Future OpenAPI Integration**: Zod schemas will be automatically generated from OpenAPI specifications
+- **Type Safety**: Shared validation schemas between frontend and backend
+- **Consistency**: Uniform form handling across the entire application
+- **Developer Experience**: Better error handling and form state management
+- **Performance**: React Hook Form minimizes re-renders and provides optimal performance
+
+### ❌ FORBIDDEN: Manual Form State Management
+
+**NEVER track form fields individually with useState:**
+```typescript
+// ❌ FORBIDDEN: Manual state management
+const [name, setName] = useState('')
+const [description, setDescription] = useState('')
+const [error, setError] = useState<string | null>(null)
+
+const handleSubmit = () => {
+  if (!name.trim()) {
+    setError('Name is required')
+    return
+  }
+  // ... manual validation
+}
+```
+
+### ✅ REQUIRED: React Hook Form + Zod Pattern
+
+**ALL forms must follow this pattern:**
+
+1. **Create Zod Schema** (in `lib/validations/`):
+```typescript
+// lib/validations/entity.ts
+import { z } from 'zod'
+
+export const createEntitySchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .max(255, 'Name must be 255 characters or less')
+    .trim(),
+  description: z
+    .string()
+    .max(1000, 'Description must be 1000 characters or less')
+    .trim()
+    .optional()
+    .or(z.literal('')),
+})
+
+export type CreateEntityFormData = z.infer<typeof createEntitySchema>
+```
+
+2. **Use React Hook Form in Component**:
+```typescript
+// ✅ REQUIRED: React Hook Form + Zod
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { createEntitySchema, CreateEntityFormData } from '../lib/validations/entity'
+
+function CreateEntityDialog({ onSubmit }) {
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<CreateEntityFormData>({
+    resolver: zodResolver(createEntitySchema),
+    defaultValues: {
+      name: '',
+      description: '',
+    },
+  })
+
+  const onFormSubmit = (data: CreateEntityFormData) => {
+    // Transform form data to API request format
+    const requestData = {
+      name: data.name,
+      description: data.description || undefined,
+    }
+    onSubmit(requestData)
+    reset()
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onFormSubmit)}>
+      <TextField.Root
+        {...register('name')}
+        color={errors.name ? 'red' : undefined}
+      />
+      {errors.name && (
+        <Text size="2" color="red">{errors.name.message}</Text>
+      )}
+      
+      <Button type="submit">Submit</Button>
+    </form>
+  )
+}
+```
+
+3. **Using Controller for Complex Components**:
+```typescript
+// For Select, Checkbox, RadioGroup, etc. use Controller
+import { Controller } from 'react-hook-form'
+
+<Controller
+  name="status"
+  control={control}
+  render={({ field }) => (
+    <Select.Root
+      value={field.value}
+      onValueChange={field.onChange}
+    >
+      <Select.Trigger>
+        <Select.Value />
+      </Select.Trigger>
+      <Select.Content>
+        <Select.Item value="active">Active</Select.Item>
+        <Select.Item value="inactive">Inactive</Select.Item>
+      </Select.Content>
+    </Select.Root>
+  )}
+/>
+{errors.status && (
+  <Text size="2" color="red">{errors.status.message}</Text>
+)}
+```
+
+### Form Validation Rules
+
+**Zod Schema Requirements:**
+- All required fields must use `.min(1, 'message')` or `.refine()` for validation
+- Optional fields should use `.optional().or(z.literal(''))` to handle empty strings
+- String fields should use `.trim()` to remove whitespace
+- Use appropriate Zod validators: `.email()`, `.url()`, `.regex()`, `.min()`, `.max()`, etc.
+- Export TypeScript types using `z.infer<typeof schema>`
+
+**Error Display:**
+- Always display validation errors below the field
+- Use `errors.fieldName?.message` to show Zod validation messages
+- Style error text with `color="red"` and `size="2"`
+- Show errors immediately after validation (React Hook Form handles this automatically)
+
+**Form Submission:**
+- Transform form data to match API request types (convert empty strings to `undefined`)
+- Reset form after successful submission
+- Use `handleSubmit` from React Hook Form (not manual event handlers)
+
+### File Organization
+
+```
+lib/validations/
+├── project.ts          # Project form schemas
+├── taskgroup.ts        # TaskGroup form schemas
+├── task.ts             # Task form schemas
+└── ...
+```
+
+### Code Review Checklist
+
+When reviewing forms, verify:
+- [ ] Uses React Hook Form (`useForm` hook)
+- [ ] Uses Zod schema with `zodResolver`
+- [ ] Zod schema is in `lib/validations/` directory
+- [ ] No manual `useState` for form fields
+- [ ] No manual validation logic
+- [ ] Errors are displayed using `errors.fieldName?.message`
+- [ ] Controller is used for complex components (Select, Checkbox, etc.)
+- [ ] Form data is transformed to API request format
+- [ ] Form is reset after successful submission
+
+---
+
+## 5. Loading & Error State Patterns
 
 ### Loading States
 

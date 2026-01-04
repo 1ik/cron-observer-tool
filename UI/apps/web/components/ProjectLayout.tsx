@@ -1,14 +1,16 @@
 'use client'
 
+import { useState } from 'react'
 import { Box, Flex, Text } from '@radix-ui/themes'
 import Link from 'next/link'
 import { Execution } from '../lib/types/execution'
 import { Project } from '../lib/types/project'
 import { Task } from '../lib/types/task'
-import { TaskGroup } from '../lib/types/taskgroup'
+import { TaskGroup, UpdateTaskGroupRequest } from '../lib/types/taskgroup'
 import { ExecutionsList } from './ExecutionsList'
 import { ResizableSplitter } from './ResizableSplitter'
 import { TaskGroupsList } from './TaskGroupsList'
+import { TaskGroupSettingsDialog } from './TaskGroupSettingsDialog'
 
 interface ProjectLayoutProps {
   project: Project
@@ -25,6 +27,21 @@ export function ProjectLayout({
   executions,
   selectedTaskId,
 }: ProjectLayoutProps) {
+  const [selectedTaskGroup, setSelectedTaskGroup] = useState<TaskGroup | null>(null)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+  const handleSettingsClick = (taskGroup: TaskGroup) => {
+    setSelectedTaskGroup(taskGroup)
+    setIsSettingsOpen(true)
+  }
+
+  const handleSubmit = (data: UpdateTaskGroupRequest) => {
+    if (!selectedTaskGroup) return
+    // TODO: Implement API call to update task group
+    console.log('Updating task group:', selectedTaskGroup.id, data)
+    // TODO: Add success toast/notification
+    setIsSettingsOpen(false)
+  }
   return (
     <Flex direction="column" height="100%" width="100%" overflow="hidden">
       {/* Top separator */}
@@ -70,6 +87,7 @@ export function ProjectLayout({
               taskGroups={taskGroups}
               tasks={tasks}
               selectedTaskId={selectedTaskId}
+              onSettingsClick={handleSettingsClick}
             />
           }
           rightContent={<ExecutionsList executions={executions} />}
@@ -78,6 +96,15 @@ export function ProjectLayout({
           minRightWidth={20}
         />
       </Box>
+
+      {selectedTaskGroup && (
+        <TaskGroupSettingsDialog
+          open={isSettingsOpen}
+          onOpenChange={setIsSettingsOpen}
+          taskGroup={selectedTaskGroup}
+          onSubmit={handleSubmit}
+        />
+      )}
     </Flex>
   )
 }
