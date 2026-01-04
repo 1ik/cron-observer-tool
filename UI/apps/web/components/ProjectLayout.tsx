@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Box, Flex, Text } from '@radix-ui/themes'
+import { Box, Flex, Text, Button } from '@radix-ui/themes'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+import { PlusIcon, CaretDownIcon } from '@radix-ui/react-icons'
 import Link from 'next/link'
 import { Execution } from '../lib/types/execution'
 import { Project } from '../lib/types/project'
@@ -32,6 +34,8 @@ export function ProjectLayout({
   const [isTaskGroupSettingsOpen, setIsTaskGroupSettingsOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isTaskSettingsOpen, setIsTaskSettingsOpen] = useState(false)
+  const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false)
+  const [isCreateTaskGroupDialogOpen, setIsCreateTaskGroupDialogOpen] = useState(false)
 
   const handleTaskGroupSettingsClick = (taskGroup: TaskGroup) => {
     setSelectedTaskGroup(taskGroup)
@@ -70,7 +74,7 @@ export function ProjectLayout({
         }}
       />
       
-      {/* Header with breadcrumb */}
+      {/* Header with breadcrumb and create button */}
       <Box
         p="4"
         style={{
@@ -78,18 +82,89 @@ export function ProjectLayout({
           borderBottom: '1px solid var(--gray-6)',
         }}
       >
-        <Flex align="center" gap="2">
-          <Link href="/projects" style={{ textDecoration: 'none' }}>
+        <Flex align="center" justify="between" gap="3">
+          <Flex align="center" gap="2">
+            <Link href="/projects" style={{ textDecoration: 'none' }}>
+              <Text size="2" color="gray">
+                Projects
+              </Text>
+            </Link>
             <Text size="2" color="gray">
-              Projects
+              &gt;
             </Text>
-          </Link>
-          <Text size="2" color="gray">
-            &gt;
-          </Text>
-          <Text size="2" color="gray">
-            {project.name}
-          </Text>
+            <Text size="2" color="gray">
+              {project.name}
+            </Text>
+          </Flex>
+          
+          {/* GitHub-style split button */}
+          <DropdownMenu.Root>
+            <Flex style={{ display: 'inline-flex', gap: 0 }}>
+              <Button
+                size="2"
+                variant="outline"
+                onClick={() => setIsCreateTaskDialogOpen(true)}
+                style={{
+                  borderTopRightRadius: 0,
+                  borderBottomRightRadius: 0,
+                  borderRight: '1px solid var(--gray-6)',
+                  marginRight: '-1px',
+                  backgroundColor: 'transparent',
+                  cursor: 'pointer',
+                }}
+              >
+                <PlusIcon width="14" height="14" />
+              </Button>
+              <DropdownMenu.Trigger asChild>
+                <Button
+                  size="2"
+                  variant="outline"
+                  style={{
+                    borderTopLeftRadius: 0,
+                    borderBottomLeftRadius: 0,
+                    paddingLeft: 'var(--space-1)',
+                    paddingRight: 'var(--space-2)',
+                    backgroundColor: 'transparent',
+                  }}
+                >
+                  <CaretDownIcon width="14" height="14" />
+                </Button>
+              </DropdownMenu.Trigger>
+            </Flex>
+            <DropdownMenu.Content
+              align="end"
+              style={{
+                backgroundColor: 'var(--color-panel)',
+                border: '1px solid var(--gray-6)',
+                borderRadius: 'var(--radius-3)',
+                boxShadow: 'var(--shadow-4)',
+                padding: 'var(--space-1)',
+                minWidth: '180px',
+                zIndex: 1000,
+              }}
+            >
+              <DropdownMenu.Item
+                onSelect={() => setIsCreateTaskDialogOpen(true)}
+                style={{
+                  borderRadius: 'var(--radius-2)',
+                  padding: 'var(--space-2) var(--space-3)',
+                  cursor: 'pointer',
+                }}
+              >
+                Create Task
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onSelect={() => setIsCreateTaskGroupDialogOpen(true)}
+                style={{
+                  borderRadius: 'var(--radius-2)',
+                  padding: 'var(--space-2) var(--space-3)',
+                  cursor: 'pointer',
+                }}
+              >
+                Create Task Group
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
         </Flex>
       </Box>
 

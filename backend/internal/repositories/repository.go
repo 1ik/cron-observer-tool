@@ -15,12 +15,14 @@ type Repository interface {
 	// tasks
 	CreateTask(ctx context.Context, projectID string, task *models.Task) error
 	GetAllActiveTasks(ctx context.Context) ([]*models.Task, error)
+	GetTasksByProjectID(ctx context.Context, projectID primitive.ObjectID) ([]*models.Task, error)
 	GetTaskByUUID(ctx context.Context, taskUUID string) (*models.Task, error)
 	UpdateTask(ctx context.Context, taskUUID string, task *models.Task) error
 	DeleteTask(ctx context.Context, taskUUID string) error
 
 	// task groups
 	CreateTaskGroup(ctx context.Context, projectID string, taskGroup *models.TaskGroup) error
+	GetTaskGroupsByProjectID(ctx context.Context, projectID primitive.ObjectID) ([]*models.TaskGroup, error)
 	GetTaskGroupByUUID(ctx context.Context, taskGroupUUID string) (*models.TaskGroup, error)
 	GetTaskGroupByID(ctx context.Context, taskGroupID primitive.ObjectID) (*models.TaskGroup, error)
 	UpdateTaskGroup(ctx context.Context, taskGroupUUID string, taskGroup *models.TaskGroup) error

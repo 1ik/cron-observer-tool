@@ -28,6 +28,51 @@ func NewTaskGroupHandler(repo repositories.Repository, eventBus *events.EventBus
 	}
 }
 
+// GetTaskGroupsByProject retrieves all task groups for a project
+// @Summary      Get task groups by project
+// @Description  Retrieve all task groups belonging to a project
+// @Tags         task-groups
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Success      200  {array}   models.TaskGroup
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/task-groups [get]
+func (h *TaskGroupHandler) GetTaskGroupsByProject(c *gin.Context) {
+	projectIDParam := c.Param("project_id")
+	if projectIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "project_id is required in path",
+		})
+		return
+	}
+
+	// Convert project_id to ObjectID
+	projectID, err := primitive.ObjectIDFromHex(projectIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid project_id format in path",
+		})
+		return
+	}
+
+	// Get all task groups for this project
+	taskGroups, err := h.repo.GetTaskGroupsByProjectID(c.Request.Context(), projectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get task groups for project",
+		})
+		return
+	}
+
+	if taskGroups == nil {
+		taskGroups = []*models.TaskGroup{}
+	}
+
+	c.JSON(http.StatusOK, taskGroups)
+}
+
 // CreateTaskGroup creates a new task group
 // @Summary      Create a new task group
 // @Description  Create a new task group in a project

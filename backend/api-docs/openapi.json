@@ -92,6 +92,59 @@
             }
         },
         "/projects/{project_id}/task-groups": {
+            "get": {
+                "description": "Retrieve all task groups belonging to a project",
+                "tags": [
+                    "task-groups"
+                ],
+                "summary": "Get task groups by project",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/models.TaskGroup"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create a new task group in a project",
                 "tags": [
@@ -550,6 +603,59 @@
             }
         },
         "/projects/{project_id}/tasks": {
+            "get": {
+                "description": "Retrieve all tasks belonging to a project",
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Get tasks by project",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/models.Task"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create a new scheduled task in a project",
                 "tags": [
@@ -1215,10 +1321,6 @@
             },
             "models.TriggerConfig": {
                 "type": "object",
-                "required": [
-                    "http",
-                    "type"
-                ],
                 "properties": {
                     "http": {
                         "$ref": "#/components/schemas/models.HTTPTriggerConfig"

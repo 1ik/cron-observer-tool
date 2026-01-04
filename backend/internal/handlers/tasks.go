@@ -25,6 +25,51 @@ func NewTaskHandler(repo repositories.Repository, eventBus *events.EventBus) *Ta
 	}
 }
 
+// GetTasksByProject retrieves all tasks for a project
+// @Summary      Get tasks by project
+// @Description  Retrieve all tasks belonging to a project
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Success      200  {array}   models.Task
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/tasks [get]
+func (h *TaskHandler) GetTasksByProject(c *gin.Context) {
+	projectIDParam := c.Param("project_id")
+	if projectIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "project_id is required in path",
+		})
+		return
+	}
+
+	// Convert project_id to ObjectID
+	projectID, err := primitive.ObjectIDFromHex(projectIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid project_id format in path",
+		})
+		return
+	}
+
+	// Get all tasks for this project
+	tasks, err := h.repo.GetTasksByProjectID(c.Request.Context(), projectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get tasks for project",
+		})
+		return
+	}
+
+	if tasks == nil {
+		tasks = []*models.Task{}
+	}
+
+	c.JSON(http.StatusOK, tasks)
+}
+
 // CreateTask creates a new task
 // @Summary      Create a new task
 // @Description  Create a new scheduled task in a project

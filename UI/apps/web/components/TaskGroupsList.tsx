@@ -26,20 +26,25 @@ export function TaskGroupsList({
   onSettingsClick,
   onTaskSettingsClick,
 }: TaskGroupsListProps) {
+  // Create a Set of task group IDs for quick lookup
+  const taskGroupIds = new Set(taskGroups.map(tg => tg.id))
+  
   // Group tasks by task_group_id
   const tasksByGroup = new Map<string, Task[]>()
   const ungroupedTasks: Task[] = []
 
   tasks.forEach((task) => {
-    if (task.task_group_id) {
+    // If task has a task_group_id AND that task group exists, add it to the group
+    // Otherwise, treat it as ungrouped (this handles cases where task_group_id exists but group doesn't)
+    if (task.task_group_id && taskGroupIds.has(task.task_group_id)) {
       const groupTasks = tasksByGroup.get(task.task_group_id) || []
       groupTasks.push(task)
       tasksByGroup.set(task.task_group_id, groupTasks)
     } else {
+      // Task has no task_group_id, OR task_group_id exists but the group doesn't exist
       ungroupedTasks.push(task)
     }
   })
-
 
   return (
     <Box
@@ -68,7 +73,7 @@ export function TaskGroupsList({
       )}
 
       {ungroupedTasks.length > 0 && (
-        <Box p="3" style={{ borderTop: '1px solid var(--gray-6)' }}>
+        <Box p="3" style={{ borderTop: taskGroups.length > 0 ? '1px solid var(--gray-6)' : 'none' }}>
           <Text size="2" weight="medium" color="gray" mb="2">
             Tasks
           </Text>

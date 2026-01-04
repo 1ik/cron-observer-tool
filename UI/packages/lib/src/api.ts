@@ -69,3 +69,31 @@ export async function createProject(project: {
   return client.postProjects({ body: project });
 }
 
+// ============================================================================
+// Tasks API
+// ============================================================================
+
+/**
+ * Get all tasks for a project
+ * @param projectId - Project ID
+ * @returns Promise resolving to an array of tasks
+ */
+export async function getTasksByProject(projectId: string) {
+  const client = getApiClient();
+  return client.getProjectsProject_idtasks({ params: { project_id: projectId } });
+}
+
+// ============================================================================
+// Task Groups API
+// ============================================================================
+
+/**
+ * Get all task groups for a project
+ * @param projectId - Project ID
+ * @returns Promise resolving to an array of task groups
+ */
+export async function getTaskGroupsByProject(projectId: string) {
+  const client = getApiClient();
+  return client.getProjectsProject_idtaskGroups({ params: { project_id: projectId } });
+}
+

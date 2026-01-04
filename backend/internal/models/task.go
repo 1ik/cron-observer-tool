@@ -120,6 +120,6 @@ type HTTPTriggerConfig struct {
 
 // TriggerConfig holds the trigger configuration for a task
 type TriggerConfig struct {
-	Type TriggerType        `json:"type" bson:"type" binding:"required,oneof=HTTP"`
-	HTTP *HTTPTriggerConfig `json:"http" bson:"http" binding:"required"`
+	Type TriggerType        `json:"type,omitempty" bson:"type,omitempty" binding:"omitempty,oneof=HTTP"`
+	HTTP *HTTPTriggerConfig `json:"http,omitempty" bson:"http,omitempty" binding:"omitempty"`
 }

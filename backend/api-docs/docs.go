@@ -92,6 +92,51 @@ const docTemplate = `{
             }
         },
         "/projects/{project_id}/task-groups": {
+            "get": {
+                "description": "Retrieve all task groups belonging to a project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "task-groups"
+                ],
+                "summary": "Get task groups by project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.TaskGroup"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create a new task group in a project",
                 "consumes": [
@@ -474,6 +519,51 @@ const docTemplate = `{
             }
         },
         "/projects/{project_id}/tasks": {
+            "get": {
+                "description": "Retrieve all tasks belonging to a project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Get tasks by project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Task"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create a new scheduled task in a project",
                 "consumes": [
@@ -1101,10 +1191,6 @@ const docTemplate = `{
         },
         "models.TriggerConfig": {
             "type": "object",
-            "required": [
-                "http",
-                "type"
-            ],
             "properties": {
                 "http": {
                     "$ref": "#/definitions/models.HTTPTriggerConfig"

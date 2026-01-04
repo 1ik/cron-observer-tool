@@ -71,6 +71,25 @@ func (r *MongoRepository) GetAllActiveTasks(ctx context.Context) ([]*models.Task
 	return tasks, nil
 }
 
+func (r *MongoRepository) GetTasksByProjectID(ctx context.Context, projectID primitive.ObjectID) ([]*models.Task, error) {
+	collection := r.db.Collection(database.CollectionTasks)
+
+	filter := bson.M{"project_id": projectID}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var tasks []*models.Task
+	err = cursor.All(ctx, &tasks)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
 func (r *MongoRepository) GetTaskByUUID(ctx context.Context, taskUUID string) (*models.Task, error) {
 	collection := r.db.Collection(database.CollectionTasks)
 
@@ -108,6 +127,25 @@ func (r *MongoRepository) CreateTaskGroup(ctx context.Context, projectID string,
 		return err
 	}
 	return nil
+}
+
+func (r *MongoRepository) GetTaskGroupsByProjectID(ctx context.Context, projectID primitive.ObjectID) ([]*models.TaskGroup, error) {
+	collection := r.db.Collection(database.CollectionTaskGroups)
+
+	filter := bson.M{"project_id": projectID}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var taskGroups []*models.TaskGroup
+	err = cursor.All(ctx, &taskGroups)
+	if err != nil {
+		return nil, err
+	}
+	return taskGroups, nil
 }
 
 func (r *MongoRepository) GetTaskGroupByUUID(ctx context.Context, taskGroupUUID string) (*models.TaskGroup, error) {

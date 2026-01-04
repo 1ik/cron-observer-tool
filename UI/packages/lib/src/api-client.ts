@@ -18,17 +18,6 @@ const models_ErrorResponse = z
   .partial()
   .passthrough();
 const models_TaskGroupStatus = z.enum(["ACTIVE", "PAUSED", "DISABLED"]);
-const models_CreateTaskGroupRequest = z
-  .object({
-    description: z.string().max(1000).optional(),
-    end_time: z.string().optional(),
-    name: z.string().min(1).max(255),
-    project_id: z.string(),
-    start_time: z.string().optional(),
-    status: models_TaskGroupStatus.optional(),
-    timezone: z.string().optional(),
-  })
-  .passthrough();
 const models_TaskGroup = z
   .object({
     created_at: z.string(),
@@ -44,6 +33,17 @@ const models_TaskGroup = z
     uuid: z.string(),
   })
   .partial()
+  .passthrough();
+const models_CreateTaskGroupRequest = z
+  .object({
+    description: z.string().max(1000).optional(),
+    end_time: z.string().optional(),
+    name: z.string().min(1).max(255),
+    project_id: z.string(),
+    start_time: z.string().optional(),
+    status: models_TaskGroupStatus.optional(),
+    timezone: z.string().optional(),
+  })
   .passthrough();
 const models_UpdateTaskGroupRequest = z
   .object({
@@ -85,6 +85,7 @@ const models_HTTPTriggerConfig = z
 const models_TriggerType = z.literal("HTTP");
 const models_TriggerConfig = z
   .object({ http: models_HTTPTriggerConfig, type: models_TriggerType })
+  .partial()
   .passthrough();
 const models_Task = z
   .object({
@@ -134,8 +135,8 @@ export const schemas = {
   models_Project,
   models_ErrorResponse,
   models_TaskGroupStatus,
-  models_CreateTaskGroupRequest,
   models_TaskGroup,
+  models_CreateTaskGroupRequest,
   models_UpdateTaskGroupRequest,
   models_FrequencyUnit,
   models_Frequency,
@@ -182,6 +183,33 @@ const endpoints = makeApi([
       },
     ],
     response: models_Project,
+    errors: [
+      {
+        status: 400,
+        description: `Bad Request`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 500,
+        description: `Internal Server Error`,
+        schema: models_ErrorResponse,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/projects/:project_id/task-groups",
+    alias: "getProjectsProject_idtaskGroups",
+    description: `Retrieve all task groups belonging to a project`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "project_id",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: z.array(models_TaskGroup),
     errors: [
       {
         status: 400,
@@ -427,6 +455,33 @@ const endpoints = makeApi([
       {
         status: 404,
         description: `Not Found`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 500,
+        description: `Internal Server Error`,
+        schema: models_ErrorResponse,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/projects/:project_id/tasks",
+    alias: "getProjectsProject_idtasks",
+    description: `Retrieve all tasks belonging to a project`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "project_id",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: z.array(models_Task),
+    errors: [
+      {
+        status: 400,
+        description: `Bad Request`,
         schema: models_ErrorResponse,
       },
       {
