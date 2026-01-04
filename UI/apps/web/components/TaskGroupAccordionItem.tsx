@@ -13,6 +13,7 @@ interface TaskGroupAccordionItemProps {
   projectUuid: string
   selectedTaskId?: string | null
   onSettingsClick: (taskGroup: TaskGroup) => void
+  onTaskSettingsClick: (task: Task) => void
 }
 
 export function TaskGroupAccordionItem({
@@ -21,6 +22,7 @@ export function TaskGroupAccordionItem({
   projectUuid,
   selectedTaskId,
   onSettingsClick,
+  onTaskSettingsClick,
 }: TaskGroupAccordionItemProps) {
   const getStatusDotColor = (status: string) => {
     switch (status) {
@@ -109,14 +111,15 @@ export function TaskGroupAccordionItem({
       >
         {tasks.length > 0 ? (
           <Box style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            {tasks.map((task) => (
-              <TaskListItem
-                key={task.id}
-                task={task}
-                projectUuid={projectUuid}
-                isSelected={selectedTaskId === task.id || selectedTaskId === task.uuid}
-              />
-            ))}
+                  {tasks.map((task) => (
+                    <TaskListItem
+                      key={task.id}
+                      task={task}
+                      projectUuid={projectUuid}
+                      isSelected={selectedTaskId === task.id || selectedTaskId === task.uuid}
+                      onSettingsClick={onTaskSettingsClick}
+                    />
+                  ))}
           </Box>
         ) : (
           <Text size="2" color="gray" style={{ padding: 'var(--space-2)' }}>

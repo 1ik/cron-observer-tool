@@ -52,20 +52,38 @@ export function CreateProjectDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <StyledDialogContent maxWidth="500px">
-        <Dialog.Title asChild>
-          <Heading size="5" mb="4">
-            Create New Project
-          </Heading>
-        </Dialog.Title>
+        {/* Header - Sticky */}
+        <Box
+          p="5"
+          style={{
+            flexShrink: 0,
+            borderBottom: '1px solid var(--gray-6)',
+          }}
+        >
+          <Dialog.Title asChild>
+            <Heading size="5" mb="2">
+              Create New Project
+            </Heading>
+          </Dialog.Title>
 
-        <Dialog.Description asChild>
-          <Text size="3" color="gray" mb="4">
-            Create a new project to organize your tasks and task groups.
-          </Text>
-        </Dialog.Description>
+          <Dialog.Description asChild>
+            <Text size="3" color="gray">
+              Create a new project to organize your tasks and task groups.
+            </Text>
+          </Dialog.Description>
+        </Box>
 
-        <Flex direction="column" gap="4" asChild>
-          <form onSubmit={handleSubmit(onFormSubmit)}>
+        {/* Content - Scrollable */}
+        <Box
+          p="5"
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            minHeight: 0,
+          }}
+        >
+          <Flex direction="column" gap="4" asChild>
+            <form onSubmit={handleSubmit(onFormSubmit)}>
             <Flex direction="column" gap="2">
               <Label.Root htmlFor="project-name">
                 <Text size="3" weight="medium">
@@ -106,19 +124,33 @@ export function CreateProjectDialog({
                 </Text>
               )}
             </Flex>
+            </form>
+          </Flex>
+        </Box>
 
-            <Flex gap="3" justify="end" mt="4">
-              <Dialog.Close asChild>
-                <Button type="button" variant="soft" onClick={handleCancel}>
-                  Cancel
-                </Button>
-              </Dialog.Close>
-              <Button type="submit" variant="solid">
-                Create Project
+        {/* Footer - Sticky */}
+        <Box
+          p="5"
+          style={{
+            flexShrink: 0,
+            borderTop: '1px solid var(--gray-6)',
+          }}
+        >
+          <Flex gap="3" justify="end">
+            <Dialog.Close asChild>
+              <Button type="button" variant="soft" onClick={handleCancel}>
+                Cancel
               </Button>
-            </Flex>
-          </form>
-        </Flex>
+            </Dialog.Close>
+            <Button
+              type="submit"
+              variant="solid"
+              onClick={handleSubmit(onFormSubmit)}
+            >
+              Create Project
+            </Button>
+          </Flex>
+        </Box>
       </StyledDialogContent>
     </Dialog.Root>
   )

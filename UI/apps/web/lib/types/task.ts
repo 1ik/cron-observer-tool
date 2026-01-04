@@ -62,3 +62,14 @@ export interface CreateTaskRequest {
   metadata?: Record<string, unknown>
 }
 
+export interface UpdateTaskRequest {
+  task_group_id?: string
+  name: string
+  description?: string
+  schedule_type: ScheduleType
+  status?: TaskStatus
+  schedule_config: ScheduleConfig
+  trigger_config: TriggerConfig
+  metadata?: Record<string, unknown>
+}
+

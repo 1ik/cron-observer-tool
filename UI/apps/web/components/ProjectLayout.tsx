@@ -5,12 +5,13 @@ import { Box, Flex, Text } from '@radix-ui/themes'
 import Link from 'next/link'
 import { Execution } from '../lib/types/execution'
 import { Project } from '../lib/types/project'
-import { Task } from '../lib/types/task'
+import { Task, UpdateTaskRequest } from '../lib/types/task'
 import { TaskGroup, UpdateTaskGroupRequest } from '../lib/types/taskgroup'
 import { ExecutionsList } from './ExecutionsList'
 import { ResizableSplitter } from './ResizableSplitter'
 import { TaskGroupsList } from './TaskGroupsList'
 import { TaskGroupSettingsDialog } from './TaskGroupSettingsDialog'
+import { TaskSettingsDialog } from './TaskSettingsDialog'
 
 interface ProjectLayoutProps {
   project: Project
@@ -28,19 +29,34 @@ export function ProjectLayout({
   selectedTaskId,
 }: ProjectLayoutProps) {
   const [selectedTaskGroup, setSelectedTaskGroup] = useState<TaskGroup | null>(null)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isTaskGroupSettingsOpen, setIsTaskGroupSettingsOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [isTaskSettingsOpen, setIsTaskSettingsOpen] = useState(false)
 
-  const handleSettingsClick = (taskGroup: TaskGroup) => {
+  const handleTaskGroupSettingsClick = (taskGroup: TaskGroup) => {
     setSelectedTaskGroup(taskGroup)
-    setIsSettingsOpen(true)
+    setIsTaskGroupSettingsOpen(true)
   }
 
-  const handleSubmit = (data: UpdateTaskGroupRequest) => {
+  const handleTaskGroupSettingsSubmit = (data: UpdateTaskGroupRequest) => {
     if (!selectedTaskGroup) return
     // TODO: Implement API call to update task group
     console.log('Updating task group:', selectedTaskGroup.id, data)
     // TODO: Add success toast/notification
-    setIsSettingsOpen(false)
+    setIsTaskGroupSettingsOpen(false)
+  }
+
+  const handleTaskSettingsClick = (task: Task) => {
+    setSelectedTask(task)
+    setIsTaskSettingsOpen(true)
+  }
+
+  const handleTaskSettingsSubmit = (data: UpdateTaskRequest) => {
+    if (!selectedTask) return
+    // TODO: Implement API call to update task
+    console.log('Updating task:', selectedTask.id, data)
+    // TODO: Add success toast/notification
+    setIsTaskSettingsOpen(false)
   }
   return (
     <Flex direction="column" height="100%" width="100%" overflow="hidden">
@@ -87,7 +103,8 @@ export function ProjectLayout({
               taskGroups={taskGroups}
               tasks={tasks}
               selectedTaskId={selectedTaskId}
-              onSettingsClick={handleSettingsClick}
+              onSettingsClick={handleTaskGroupSettingsClick}
+              onTaskSettingsClick={handleTaskSettingsClick}
             />
           }
           rightContent={<ExecutionsList executions={executions} />}
@@ -99,10 +116,19 @@ export function ProjectLayout({
 
       {selectedTaskGroup && (
         <TaskGroupSettingsDialog
-          open={isSettingsOpen}
-          onOpenChange={setIsSettingsOpen}
+          open={isTaskGroupSettingsOpen}
+          onOpenChange={setIsTaskGroupSettingsOpen}
           taskGroup={selectedTaskGroup}
-          onSubmit={handleSubmit}
+          onSubmit={handleTaskGroupSettingsSubmit}
+        />
+      )}
+
+      {selectedTask && (
+        <TaskSettingsDialog
+          open={isTaskSettingsOpen}
+          onOpenChange={setIsTaskSettingsOpen}
+          task={selectedTask}
+          onSubmit={handleTaskSettingsSubmit}
         />
       )}
     </Flex>

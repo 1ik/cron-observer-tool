@@ -1,6 +1,7 @@
 'use client'
 
-import { Box, Flex, Text } from '@radix-ui/themes'
+import { Box, Flex, Text, IconButton } from '@radix-ui/themes'
+import { GearIcon } from '@radix-ui/react-icons'
 import { useRouter } from 'next/navigation'
 import { Task } from '../lib/types/task'
 
@@ -8,13 +9,19 @@ interface TaskListItemProps {
   task: Task
   projectUuid: string
   isSelected: boolean
+  onSettingsClick?: (task: Task) => void
 }
 
-export function TaskListItem({ task, projectUuid, isSelected }: TaskListItemProps) {
+export function TaskListItem({ task, projectUuid, isSelected, onSettingsClick }: TaskListItemProps) {
   const router = useRouter()
 
   const handleClick = () => {
     router.push(`/projects/${projectUuid}/tasks/${task.uuid}`)
+  }
+
+  const handleSettingsClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onSettingsClick?.(task)
   }
   const getStatusDotColor = (status: string) => {
     switch (status) {
@@ -64,15 +71,27 @@ export function TaskListItem({ task, projectUuid, isSelected }: TaskListItemProp
         >
           {task.name}
         </Text>
-        <Box
-          style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            backgroundColor: getStatusDotColor(task.status),
-            flexShrink: 0,
-          }}
-        />
+        <Flex align="center" gap="2">
+          {onSettingsClick && (
+            <IconButton
+              variant="ghost"
+              size="1"
+              onClick={handleSettingsClick}
+              style={{ cursor: 'pointer' }}
+            >
+              <GearIcon width="14" height="14" />
+            </IconButton>
+          )}
+          <Box
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: getStatusDotColor(task.status),
+              flexShrink: 0,
+            }}
+          />
+        </Flex>
       </Flex>
       {task.description && (
         <Text

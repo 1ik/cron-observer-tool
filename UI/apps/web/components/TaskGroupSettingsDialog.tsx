@@ -91,20 +91,38 @@ export function TaskGroupSettingsDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <StyledDialogContent maxWidth="600px">
-        <Dialog.Title asChild>
-          <Heading size="5" mb="4">
-            Edit Task Group Settings
-          </Heading>
-        </Dialog.Title>
+        {/* Header - Sticky */}
+        <Box
+          p="5"
+          style={{
+            flexShrink: 0,
+            borderBottom: '1px solid var(--gray-6)',
+          }}
+        >
+          <Dialog.Title asChild>
+            <Heading size="5" mb="2">
+              Edit Task Group Settings
+            </Heading>
+          </Dialog.Title>
 
-        <Dialog.Description asChild>
-          <Text size="3" color="gray" mb="4">
-            Update the task group configuration and settings.
-          </Text>
-        </Dialog.Description>
+          <Dialog.Description asChild>
+            <Text size="3" color="gray">
+              Update the task group configuration and settings.
+            </Text>
+          </Dialog.Description>
+        </Box>
 
-        <Flex direction="column" gap="4" asChild>
-          <form onSubmit={handleSubmit(onFormSubmit)}>
+        {/* Content - Scrollable */}
+        <Box
+          p="5"
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            minHeight: 0,
+          }}
+        >
+          <Flex direction="column" gap="4" asChild>
+            <form onSubmit={handleSubmit(onFormSubmit)}>
             {/* Name */}
             <Flex direction="column" gap="2">
               <Label.Root htmlFor="task-group-name">
@@ -306,19 +324,33 @@ export function TaskGroupSettingsDialog({
                 </Text>
               )}
             </Flex>
+            </form>
+          </Flex>
+        </Box>
 
-            <Flex gap="3" justify="end" mt="4">
-              <Dialog.Close asChild>
-                <Button type="button" variant="soft" onClick={handleCancel}>
-                  Cancel
-                </Button>
-              </Dialog.Close>
-              <Button type="submit" variant="solid">
-                Save Changes
+        {/* Footer - Sticky */}
+        <Box
+          p="5"
+          style={{
+            flexShrink: 0,
+            borderTop: '1px solid var(--gray-6)',
+          }}
+        >
+          <Flex gap="3" justify="end">
+            <Dialog.Close asChild>
+              <Button type="button" variant="soft" onClick={handleCancel}>
+                Cancel
               </Button>
-            </Flex>
-          </form>
-        </Flex>
+            </Dialog.Close>
+            <Button
+              type="submit"
+              variant="solid"
+              onClick={handleSubmit(onFormSubmit)}
+            >
+              Save Changes
+            </Button>
+          </Flex>
+        </Box>
       </StyledDialogContent>
     </Dialog.Root>
   )
