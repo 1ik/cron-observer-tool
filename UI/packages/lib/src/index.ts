@@ -2,7 +2,7 @@
 // Utils and hooks will be added here as they are created
 
 // export * from './utils';
-// export * from './hooks';
+export * from './hooks';
 
 // Export API client generated from OpenAPI spec
 export type { ZodiosOptions } from '@zodios/core';

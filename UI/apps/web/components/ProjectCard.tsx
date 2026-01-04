@@ -1,7 +1,7 @@
 'use client'
 
+import { Badge, Card, Flex, Heading, Text } from '@radix-ui/themes'
 import Link from 'next/link'
-import { Card, Box, Flex, Text, Heading, Badge } from '@radix-ui/themes'
 import { Project } from '../lib/types/project'
 
 interface ProjectCardProps {
@@ -25,7 +25,24 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
   return (
     <Link href={`/projects/${project.uuid}`} style={{ textDecoration: 'none' }}>
-      <Card size="3" style={{ height: '100%', cursor: 'pointer' }}>
+      <Card
+        size="3"
+        style={{
+          height: '100%',
+          cursor: 'pointer',
+          transition: 'background-color 0.2s, box-shadow 0.2s, transform 0.2s',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--gray-2)'
+          e.currentTarget.style.boxShadow = 'var(--shadow-4)'
+          e.currentTarget.style.transform = 'translateY(-2px)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = ''
+          e.currentTarget.style.boxShadow = ''
+          e.currentTarget.style.transform = ''
+        }}
+      >
         <Flex direction="column" gap="3" p="4">
           <Flex justify="between" align="start">
             <Heading size="5" weight="bold">

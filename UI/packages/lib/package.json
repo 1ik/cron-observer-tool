@@ -14,9 +14,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.16",
     "@zodios/core": "^10.9.0",
     "zod": "^3.23.8"
-  },
-  "devDependencies": {}
+  }
 }
-
