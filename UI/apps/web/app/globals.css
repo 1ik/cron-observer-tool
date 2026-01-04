@@ -16,3 +16,105 @@ html, body {
   transform: rotate(0deg) !important;
 }
 
+/* React Day Picker styles */
+.rdp {
+  --rdp-cell-size: 36px;
+  --rdp-accent-color: var(--accent-9);
+  --rdp-background-color: var(--color-panel-solid);
+  --rdp-accent-color-dark: var(--accent-10);
+  --rdp-outline: 2px solid var(--accent-9);
+  --rdp-outline-selected: 2px solid var(--accent-9);
+  margin: 0;
+}
+
+.rdp-day {
+  border-radius: var(--radius-2);
+  color: var(--gray-12) !important;
+  cursor: pointer;
+}
+
+.rdp-day:hover:not([disabled]):not(.rdp-day_selected) {
+  background-color: var(--gray-4);
+}
+
+.rdp-day_selected {
+  background-color: var(--accent-9);
+  color: var(--accent-contrast);
+  font-weight: var(--font-weight-medium);
+}
+
+.rdp-day_today {
+  font-weight: var(--font-weight-bold);
+}
+
+.rdp-day_disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.rdp-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.rdp-caption_label {
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-medium);
+  color: var(--gray-12) !important;
+}
+
+.rdp-nav {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.rdp-button_previous,
+.rdp-button_next {
+  cursor: pointer;
+  padding: var(--space-1);
+  border-radius: var(--radius-2);
+  border: none;
+  background-color: transparent;
+  color: var(--gray-12) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rdp-button_previous svg,
+.rdp-button_next svg {
+  color: var(--gray-12) !important;
+  width: 16px;
+  height: 16px;
+  fill: var(--gray-12) !important;
+}
+
+.rdp-button_previous:hover,
+.rdp-button_next:hover {
+  background-color: var(--gray-4);
+}
+
+.rdp-head_cell {
+  padding: var(--space-2);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-medium);
+  color: var(--gray-11) !important;
+  text-align: center;
+}
+
+/* Ensure all text in calendar uses theme colors */
+.rdp {
+  color: var(--gray-12) !important;
+}
+
+.rdp-month {
+  color: var(--gray-12) !important;
+}
+
+.rdp * {
+  color: inherit;
+}
+
