@@ -10,6 +10,7 @@ import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { TaskGroup, TaskGroupStatus, UpdateTaskGroupRequest } from '../lib/types/taskgroup'
 import { UpdateTaskGroupFormData, updateTaskGroupSchema } from '../lib/validations/taskgroup'
+import { StyledDialogContent } from './StyledDialogContent'
 
 interface TaskGroupSettingsDialogProps {
   open: boolean
@@ -89,24 +90,7 @@ export function TaskGroupSettingsDialog({
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          maxWidth: '600px',
-          width: '90vw',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          backgroundColor: 'var(--color-panel-solid)',
-          border: '1px solid var(--gray-6)',
-          borderRadius: 'var(--radius-3)',
-          padding: 'var(--space-5)',
-          boxShadow: 'var(--shadow-6)',
-          zIndex: 51,
-        }}
-      >
+      <StyledDialogContent maxWidth="600px">
         <Dialog.Title asChild>
           <Heading size="5" mb="4">
             Edit Task Group Settings
@@ -335,7 +319,7 @@ export function TaskGroupSettingsDialog({
             </Flex>
           </form>
         </Flex>
-      </Dialog.Content>
+      </StyledDialogContent>
     </Dialog.Root>
   )
 }

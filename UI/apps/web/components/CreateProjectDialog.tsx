@@ -7,6 +7,7 @@ import * as Label from '@radix-ui/react-label'
 import { Box, Flex, Text, Heading, Button, TextField, TextArea } from '@radix-ui/themes'
 import { CreateProjectRequest } from '../lib/types/project'
 import { createProjectSchema, CreateProjectFormData } from '../lib/validations/project'
+import { StyledDialogContent } from './StyledDialogContent'
 
 interface CreateProjectDialogProps {
   open: boolean
@@ -50,7 +51,7 @@ export function CreateProjectDialog({
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content style={{ maxWidth: '500px' }}>
+      <StyledDialogContent maxWidth="500px">
         <Dialog.Title asChild>
           <Heading size="5" mb="4">
             Create New Project
@@ -118,7 +119,7 @@ export function CreateProjectDialog({
             </Flex>
           </form>
         </Flex>
-      </Dialog.Content>
+      </StyledDialogContent>
     </Dialog.Root>
   )
 }
