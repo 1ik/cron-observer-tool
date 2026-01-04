@@ -8,9 +8,12 @@
     "build": "pnpm --filter './packages/*' build && pnpm --filter './apps/*' build",
     "lint": "pnpm --filter './packages/*' lint && pnpm --filter './apps/*' lint",
     "type-check": "pnpm --filter './packages/*' type-check && pnpm --filter './apps/*' type-check",
-    "clean": "pnpm --filter './packages/*' clean && pnpm --filter './apps/*' clean"
+    "clean": "pnpm --filter './packages/*' clean && pnpm --filter './apps/*' clean",
+    "gen:api": "npx swagger2openapi ../backend/api-docs/swagger.json -o ../backend/api-docs/openapi.json && openapi-zod-client ../backend/api-docs/openapi.json -o ./packages/lib/src/api-client.ts"
   },
   "devDependencies": {
+    "openapi-zod-client": "^1.18.3",
+    "swagger2openapi": "^7.0.8",
     "typescript": "^5.3.3"
   },
   "engines": {

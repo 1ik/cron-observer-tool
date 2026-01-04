@@ -13,7 +13,10 @@
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@zodios/core": "^10.9.0",
+    "zod": "^3.23.8"
+  },
   "devDependencies": {}
 }
 

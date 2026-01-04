@@ -1,0 +1,1346 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "description": "API for managing scheduled tasks and task groups",
+        "title": "Cron Observer API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/projects": {
+            "get": {
+                "description": "Retrieve a list of all projects",
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Get all projects",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/models.Project"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new project with auto-generated UUID and API key",
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Create a new project",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/models.Project"
+                            }
+                        }
+                    },
+                    "description": "Project creation request",
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.Project"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{project_id}/task-groups": {
+            "post": {
+                "description": "Create a new task group in a project",
+                "tags": [
+                    "task-groups"
+                ],
+                "summary": "Create a new task group",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/models.CreateTaskGroupRequest"
+                            }
+                        }
+                    },
+                    "description": "Task group creation request",
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.TaskGroup"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{project_id}/task-groups/{group_uuid}": {
+            "get": {
+                "description": "Retrieve a task group by its UUID",
+                "tags": [
+                    "task-groups"
+                ],
+                "summary": "Get a task group",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Task Group UUID",
+                        "name": "group_uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.TaskGroup"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an existing task group",
+                "tags": [
+                    "task-groups"
+                ],
+                "summary": "Update a task group",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Task Group UUID",
+                        "name": "group_uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/models.UpdateTaskGroupRequest"
+                            }
+                        }
+                    },
+                    "description": "Task group update request",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.TaskGroup"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete an existing task group",
+                "tags": [
+                    "task-groups"
+                ],
+                "summary": "Delete a task group",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Task Group UUID",
+                        "name": "group_uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{project_id}/task-groups/{group_uuid}/start": {
+            "post": {
+                "description": "Manually start all tasks in a task group",
+                "tags": [
+                    "task-groups"
+                ],
+                "summary": "Start a task group",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Task Group UUID",
+                        "name": "group_uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{project_id}/task-groups/{group_uuid}/stop": {
+            "post": {
+                "description": "Manually stop all tasks in a task group",
+                "tags": [
+                    "task-groups"
+                ],
+                "summary": "Stop a task group",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Task Group UUID",
+                        "name": "group_uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{project_id}/task-groups/{group_uuid}/tasks": {
+            "get": {
+                "description": "Retrieve all tasks belonging to a task group",
+                "tags": [
+                    "task-groups"
+                ],
+                "summary": "Get tasks in a group",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Task Group UUID",
+                        "name": "group_uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/models.Task"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{project_id}/tasks": {
+            "post": {
+                "description": "Create a new scheduled task in a project",
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Create a new task",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/models.CreateTaskRequest"
+                            }
+                        }
+                    },
+                    "description": "Task creation request",
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.Task"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{project_id}/tasks/{task_uuid}": {
+            "put": {
+                "description": "Update an existing scheduled task",
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Update a task",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Task UUID",
+                        "name": "task_uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/models.UpdateTaskRequest"
+                            }
+                        }
+                    },
+                    "description": "Task update request",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.Task"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete an existing scheduled task",
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Delete a task",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Task UUID",
+                        "name": "task_uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "servers": [
+        {
+            "url": "//localhost:8080/api/v1"
+        }
+    ],
+    "components": {
+        "schemas": {
+            "models.CreateTaskGroupRequest": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "project_id"
+                ],
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "end_time": {
+                        "description": "Format: \"HH:MM\"",
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 1
+                    },
+                    "project_id": {
+                        "type": "string"
+                    },
+                    "start_time": {
+                        "description": "Format: \"HH:MM\"",
+                        "type": "string"
+                    },
+                    "status": {
+                        "enum": [
+                            "ACTIVE",
+                            "PAUSED",
+                            "DISABLED"
+                        ],
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.TaskGroupStatus"
+                            }
+                        ]
+                    },
+                    "timezone": {
+                        "type": "string"
+                    }
+                }
+            },
+            "models.CreateTaskRequest": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "project_id",
+                    "schedule_config",
+                    "schedule_type",
+                    "trigger_config"
+                ],
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 1
+                    },
+                    "project_id": {
+                        "type": "string"
+                    },
+                    "schedule_config": {
+                        "$ref": "#/components/schemas/models.ScheduleConfig"
+                    },
+                    "schedule_type": {
+                        "enum": [
+                            "RECURRING",
+                            "ONEOFF"
+                        ],
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.ScheduleType"
+                            }
+                        ]
+                    },
+                    "status": {
+                        "enum": [
+                            "ACTIVE",
+                            "PAUSED",
+                            "DISABLED"
+                        ],
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.TaskStatus"
+                            }
+                        ]
+                    },
+                    "task_group_id": {
+                        "description": "Optional task group ID",
+                        "type": "string"
+                    },
+                    "trigger_config": {
+                        "$ref": "#/components/schemas/models.TriggerConfig"
+                    }
+                }
+            },
+            "models.ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "details": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "project_id is required"
+                        ]
+                    },
+                    "error": {
+                        "type": "string",
+                        "example": "Invalid request"
+                    }
+                }
+            },
+            "models.Frequency": {
+                "type": "object",
+                "required": [
+                    "unit",
+                    "value"
+                ],
+                "properties": {
+                    "unit": {
+                        "description": "Unit: \"s\" (seconds), \"m\" (minutes), \"h\" (hours)",
+                        "enum": [
+                            "s",
+                            "m",
+                            "h"
+                        ],
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.FrequencyUnit"
+                            }
+                        ]
+                    },
+                    "value": {
+                        "description": "Numeric value (e.g., 15)",
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            },
+            "models.FrequencyUnit": {
+                "type": "string",
+                "enum": [
+                    "s",
+                    "m",
+                    "h"
+                ],
+                "x-enum-varnames": [
+                    "FrequencyUnitSecond",
+                    "FrequencyUnitMinute",
+                    "FrequencyUnitHour"
+                ]
+            },
+            "models.HTTPTriggerConfig": {
+                "type": "object",
+                "required": [
+                    "method",
+                    "url"
+                ],
+                "properties": {
+                    "body": {},
+                    "headers": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "method": {
+                        "type": "string"
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "maximum": 300,
+                        "minimum": 1
+                    },
+                    "url": {
+                        "type": "string"
+                    }
+                }
+            },
+            "models.Project": {
+                "description": "Project represents a project entity that contains tasks",
+                "type": "object",
+                "properties": {
+                    "api_key": {
+                        "type": "string",
+                        "example": "sk_live_abc123..."
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "example": "2025-01-15T10:00:00Z"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Project description"
+                    },
+                    "id": {
+                        "type": "string",
+                        "example": "507f1f77bcf86cd799439011"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "My Project"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "example": "2025-01-15T10:00:00Z"
+                    },
+                    "uuid": {
+                        "type": "string",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                }
+            },
+            "models.ScheduleConfig": {
+                "type": "object",
+                "required": [
+                    "timezone"
+                ],
+                "properties": {
+                    "cron_expression": {
+                        "description": "If provided, TimeRange and DaysOfWeek are ignored",
+                        "type": "string"
+                    },
+                    "days_of_week": {
+                        "description": "Used only if CronExpression is not provided",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "exclusions": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "time_range": {
+                        "description": "Used only if CronExpression is not provided",
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.TimeRange"
+                            }
+                        ]
+                    },
+                    "timezone": {
+                        "type": "string"
+                    }
+                }
+            },
+            "models.ScheduleType": {
+                "type": "string",
+                "enum": [
+                    "RECURRING",
+                    "ONEOFF"
+                ],
+                "x-enum-varnames": [
+                    "ScheduleTypeRecurring",
+                    "ScheduleTypeOneOff"
+                ]
+            },
+            "models.Task": {
+                "description": "Task represents a scheduled task entity",
+                "type": "object",
+                "properties": {
+                    "created_at": {
+                        "type": "string",
+                        "example": "2025-01-15T10:00:00Z"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Backup database daily"
+                    },
+                    "id": {
+                        "type": "string",
+                        "example": "507f1f77bcf86cd799439011"
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Daily Backup"
+                    },
+                    "project_id": {
+                        "type": "string",
+                        "example": "507f1f77bcf86cd799439011"
+                    },
+                    "schedule_config": {
+                        "$ref": "#/components/schemas/models.ScheduleConfig"
+                    },
+                    "schedule_type": {
+                        "enum": [
+                            "RECURRING",
+                            "ONEOFF"
+                        ],
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.ScheduleType"
+                            }
+                        ],
+                        "example": "RECURRING"
+                    },
+                    "status": {
+                        "enum": [
+                            "ACTIVE",
+                            "PAUSED",
+                            "DISABLED"
+                        ],
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.TaskStatus"
+                            }
+                        ],
+                        "example": "ACTIVE"
+                    },
+                    "task_group_id": {
+                        "description": "Optional reference to task group",
+                        "type": "string",
+                        "example": "507f1f77bcf86cd799439011"
+                    },
+                    "trigger_config": {
+                        "$ref": "#/components/schemas/models.TriggerConfig"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "example": "2025-01-15T10:00:00Z"
+                    },
+                    "uuid": {
+                        "type": "string",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                }
+            },
+            "models.TaskGroup": {
+                "description": "TaskGroup represents a group of tasks that can be controlled together",
+                "type": "object",
+                "properties": {
+                    "created_at": {
+                        "type": "string",
+                        "example": "2025-01-15T10:00:00Z"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Tasks that run in the morning"
+                    },
+                    "end_time": {
+                        "description": "Format: \"HH:MM\"",
+                        "type": "string",
+                        "example": "17:00"
+                    },
+                    "id": {
+                        "type": "string",
+                        "example": "507f1f77bcf86cd799439011"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Morning Tasks"
+                    },
+                    "project_id": {
+                        "type": "string",
+                        "example": "507f1f77bcf86cd799439011"
+                    },
+                    "start_time": {
+                        "description": "Format: \"HH:MM\"",
+                        "type": "string",
+                        "example": "09:00"
+                    },
+                    "status": {
+                        "enum": [
+                            "ACTIVE",
+                            "PAUSED",
+                            "DISABLED"
+                        ],
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.TaskGroupStatus"
+                            }
+                        ],
+                        "example": "ACTIVE"
+                    },
+                    "timezone": {
+                        "description": "IANA timezone (e.g., \"America/New_York\")",
+                        "type": "string",
+                        "example": "America/New_York"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "example": "2025-01-15T10:00:00Z"
+                    },
+                    "uuid": {
+                        "type": "string",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                }
+            },
+            "models.TaskGroupStatus": {
+                "type": "string",
+                "enum": [
+                    "ACTIVE",
+                    "PAUSED",
+                    "DISABLED"
+                ],
+                "x-enum-varnames": [
+                    "TaskGroupStatusActive",
+                    "TaskGroupStatusPaused",
+                    "TaskGroupStatusDisabled"
+                ]
+            },
+            "models.TaskStatus": {
+                "type": "string",
+                "enum": [
+                    "ACTIVE",
+                    "PAUSED",
+                    "DISABLED"
+                ],
+                "x-enum-varnames": [
+                    "TaskStatusActive",
+                    "TaskStatusPaused",
+                    "TaskStatusDisabled"
+                ]
+            },
+            "models.TimeRange": {
+                "type": "object",
+                "required": [
+                    "end",
+                    "frequency",
+                    "start"
+                ],
+                "properties": {
+                    "end": {
+                        "description": "Format: \"HH:MM\"",
+                        "type": "string"
+                    },
+                    "frequency": {
+                        "description": "Frequency with value and unit (e.g., {value: 15, unit: \"m\"})",
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.Frequency"
+                            }
+                        ]
+                    },
+                    "start": {
+                        "description": "Format: \"HH:MM\"",
+                        "type": "string"
+                    }
+                }
+            },
+            "models.TriggerConfig": {
+                "type": "object",
+                "required": [
+                    "http",
+                    "type"
+                ],
+                "properties": {
+                    "http": {
+                        "$ref": "#/components/schemas/models.HTTPTriggerConfig"
+                    },
+                    "type": {
+                        "enum": [
+                            "HTTP"
+                        ],
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.TriggerType"
+                            }
+                        ]
+                    }
+                }
+            },
+            "models.TriggerType": {
+                "type": "string",
+                "enum": [
+                    "HTTP"
+                ],
+                "x-enum-varnames": [
+                    "TriggerTypeHTTP"
+                ]
+            },
+            "models.UpdateTaskGroupRequest": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "end_time": {
+                        "description": "Format: \"HH:MM\"",
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 1
+                    },
+                    "start_time": {
+                        "description": "Format: \"HH:MM\"",
+                        "type": "string"
+                    },
+                    "status": {
+                        "enum": [
+                            "ACTIVE",
+                            "PAUSED",
+                            "DISABLED"
+                        ],
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.TaskGroupStatus"
+                            }
+                        ]
+                    },
+                    "timezone": {
+                        "type": "string"
+                    }
+                }
+            },
+            "models.UpdateTaskRequest": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "schedule_config",
+                    "schedule_type",
+                    "trigger_config"
+                ],
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 1
+                    },
+                    "schedule_config": {
+                        "$ref": "#/components/schemas/models.ScheduleConfig"
+                    },
+                    "schedule_type": {
+                        "enum": [
+                            "RECURRING",
+                            "ONEOFF"
+                        ],
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.ScheduleType"
+                            }
+                        ]
+                    },
+                    "status": {
+                        "enum": [
+                            "ACTIVE",
+                            "PAUSED",
+                            "DISABLED"
+                        ],
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.TaskStatus"
+                            }
+                        ]
+                    },
+                    "task_group_id": {
+                        "description": "Optional task group ID",
+                        "type": "string"
+                    },
+                    "trigger_config": {
+                        "$ref": "#/components/schemas/models.TriggerConfig"
+                    }
+                }
+            }
+        }
+    }
+}
