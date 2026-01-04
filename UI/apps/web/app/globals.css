@@ -16,42 +16,67 @@ html, body {
   transform: rotate(0deg) !important;
 }
 
-/* React Day Picker styles */
+/* React Day Picker - Custom styling using classNames */
 .rdp {
   --rdp-cell-size: 36px;
-  --rdp-accent-color: var(--accent-9);
-  --rdp-background-color: var(--color-panel-solid);
-  --rdp-accent-color-dark: var(--accent-10);
-  --rdp-outline: 2px solid var(--accent-9);
-  --rdp-outline-selected: 2px solid var(--accent-9);
+  --rdp-outline-selected: 1px solid var(--accent-9) !important;
   margin: 0;
+  font-family: var(--font-family);
+  color: var(--gray-12);
 }
 
+/* Day button base styles */
 .rdp-day {
+  border: none !important;
   border-radius: var(--radius-2);
   color: var(--gray-12) !important;
   cursor: pointer;
+  background-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
+.rdp-day:focus,
+.rdp-day:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Hover state for non-selected days */
 .rdp-day:hover:not([disabled]):not(.rdp-day_selected) {
-  background-color: var(--gray-4);
+  background-color: var(--gray-4) !important;
 }
 
+/* Selected day - change only the round indicator, keep background as is */
 .rdp-day_selected {
-  background-color: var(--accent-9);
-  color: var(--accent-contrast);
-  font-weight: var(--font-weight-medium);
+  /* Keep default background (yellow) - don't override */
+  /* Only change the round outline indicator from blue to accent color (yellow) */
+  outline: 1px solid var(--accent-9) !important;
+  outline-offset: 1px !important;
+  border: 1px solid var(--accent-9) !important;
+  border-color: var(--accent-9) !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 0 1px var(--accent-9) !important;
 }
 
+/* Remove hover background change for selected dates */
+.rdp-day_selected:hover {
+  background-color: inherit !important;
+}
+
+/* Today indicator */
 .rdp-day_today {
   font-weight: var(--font-weight-bold);
 }
 
+/* Disabled days */
 .rdp-day_disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
+/* Calendar header and navigation */
 .rdp-caption {
   display: flex;
   justify-content: space-between;
@@ -105,11 +130,8 @@ html, body {
   text-align: center;
 }
 
-/* Ensure all text in calendar uses theme colors */
-.rdp {
-  color: var(--gray-12) !important;
-}
-
+/* Ensure all calendar text uses theme colors */
+.rdp,
 .rdp-month {
   color: var(--gray-12) !important;
 }
@@ -117,4 +139,3 @@ html, body {
 .rdp * {
   color: inherit;
 }
-
