@@ -1,18 +1,20 @@
 'use client'
 
-import { useState } from 'react'
-import { Box, Flex, Text, Button } from '@radix-ui/themes'
+import { useCreateTaskGroup } from '@cron-observer/lib'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { PlusIcon, CaretDownIcon } from '@radix-ui/react-icons'
+import { CaretDownIcon, PlusIcon } from '@radix-ui/react-icons'
+import { Box, Button, Flex, Text } from '@radix-ui/themes'
 import Link from 'next/link'
+import { useState } from 'react'
 import { Execution } from '../lib/types/execution'
 import { Project } from '../lib/types/project'
 import { Task, UpdateTaskRequest } from '../lib/types/task'
-import { TaskGroup, UpdateTaskGroupRequest } from '../lib/types/taskgroup'
+import { CreateTaskGroupRequest, TaskGroup, UpdateTaskGroupRequest } from '../lib/types/taskgroup'
+import { CreateTaskGroupDialog } from './CreateTaskGroupDialog'
 import { ExecutionsList } from './ExecutionsList'
 import { ResizableSplitter } from './ResizableSplitter'
-import { TaskGroupsList } from './TaskGroupsList'
 import { TaskGroupSettingsDialog } from './TaskGroupSettingsDialog'
+import { TaskGroupsList } from './TaskGroupsList'
 import { TaskSettingsDialog } from './TaskSettingsDialog'
 
 interface ProjectLayoutProps {
@@ -36,6 +38,8 @@ export function ProjectLayout({
   const [isTaskSettingsOpen, setIsTaskSettingsOpen] = useState(false)
   const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false)
   const [isCreateTaskGroupDialogOpen, setIsCreateTaskGroupDialogOpen] = useState(false)
+
+  const createTaskGroupMutation = useCreateTaskGroup(project.id)
 
   const handleTaskGroupSettingsClick = (taskGroup: TaskGroup) => {
     setSelectedTaskGroup(taskGroup)
@@ -62,6 +66,20 @@ export function ProjectLayout({
     // TODO: Add success toast/notification
     setIsTaskSettingsOpen(false)
   }
+
+  const handleCreateTaskGroupSubmit = (data: CreateTaskGroupRequest) => {
+    createTaskGroupMutation.mutate(data as any, {
+      onSuccess: () => {
+        // Dialog will close automatically via onOpenChange
+        // Task groups will be refetched automatically via query invalidation
+      },
+      onError: (error: Error) => {
+        // TODO: Add error toast/notification
+        console.error('Failed to create task group:', error)
+      },
+    })
+  }
+
   return (
     <Flex direction="column" height="100%" width="100%" overflow="hidden">
       {/* Top separator */}
@@ -206,6 +224,13 @@ export function ProjectLayout({
           onSubmit={handleTaskSettingsSubmit}
         />
       )}
+
+      <CreateTaskGroupDialog
+        open={isCreateTaskGroupDialogOpen}
+        onOpenChange={setIsCreateTaskGroupDialogOpen}
+        projectId={project.id}
+        onSubmit={handleCreateTaskGroupSubmit}
+      />
     </Flex>
   )
 }

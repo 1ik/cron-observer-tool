@@ -11,6 +11,21 @@ html, body {
   padding: 0;
 }
 
+/* Default cursor pointer for all clickable/interactive elements */
+button,
+a,
+[role="button"],
+[role="link"],
+[role="tab"],
+[role="menuitem"],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+label[for],
+[onclick] {
+  cursor: pointer;
+}
+
 /* Accordion chevron rotation */
 [data-state="open"] .accordion-chevron {
   transform: rotate(0deg) !important;
@@ -76,11 +91,6 @@ html, body {
   cursor: not-allowed;
 }
 
-/* DropdownMenu Item hover styles */
-[data-radix-dropdown-menu-item][data-highlighted] {
-  background-color: var(--gray-4) !important;
-  outline: none;
-}
 
 /* Calendar header and navigation */
 .rdp-caption {

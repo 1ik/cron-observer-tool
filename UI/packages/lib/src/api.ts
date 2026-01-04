@@ -97,3 +97,25 @@ export async function getTaskGroupsByProject(projectId: string) {
   return client.getProjectsProject_idtaskGroups({ params: { project_id: projectId } });
 }
 
+/**
+ * Create a new task group in a project
+ * @param projectId - Project ID
+ * @param taskGroup - Task group creation data
+ * @returns Promise resolving to the created task group
+ */
+export async function createTaskGroup(
+  projectId: string,
+  taskGroup: {
+    name: string;
+    project_id: string;
+    description?: string;
+    status?: 'ACTIVE' | 'PAUSED' | 'DISABLED';
+    start_time?: string;
+    end_time?: string;
+    timezone?: string;
+  }
+) {
+  const client = getApiClient();
+  return client.postProjectsProject_idtaskGroups(taskGroup, { params: { project_id: projectId } });
+}
+
