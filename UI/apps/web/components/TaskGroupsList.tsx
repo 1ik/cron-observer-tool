@@ -2,7 +2,6 @@
 
 import * as Accordion from '@radix-ui/react-accordion'
 import { Box, Text } from '@radix-ui/themes'
-import { useState } from 'react'
 import { Task } from '../lib/types/task'
 import { TaskGroup } from '../lib/types/taskgroup'
 import { TaskGroupAccordionItem } from './TaskGroupAccordionItem'
@@ -10,16 +9,19 @@ import { TaskListItem } from './TaskListItem'
 
 interface TaskGroupsListProps {
   projectId: string
+  projectUuid: string
   taskGroups: TaskGroup[]
   tasks: Task[]
+  selectedTaskId?: string | null
 }
 
 export function TaskGroupsList({
   projectId,
+  projectUuid,
   taskGroups,
   tasks,
+  selectedTaskId,
 }: TaskGroupsListProps) {
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
 
   // Group tasks by task_group_id
   const tasksByGroup = new Map<string, Task[]>()
@@ -35,9 +37,6 @@ export function TaskGroupsList({
     }
   })
 
-  const handleTaskSelect = (taskId: string) => {
-    setSelectedTaskId(taskId === selectedTaskId ? null : taskId)
-  }
 
   return (
     <Box
@@ -56,8 +55,8 @@ export function TaskGroupsList({
               key={group.id}
               taskGroup={group}
               tasks={tasksByGroup.get(group.id) || []}
+              projectUuid={projectUuid}
               selectedTaskId={selectedTaskId}
-              onTaskSelect={handleTaskSelect}
             />
           ))}
         </Accordion.Root>
@@ -73,8 +72,8 @@ export function TaskGroupsList({
               <TaskListItem
                 key={task.id}
                 task={task}
-                isSelected={selectedTaskId === task.id}
-                onSelect={() => handleTaskSelect(task.id)}
+                projectUuid={projectUuid}
+                isSelected={selectedTaskId === task.id || selectedTaskId === task.uuid}
               />
             ))}
           </Box>

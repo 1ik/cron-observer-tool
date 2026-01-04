@@ -10,15 +10,15 @@ import { TaskListItem } from './TaskListItem'
 interface TaskGroupAccordionItemProps {
   taskGroup: TaskGroup
   tasks: Task[]
-  selectedTaskId: string | null
-  onTaskSelect: (taskId: string) => void
+  projectUuid: string
+  selectedTaskId?: string | null
 }
 
 export function TaskGroupAccordionItem({
   taskGroup,
   tasks,
+  projectUuid,
   selectedTaskId,
-  onTaskSelect,
 }: TaskGroupAccordionItemProps) {
   const getStatusDotColor = (status: string) => {
     switch (status) {
@@ -90,8 +90,8 @@ export function TaskGroupAccordionItem({
               <TaskListItem
                 key={task.id}
                 task={task}
-                isSelected={selectedTaskId === task.id}
-                onSelect={() => onTaskSelect(task.id)}
+                projectUuid={projectUuid}
+                isSelected={selectedTaskId === task.id || selectedTaskId === task.uuid}
               />
             ))}
           </Box>

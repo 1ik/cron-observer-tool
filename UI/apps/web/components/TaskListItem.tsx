@@ -1,15 +1,21 @@
 'use client'
 
 import { Box, Flex, Text } from '@radix-ui/themes'
+import { useRouter } from 'next/navigation'
 import { Task } from '../lib/types/task'
 
 interface TaskListItemProps {
   task: Task
+  projectUuid: string
   isSelected: boolean
-  onSelect: () => void
 }
 
-export function TaskListItem({ task, isSelected, onSelect }: TaskListItemProps) {
+export function TaskListItem({ task, projectUuid, isSelected }: TaskListItemProps) {
+  const router = useRouter()
+
+  const handleClick = () => {
+    router.push(`/projects/${projectUuid}/tasks/${task.uuid}`)
+  }
   const getStatusDotColor = (status: string) => {
     switch (status) {
       case 'ACTIVE':
@@ -25,7 +31,7 @@ export function TaskListItem({ task, isSelected, onSelect }: TaskListItemProps) 
 
   return (
     <Box
-      onClick={onSelect}
+      onClick={handleClick}
       p="2"
       style={{
         cursor: 'pointer',

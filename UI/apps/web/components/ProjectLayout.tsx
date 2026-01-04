@@ -1,20 +1,21 @@
 'use client'
 
-import Link from 'next/link'
 import { Box, Flex, Text } from '@radix-ui/themes'
-import { Project } from '../lib/types/project'
-import { TaskGroup } from '../lib/types/taskgroup'
-import { Task } from '../lib/types/task'
+import Link from 'next/link'
 import { Execution } from '../lib/types/execution'
-import { TaskGroupsList } from './TaskGroupsList'
+import { Project } from '../lib/types/project'
+import { Task } from '../lib/types/task'
+import { TaskGroup } from '../lib/types/taskgroup'
 import { ExecutionsList } from './ExecutionsList'
 import { ResizableSplitter } from './ResizableSplitter'
+import { TaskGroupsList } from './TaskGroupsList'
 
 interface ProjectLayoutProps {
   project: Project
   taskGroups: TaskGroup[]
   tasks: Task[]
   executions: Execution[]
+  selectedTaskId?: string | null
 }
 
 export function ProjectLayout({
@@ -22,6 +23,7 @@ export function ProjectLayout({
   taskGroups,
   tasks,
   executions,
+  selectedTaskId,
 }: ProjectLayoutProps) {
   return (
     <Flex direction="column" height="100%" width="100%" overflow="hidden">
@@ -64,8 +66,10 @@ export function ProjectLayout({
           leftContent={
             <TaskGroupsList
               projectId={project.id}
+              projectUuid={project.uuid}
               taskGroups={taskGroups}
               tasks={tasks}
+              selectedTaskId={selectedTaskId}
             />
           }
           rightContent={<ExecutionsList executions={executions} />}
