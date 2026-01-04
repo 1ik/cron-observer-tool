@@ -12,6 +12,50 @@ export const mockExecutions: Execution[] = [
     duration_ms: 323000,
     response_status: 200,
     created_at: '2025-01-20T02:00:00Z',
+    logs: [
+      {
+        id: 'log-001',
+        timestamp: '2025-01-20T02:00:00Z',
+        level: 'INFO',
+        message: 'Starting daily backup process',
+      },
+      {
+        id: 'log-002',
+        timestamp: '2025-01-20T02:00:15Z',
+        level: 'INFO',
+        message: 'Connecting to database...',
+      },
+      {
+        id: 'log-003',
+        timestamp: '2025-01-20T02:00:30Z',
+        level: 'INFO',
+        message: 'Database connection established',
+      },
+      {
+        id: 'log-004',
+        timestamp: '2025-01-20T02:01:00Z',
+        level: 'INFO',
+        message: 'Backing up user data...',
+      },
+      {
+        id: 'log-005',
+        timestamp: '2025-01-20T02:03:45Z',
+        level: 'INFO',
+        message: 'Backing up transaction logs...',
+      },
+      {
+        id: 'log-006',
+        timestamp: '2025-01-20T02:05:00Z',
+        level: 'INFO',
+        message: 'Backup completed successfully',
+      },
+      {
+        id: 'log-007',
+        timestamp: '2025-01-20T02:05:23Z',
+        level: 'INFO',
+        message: 'Uploading backup to storage...',
+      },
+    ],
   },
   {
     id: 'exec-002',
@@ -24,6 +68,32 @@ export const mockExecutions: Execution[] = [
     duration_ms: 12000,
     response_status: 200,
     created_at: '2025-01-20T09:15:00Z',
+    logs: [
+      {
+        id: 'log-008',
+        timestamp: '2025-01-20T09:15:00Z',
+        level: 'INFO',
+        message: 'Generating morning report',
+      },
+      {
+        id: 'log-009',
+        timestamp: '2025-01-20T09:15:05Z',
+        level: 'INFO',
+        message: 'Collecting metrics data',
+      },
+      {
+        id: 'log-010',
+        timestamp: '2025-01-20T09:15:10Z',
+        level: 'INFO',
+        message: 'Report generated successfully',
+      },
+      {
+        id: 'log-011',
+        timestamp: '2025-01-20T09:15:12Z',
+        level: 'INFO',
+        message: 'Report sent to recipients',
+      },
+    ],
   },
   {
     id: 'exec-003',
@@ -37,6 +107,38 @@ export const mockExecutions: Execution[] = [
     error_message: 'Connection timeout',
     response_status: 500,
     created_at: '2025-01-19T02:00:00Z',
+    logs: [
+      {
+        id: 'log-012',
+        timestamp: '2025-01-19T02:00:00Z',
+        level: 'INFO',
+        message: 'Starting daily backup process',
+      },
+      {
+        id: 'log-013',
+        timestamp: '2025-01-19T02:00:15Z',
+        level: 'INFO',
+        message: 'Connecting to database...',
+      },
+      {
+        id: 'log-014',
+        timestamp: '2025-01-19T02:00:30Z',
+        level: 'WARN',
+        message: 'Database connection taking longer than expected',
+      },
+      {
+        id: 'log-015',
+        timestamp: '2025-01-19T02:01:00Z',
+        level: 'ERROR',
+        message: 'Connection timeout after 60 seconds',
+      },
+      {
+        id: 'log-016',
+        timestamp: '2025-01-19T02:01:15Z',
+        level: 'ERROR',
+        message: 'Backup process failed: Connection timeout',
+      },
+    ],
   },
   {
     id: 'exec-004',
@@ -46,6 +148,26 @@ export const mockExecutions: Execution[] = [
     status: 'RUNNING',
     started_at: '2025-01-20T09:30:00Z',
     created_at: '2025-01-20T09:30:00Z',
+    logs: [
+      {
+        id: 'log-017',
+        timestamp: '2025-01-20T09:30:00Z',
+        level: 'INFO',
+        message: 'Generating morning report',
+      },
+      {
+        id: 'log-018',
+        timestamp: '2025-01-20T09:30:05Z',
+        level: 'INFO',
+        message: 'Collecting metrics data',
+      },
+      {
+        id: 'log-019',
+        timestamp: '2025-01-20T09:30:10Z',
+        level: 'DEBUG',
+        message: 'Processing 1,234 records',
+      },
+    ],
   },
   {
     id: 'exec-005',
@@ -58,6 +180,38 @@ export const mockExecutions: Execution[] = [
     duration_ms: 45000,
     response_status: 200,
     created_at: '2025-01-20T09:00:00Z',
+    logs: [
+      {
+        id: 'log-020',
+        timestamp: '2025-01-20T09:00:00Z',
+        level: 'INFO',
+        message: 'Starting order processing',
+      },
+      {
+        id: 'log-021',
+        timestamp: '2025-01-20T09:00:10Z',
+        level: 'INFO',
+        message: 'Found 15 pending orders',
+      },
+      {
+        id: 'log-022',
+        timestamp: '2025-01-20T09:00:20Z',
+        level: 'INFO',
+        message: 'Processing order #12345',
+      },
+      {
+        id: 'log-023',
+        timestamp: '2025-01-20T09:00:30Z',
+        level: 'INFO',
+        message: 'Processing order #12346',
+      },
+      {
+        id: 'log-024',
+        timestamp: '2025-01-20T09:00:40Z',
+        level: 'INFO',
+        message: 'All orders processed successfully',
+      },
+    ],
   },
   {
     id: 'exec-006',
@@ -70,6 +224,31 @@ export const mockExecutions: Execution[] = [
     duration_ms: 38000,
     response_status: 200,
     created_at: '2025-01-20T09:30:00Z',
+    logs: [
+      {
+        id: 'log-025',
+        timestamp: '2025-01-20T09:30:00Z',
+        level: 'INFO',
+        message: 'Starting order processing',
+      },
+      {
+        id: 'log-026',
+        timestamp: '2025-01-20T09:30:05Z',
+        level: 'INFO',
+        message: 'Found 8 pending orders',
+      },
+      {
+        id: 'log-027',
+        timestamp: '2025-01-20T09:30:15Z',
+        level: 'INFO',
+        message: 'Processing orders...',
+      },
+      {
+        id: 'log-028',
+        timestamp: '2025-01-20T09:30:35Z',
+        level: 'INFO',
+        message: 'All orders processed successfully',
+      },
+    ],
   },
 ]
-
