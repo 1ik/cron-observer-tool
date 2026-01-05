@@ -12,6 +12,12 @@ export const createProjectSchema = z.object({
     .trim()
     .optional()
     .or(z.literal('')),
+  execution_endpoint: z
+    .string()
+    .url('Execution endpoint must be a valid URL')
+    .trim()
+    .optional()
+    .or(z.literal('')),
 })
 
 export type CreateProjectFormData = z.infer<typeof createProjectSchema>

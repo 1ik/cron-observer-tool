@@ -44,7 +44,7 @@ export interface Task {
   schedule_type: ScheduleType
   status: TaskStatus
   schedule_config: ScheduleConfig
-  trigger_config: TriggerConfig
+  trigger_config?: TriggerConfig // Deprecated: Tasks now use project's execution_endpoint
   metadata?: Record<string, unknown>
   created_at: string
   updated_at: string
@@ -58,7 +58,6 @@ export interface CreateTaskRequest {
   schedule_type: ScheduleType
   status?: TaskStatus
   schedule_config: ScheduleConfig
-  trigger_config: TriggerConfig
   metadata?: Record<string, unknown>
 }
 
@@ -69,7 +68,6 @@ export interface UpdateTaskRequest {
   schedule_type: ScheduleType
   status?: TaskStatus
   schedule_config: ScheduleConfig
-  trigger_config: TriggerConfig
   metadata?: Record<string, unknown>
 }
 

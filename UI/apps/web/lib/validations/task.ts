@@ -23,19 +23,6 @@ export const scheduleConfigSchema = z.object({
   exclusions: z.array(z.number().int().min(0).max(6)).optional(),
 })
 
-export const httpTriggerConfigSchema = z.object({
-  url: z.string().url('URL must be a valid URL').trim(),
-  method: z.string().min(1, 'HTTP method is required').trim(),
-  headers: z.record(z.string(), z.string()).optional(),
-  body: z.unknown().optional(),
-  timeout: z.number().int().min(1).max(300).optional(),
-})
-
-export const triggerConfigSchema = z.object({
-  type: z.literal('HTTP'),
-  http: httpTriggerConfigSchema,
-})
-
 export const updateTaskSchema = z.object({
   name: z
     .string()
@@ -51,7 +38,6 @@ export const updateTaskSchema = z.object({
   schedule_type: scheduleTypeSchema,
   status: taskStatusSchema.optional(),
   schedule_config: scheduleConfigSchema,
-  trigger_config: triggerConfigSchema,
   task_group_id: z.string().trim().optional().or(z.literal('')),
   metadata: z.record(z.string(), z.unknown()).optional(),
 })
@@ -72,7 +58,6 @@ export const createTaskSchema = z.object({
     .or(z.literal('')),
   schedule_type: scheduleTypeSchema,
   schedule_config: scheduleConfigSchema,
-  trigger_config: triggerConfigSchema,
   metadata: z.record(z.string(), z.unknown()).optional(),
 })
 

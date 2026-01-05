@@ -25,20 +25,27 @@ export function CreateProjectDialog({
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<CreateProjectFormData>({
+  } =   useForm<CreateProjectFormData>({
     resolver: zodResolver(createProjectSchema),
     defaultValues: {
       name: '',
       description: '',
+      execution_endpoint: '',
     },
   })
 
   const onFormSubmit = (data: CreateProjectFormData) => {
     // Transform form data to API request format (convert empty strings to undefined)
     const requestData: CreateProjectRequest = {
-      name: data.name,
-      description: data.description || undefined,
+      name: data.name.trim(),
+      description: data.description?.trim() || undefined,
+      execution_endpoint: data.execution_endpoint?.trim() || undefined,
     }
+    
+    // Debug logging
+    console.log('Form data:', data)
+    console.log('Request data:', requestData)
+    
     onSubmit(requestData)
     reset()
     onOpenChange(false)
@@ -82,50 +89,74 @@ export function CreateProjectDialog({
             minHeight: 0,
           }}
         >
-          <Flex direction="column" gap="4" asChild>
-            <form onSubmit={handleSubmit(onFormSubmit)}>
-            <Flex direction="column" gap="2">
-              <Label.Root htmlFor="project-name">
-                <Text size="3" weight="medium">
-                  Project Name <Text color="red">*</Text>
-                </Text>
-              </Label.Root>
-              <TextField.Root
-                id="project-name"
-                {...register('name')}
-                placeholder="Enter project name"
-                size="3"
-                color={errors.name ? 'red' : undefined}
-              />
-              {errors.name && (
-                <Text size="2" color="red">
-                  {errors.name.message}
-                </Text>
-              )}
-            </Flex>
+          <form id="create-project-form" onSubmit={handleSubmit(onFormSubmit)}>
+            <Flex direction="column" gap="4">
+              <Flex direction="column" gap="2">
+                <Label.Root htmlFor="project-name">
+                  <Text size="3" weight="medium">
+                    Project Name <Text color="red">*</Text>
+                  </Text>
+                </Label.Root>
+                <TextField.Root
+                  id="project-name"
+                  {...register('name')}
+                  placeholder="Enter project name"
+                  size="3"
+                  color={errors.name ? 'red' : undefined}
+                />
+                {errors.name && (
+                  <Text size="2" color="red">
+                    {errors.name.message}
+                  </Text>
+                )}
+              </Flex>
 
-            <Flex direction="column" gap="2">
-              <Label.Root htmlFor="project-description">
-                <Text size="3" weight="medium">
-                  Description
+              <Flex direction="column" gap="2">
+                <Label.Root htmlFor="project-description">
+                  <Text size="3" weight="medium">
+                    Description
+                  </Text>
+                </Label.Root>
+                <TextArea
+                  id="project-description"
+                  {...register('description')}
+                  placeholder="Enter project description (optional)"
+                  rows={4}
+                  size="3"
+                  color={errors.description ? 'red' : undefined}
+                />
+                {errors.description && (
+                  <Text size="2" color="red">
+                    {errors.description.message}
+                  </Text>
+                )}
+              </Flex>
+
+              <Flex direction="column" gap="2">
+                <Label.Root htmlFor="project-execution-endpoint">
+                  <Text size="3" weight="medium">
+                    Execution Endpoint
+                  </Text>
+                </Label.Root>
+                <TextField.Root
+                  id="project-execution-endpoint"
+                  {...register('execution_endpoint')}
+                  placeholder="https://api.example.com/execute"
+                  size="3"
+                  type="url"
+                  color={errors.execution_endpoint ? 'red' : undefined}
+                />
+                <Text size="1" color="gray">
+                  URL where task executions will be sent via POST request
                 </Text>
-              </Label.Root>
-              <TextArea
-                id="project-description"
-                {...register('description')}
-                placeholder="Enter project description (optional)"
-                rows={4}
-                size="3"
-                color={errors.description ? 'red' : undefined}
-              />
-              {errors.description && (
-                <Text size="2" color="red">
-                  {errors.description.message}
-                </Text>
-              )}
+                {errors.execution_endpoint && (
+                  <Text size="2" color="red">
+                    {errors.execution_endpoint.message}
+                  </Text>
+                )}
+              </Flex>
             </Flex>
-            </form>
-          </Flex>
+          </form>
         </Box>
 
         {/* Footer - Sticky */}
@@ -143,7 +174,7 @@ export function CreateProjectDialog({
               </Button>
             </Dialog.Close>
             <Button
-              type="submit"
+              type="button"
               variant="solid"
               onClick={handleSubmit(onFormSubmit)}
             >

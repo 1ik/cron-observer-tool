@@ -64,9 +64,40 @@ export async function getProjects() {
 export async function createProject(project: {
   name: string;
   description?: string;
+  execution_endpoint?: string;
 }) {
   const client = getApiClient();
-  return client.postProjects({ body: project });
+  
+  // Create a clean object that matches the schema exactly
+  const requestBody: {
+    name: string;
+    description?: string;
+    execution_endpoint?: string;
+  } = {
+    name: project.name,
+  };
+  
+  // Only include optional fields if they have values
+  if (project.description) {
+    requestBody.description = project.description;
+  }
+  if (project.execution_endpoint) {
+    requestBody.execution_endpoint = project.execution_endpoint;
+  }
+  
+  // Debug: log what we're sending
+  console.log('createProject - original project:', project);
+  console.log('createProject - requestBody:', requestBody);
+  console.log('createProject - requestBody.name:', requestBody.name);
+  
+  // Ensure name is a string and not undefined
+  if (!requestBody.name || typeof requestBody.name !== 'string') {
+    throw new Error(`Invalid project data: name must be a non-empty string, got: ${JSON.stringify(requestBody)}`);
+  }
+  
+  // When there are NO path parameters, Zodios expects the body as the first argument directly
+  // (unlike endpoints with path params which use: client.method(body, { params: { ... } }))
+  return client.postProjects(requestBody);
 }
 
 // ============================================================================

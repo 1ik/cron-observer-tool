@@ -97,6 +97,7 @@ export function ProjectList() {
               name: project.name || '',
               description: project.description,
               api_key: project.api_key,
+              execution_endpoint: project.execution_endpoint,
               created_at: project.created_at || new Date().toISOString(),
               updated_at: project.updated_at || new Date().toISOString(),
             }}

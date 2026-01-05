@@ -30,6 +30,17 @@ func (r *MongoRepository) GetAllProjects(ctx context.Context) ([]*models.Project
 	return projects, nil
 }
 
+func (r *MongoRepository) GetProjectByID(ctx context.Context, projectID primitive.ObjectID) (*models.Project, error) {
+	collection := r.db.Collection(database.CollectionProjects)
+
+	var project models.Project
+	err := collection.FindOne(ctx, bson.M{"_id": projectID}).Decode(&project)
+	if err != nil {
+		return nil, err
+	}
+	return &project, nil
+}
+
 func (r *MongoRepository) CreateProject(ctx context.Context, project *models.Project) error {
 	collection := r.db.Collection(database.CollectionProjects)
 	_, err := collection.InsertOne(ctx, project)
@@ -228,6 +239,15 @@ func (r *MongoRepository) GetActiveTaskGroupsWithWindows(ctx context.Context) ([
 		return nil, err
 	}
 	return taskGroups, nil
+}
+
+func (r *MongoRepository) CreateExecution(ctx context.Context, execution *models.Execution) error {
+	collection := r.db.Collection(database.CollectionExecutions)
+	_, err := collection.InsertOne(ctx, execution)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewMongoRepository(db *mongo.Database) *MongoRepository {

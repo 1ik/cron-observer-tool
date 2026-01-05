@@ -6,6 +6,7 @@ const models_Project = z
     api_key: z.string(),
     created_at: z.string(),
     description: z.string(),
+    execution_endpoint: z.string(),
     id: z.string(),
     name: z.string(),
     updated_at: z.string(),
@@ -16,6 +17,13 @@ const models_Project = z
 const models_ErrorResponse = z
   .object({ details: z.array(z.string()), error: z.string() })
   .partial()
+  .passthrough();
+const models_CreateProjectRequest = z
+  .object({
+    description: z.string().max(1000).optional(),
+    execution_endpoint: z.string().optional(),
+    name: z.string().min(1).max(255),
+  })
   .passthrough();
 const models_TaskGroupStatus = z.enum(["ACTIVE", "PAUSED", "DISABLED"]);
 const models_TaskGroup = z
@@ -115,7 +123,6 @@ const models_CreateTaskRequest = z
     schedule_type: models_ScheduleType,
     status: models_TaskStatus.optional(),
     task_group_id: z.string().optional(),
-    trigger_config: models_TriggerConfig,
   })
   .passthrough();
 const models_UpdateTaskRequest = z
@@ -127,13 +134,13 @@ const models_UpdateTaskRequest = z
     schedule_type: models_ScheduleType,
     status: models_TaskStatus.optional(),
     task_group_id: z.string().optional(),
-    trigger_config: models_TriggerConfig,
   })
   .passthrough();
 
 export const schemas = {
   models_Project,
   models_ErrorResponse,
+  models_CreateProjectRequest,
   models_TaskGroupStatus,
   models_TaskGroup,
   models_CreateTaskGroupRequest,
@@ -179,7 +186,7 @@ const endpoints = makeApi([
         name: "body",
         description: `Project creation request`,
         type: "Body",
-        schema: models_Project,
+        schema: models_CreateProjectRequest,
       },
     ],
     response: models_Project,

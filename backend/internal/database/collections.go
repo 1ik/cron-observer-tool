@@ -15,6 +15,7 @@ const (
 	CollectionProjects   = "projects"
 	CollectionTasks      = "tasks"
 	CollectionTaskGroups = "task_groups"
+	CollectionExecutions = "executions"
 )
 
 // GetProjectsCollection returns the projects collection

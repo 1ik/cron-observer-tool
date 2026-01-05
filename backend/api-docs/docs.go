@@ -65,7 +65,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Project"
+                            "$ref": "#/definitions/models.CreateProjectRequest"
                         }
                     }
                 ],
@@ -730,6 +730,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.CreateProjectRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "execution_endpoint": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                }
+            }
+        },
         "models.CreateTaskGroupRequest": {
             "type": "object",
             "required": [
@@ -935,6 +955,10 @@ const docTemplate = `{
                 "description": {
                     "type": "string",
                     "example": "Project description"
+                },
+                "execution_endpoint": {
+                    "type": "string",
+                    "example": "https://api.example.com/execute"
                 },
                 "id": {
                     "type": "string",

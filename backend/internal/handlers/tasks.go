@@ -177,17 +177,8 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		}
 	}
 
-	// Convert TriggerConfig from request DTO to model
-	task.TriggerConfig = models.TriggerConfig{
-		Type: req.TriggerConfig.Type,
-		HTTP: &models.HTTPTriggerConfig{
-			URL:     req.TriggerConfig.HTTP.URL,
-			Method:  req.TriggerConfig.HTTP.Method,
-			Headers: req.TriggerConfig.HTTP.Headers,
-			Body:    req.TriggerConfig.HTTP.Body,
-			Timeout: req.TriggerConfig.HTTP.Timeout,
-		},
-	}
+	// TriggerConfig is no longer required - tasks use project's execution_endpoint
+	// Leave TriggerConfig empty/zero value for new tasks
 
 	// Create the task
 	err = h.repo.CreateTask(c.Request.Context(), projectIDParam, task)
@@ -304,17 +295,9 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 		}
 	}
 
-	// Convert TriggerConfig from request DTO to model
-	task.TriggerConfig = models.TriggerConfig{
-		Type: req.TriggerConfig.Type,
-		HTTP: &models.HTTPTriggerConfig{
-			URL:     req.TriggerConfig.HTTP.URL,
-			Method:  req.TriggerConfig.HTTP.Method,
-			Headers: req.TriggerConfig.HTTP.Headers,
-			Body:    req.TriggerConfig.HTTP.Body,
-			Timeout: req.TriggerConfig.HTTP.Timeout,
-		},
-	}
+	// TriggerConfig is no longer required - tasks use project's execution_endpoint
+	// Preserve existing TriggerConfig if it exists, otherwise leave empty
+	task.TriggerConfig = existingTask.TriggerConfig
 
 	// Update the task
 	err = h.repo.UpdateTask(c.Request.Context(), taskUUIDParam, task)

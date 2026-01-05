@@ -41,13 +41,6 @@ export function CreateTaskDialog({
         timezone: 'UTC',
         cron_expression: '',
       },
-      trigger_config: {
-        type: 'HTTP',
-        http: {
-          url: '',
-          method: 'GET',
-        },
-      },
     },
   })
 
@@ -61,13 +54,6 @@ export function CreateTaskDialog({
         schedule_config: {
           timezone: 'UTC',
           cron_expression: '',
-        },
-        trigger_config: {
-          type: 'HTTP',
-          http: {
-            url: '',
-            method: 'GET',
-          },
         },
       })
     }
@@ -87,16 +73,6 @@ export function CreateTaskDialog({
         time_range: data.schedule_config.time_range,
         days_of_week: data.schedule_config.days_of_week,
         exclusions: data.schedule_config.exclusions,
-      },
-      trigger_config: {
-        type: 'HTTP',
-        http: {
-          url: data.trigger_config.http.url,
-          method: data.trigger_config.http.method,
-          headers: data.trigger_config.http.headers,
-          body: data.trigger_config.http.body,
-          timeout: data.trigger_config.http.timeout,
-        },
       },
       metadata: data.metadata,
     }
@@ -268,86 +244,6 @@ export function CreateTaskDialog({
                 )}
               </Flex>
 
-              {/* Trigger Config - HTTP URL */}
-              <Flex direction="column" gap="2">
-                <Label.Root htmlFor="task-trigger-url">
-                  <Text size="3" weight="medium">
-                    HTTP URL <Text color="red">*</Text>
-                  </Text>
-                </Label.Root>
-                <TextField.Root
-                  id="task-trigger-url"
-                  {...register('trigger_config.http.url')}
-                  placeholder="https://api.example.com/endpoint"
-                  size="3"
-                  color={errors.trigger_config?.http?.url ? 'red' : undefined}
-                />
-                {errors.trigger_config?.http?.url && (
-                  <Text size="2" color="red">
-                    {errors.trigger_config.http.url.message}
-                  </Text>
-                )}
-              </Flex>
-
-              {/* Trigger Config - HTTP Method */}
-              <Flex direction="column" gap="2">
-                <Label.Root htmlFor="task-trigger-method">
-                  <Text size="3" weight="medium">
-                    HTTP Method <Text color="red">*</Text>
-                  </Text>
-                </Label.Root>
-                <Controller
-                  name="trigger_config.http.method"
-                  control={control}
-                  render={({ field }) => (
-                    <Select.Root
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <Select.Trigger id="task-trigger-method" style={{ width: '100%' }} />
-                      <Select.Content>
-                        <Select.Item value="GET">GET</Select.Item>
-                        <Select.Item value="POST">POST</Select.Item>
-                        <Select.Item value="PUT">PUT</Select.Item>
-                        <Select.Item value="PATCH">PATCH</Select.Item>
-                        <Select.Item value="DELETE">DELETE</Select.Item>
-                      </Select.Content>
-                    </Select.Root>
-                  )}
-                />
-                {errors.trigger_config?.http?.method && (
-                  <Text size="2" color="red">
-                    {errors.trigger_config.http.method.message}
-                  </Text>
-                )}
-              </Flex>
-
-              {/* Trigger Config - HTTP Timeout */}
-              <Flex direction="column" gap="2">
-                <Label.Root htmlFor="task-trigger-timeout">
-                  <Text size="3" weight="medium">
-                    HTTP Timeout (seconds)
-                  </Text>
-                </Label.Root>
-                <TextField.Root
-                  id="task-trigger-timeout"
-                  type="number"
-                  {...register('trigger_config.http.timeout', { valueAsNumber: true })}
-                  placeholder="300"
-                  size="3"
-                  min={1}
-                  max={300}
-                  color={errors.trigger_config?.http?.timeout ? 'red' : undefined}
-                />
-                <Text size="1" color="gray">
-                  Timeout in seconds (1-300)
-                </Text>
-                {errors.trigger_config?.http?.timeout && (
-                  <Text size="2" color="red">
-                    {errors.trigger_config.http.timeout.message}
-                  </Text>
-                )}
-              </Flex>
             </form>
           </Flex>
         </Box>

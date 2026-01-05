@@ -76,14 +76,11 @@ definitions:
       task_group_id:
         description: Optional task group ID
         type: string
-      trigger_config:
-        $ref: '#/definitions/models.TriggerConfig'
     required:
     - name
     - project_id
     - schedule_config
     - schedule_type
-    - trigger_config
     type: object
   models.ErrorResponse:
     properties:
@@ -246,7 +243,9 @@ definitions:
         example: 507f1f77bcf86cd799439011
         type: string
       trigger_config:
-        $ref: '#/definitions/models.TriggerConfig'
+        allOf:
+        - $ref: '#/definitions/models.TriggerConfig'
+        description: 'Deprecated: Tasks now use project''s execution_endpoint'
       updated_at:
         example: "2025-01-15T10:00:00Z"
         type: string
@@ -409,13 +408,10 @@ definitions:
       task_group_id:
         description: Optional task group ID
         type: string
-      trigger_config:
-        $ref: '#/definitions/models.TriggerConfig'
     required:
     - name
     - schedule_config
     - schedule_type
-    - trigger_config
     type: object
 host: localhost:8080
 info:

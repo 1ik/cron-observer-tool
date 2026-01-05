@@ -50,7 +50,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/models.Project"
+                                "$ref": "#/components/schemas/models.CreateProjectRequest"
                             }
                         }
                     },
@@ -860,6 +860,26 @@
     ],
     "components": {
         "schemas": {
+            "models.CreateProjectRequest": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "execution_endpoint": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 1
+                    }
+                }
+            },
             "models.CreateTaskGroupRequest": {
                 "type": "object",
                 "required": [
@@ -910,8 +930,7 @@
                     "name",
                     "project_id",
                     "schedule_config",
-                    "schedule_type",
-                    "trigger_config"
+                    "schedule_type"
                 ],
                 "properties": {
                     "description": {
@@ -959,9 +978,6 @@
                     "task_group_id": {
                         "description": "Optional task group ID",
                         "type": "string"
-                    },
-                    "trigger_config": {
-                        "$ref": "#/components/schemas/models.TriggerConfig"
                     }
                 }
             },
@@ -1065,6 +1081,10 @@
                     "description": {
                         "type": "string",
                         "example": "Project description"
+                    },
+                    "execution_endpoint": {
+                        "type": "string",
+                        "example": "https://api.example.com/execute"
                     },
                     "id": {
                         "type": "string",
@@ -1193,7 +1213,12 @@
                         "example": "507f1f77bcf86cd799439011"
                     },
                     "trigger_config": {
-                        "$ref": "#/components/schemas/models.TriggerConfig"
+                        "description": "Deprecated: Tasks now use project's execution_endpoint",
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.TriggerConfig"
+                            }
+                        ]
                     },
                     "updated_at": {
                         "type": "string",
@@ -1391,8 +1416,7 @@
                 "required": [
                     "name",
                     "schedule_config",
-                    "schedule_type",
-                    "trigger_config"
+                    "schedule_type"
                 ],
                 "properties": {
                     "description": {
@@ -1437,9 +1461,6 @@
                     "task_group_id": {
                         "description": "Optional task group ID",
                         "type": "string"
-                    },
-                    "trigger_config": {
-                        "$ref": "#/components/schemas/models.TriggerConfig"
                     }
                 }
             }

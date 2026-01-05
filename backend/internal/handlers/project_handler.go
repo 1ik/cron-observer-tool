@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -53,37 +54,57 @@ func (h *ProjectHandler) GetAllProjects(c *gin.Context) {
 // @Tags         projects
 // @Accept       json
 // @Produce      json
-// @Param        project body models.Project true "Project creation request"
+// @Param        project body models.CreateProjectRequest true "Project creation request"
 // @Success      201  {object}  models.Project
 // @Failure      400  {object}  models.ErrorResponse
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /projects [post]
 func (h *ProjectHandler) CreateProject(c *gin.Context) {
-	var project models.Project
-	if err := c.ShouldBindJSON(&project); err != nil {
+	var req models.CreateProjectRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("JSON binding error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request body",
+			"details": []string{err.Error()},
 		})
 		return
 	}
 
-	// Set timestamps
-	now := time.Now()
-	project.CreatedAt = now
-	project.UpdatedAt = now
+	log.Printf("Parsed request: Name=%s, Description=%s, ExecutionEndpoint=%s", req.Name, req.Description, req.ExecutionEndpoint)
 
-	// Generate UUID and API key
-	project.UUID = uuid.New().String()
-	project.APIKey = utils.GenerateAPIKey()
+	// Validate that name is not empty (additional check)
+	if req.Name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Project name is required",
+		})
+		return
+	}
+
+	// Create project model from request
+	now := time.Now()
+	project := &models.Project{
+		Name:              req.Name,
+		Description:       req.Description,
+		ExecutionEndpoint: req.ExecutionEndpoint,
+		UUID:              uuid.New().String(),
+		APIKey:            utils.GenerateAPIKey(),
+		CreatedAt:         now,
+		UpdatedAt:         now,
+	}
+
+	// Log the project being created for debugging
+	log.Printf("Creating project: Name=%s, Description=%s, ExecutionEndpoint=%s", project.Name, project.Description, project.ExecutionEndpoint)
 
 	// create the project
-	err := h.repo.CreateProject(c.Request.Context(), &project)
+	err := h.repo.CreateProject(c.Request.Context(), project)
 	if err != nil {
+		log.Printf("Failed to create project: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create project",
 		})
 		return
 	}
 
+	log.Printf("Project created successfully: ID=%s, UUID=%s, Name=%s", project.ID.Hex(), project.UUID, project.Name)
 	c.JSON(http.StatusCreated, project)
 }

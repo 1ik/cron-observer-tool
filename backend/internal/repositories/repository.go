@@ -10,6 +10,7 @@ import (
 // Repository defines project-related repository operations
 type Repository interface {
 	GetAllProjects(ctx context.Context) ([]*models.Project, error)
+	GetProjectByID(ctx context.Context, projectID primitive.ObjectID) (*models.Project, error)
 	CreateProject(ctx context.Context, project *models.Project) error
 
 	// tasks
@@ -29,4 +30,7 @@ type Repository interface {
 	DeleteTaskGroup(ctx context.Context, taskGroupUUID string) error
 	GetTasksByGroupID(ctx context.Context, taskGroupID primitive.ObjectID) ([]*models.Task, error)
 	GetActiveTaskGroupsWithWindows(ctx context.Context) ([]*models.TaskGroup, error)
+
+	// executions
+	CreateExecution(ctx context.Context, execution *models.Execution) error
 }

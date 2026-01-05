@@ -18,7 +18,7 @@ type Task struct {
 	ScheduleType   ScheduleType           `json:"schedule_type" bson:"schedule_type" enums:"RECURRING,ONEOFF" example:"RECURRING"`
 	Status         TaskStatus             `json:"status" bson:"status" enums:"ACTIVE,PAUSED,DISABLED" example:"ACTIVE"`
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" bson:"schedule_config"`
-	TriggerConfig  TriggerConfig          `json:"trigger_config" bson:"trigger_config"`
+	TriggerConfig  TriggerConfig          `json:"trigger_config,omitempty" bson:"trigger_config,omitempty"` // Deprecated: Tasks now use project's execution_endpoint
 	Metadata       map[string]interface{} `json:"metadata,omitempty" bson:"metadata,omitempty"`
 
 	CreatedAt time.Time `json:"created_at" bson:"created_at" example:"2025-01-15T10:00:00Z"`
@@ -85,7 +85,6 @@ type CreateTaskRequest struct {
 	ScheduleType   ScheduleType           `json:"schedule_type" binding:"required,oneof=RECURRING ONEOFF"`
 	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE PAUSED DISABLED"`
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" binding:"required"`
-	TriggerConfig  TriggerConfig          `json:"trigger_config" binding:"required"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -98,7 +97,6 @@ type UpdateTaskRequest struct {
 	ScheduleType   ScheduleType           `json:"schedule_type" binding:"required,oneof=RECURRING ONEOFF"`
 	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE PAUSED DISABLED"`
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" binding:"required"`
-	TriggerConfig  TriggerConfig          `json:"trigger_config" binding:"required"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 }
 
