@@ -1,8 +1,7 @@
 'use client'
 
-import * as Dialog from '@radix-ui/react-dialog'
-import { Box } from '@radix-ui/themes'
-import { CSSProperties, ReactNode } from 'react'
+import { Box, Dialog } from '@radix-ui/themes'
+import { ReactNode } from 'react'
 
 interface StyledDialogContentProps {
   children: ReactNode
@@ -15,26 +14,17 @@ export function StyledDialogContent({
   maxWidth = '600px',
   maxHeight = '90vh',
 }: StyledDialogContentProps) {
-  const containerStyle: CSSProperties = {
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    maxWidth,
-    width: '90vw',
-    maxHeight,
-    backgroundColor: 'var(--color-panel-solid)',
-    border: '1px solid var(--gray-6)',
-    borderRadius: 'var(--radius-3)',
-    boxShadow: 'var(--shadow-6)',
-    zIndex: 51,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-  }
-
   return (
-    <Dialog.Content style={containerStyle}>
+    <Dialog.Content
+      maxWidth={maxWidth}
+      style={{
+        maxHeight,
+        width: '90vw',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       <Box
         style={{
           display: 'flex',

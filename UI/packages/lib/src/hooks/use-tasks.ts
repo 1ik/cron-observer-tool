@@ -1,10 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
-import { getTasksByProject } from '../api';
+import { createTask, getTasksByProject } from '../api';
 import { schemas } from '../api-client';
 
 // Infer the Task type from the Zod schema
 export type Task = z.infer<typeof schemas.models_Task>;
+
+// CreateTaskRequest type inferred from schema
+type CreateTaskRequest = z.infer<typeof schemas.models_CreateTaskRequest>;
 
 /**
  * Query keys for tasks
@@ -30,5 +33,25 @@ export function useTasksByProject(projectId: string) {
     enabled: !!projectId, // Only fetch if projectId is provided
   });
 }
+
+/**
+ * Hook to create a new task
+ * @param projectId - The ID of the project
+ */
+export function useCreateTask(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateTaskRequest) => {
+      return createTask(projectId, data);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch tasks for this project
+      queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+    },
+  });
+}
+
+export type { CreateTaskRequest };
 
 

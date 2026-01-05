@@ -1,6 +1,6 @@
 'use client'
 
-import { useCreateTaskGroup } from '@cron-observer/lib'
+import { useCreateTask, useCreateTaskGroup } from '@cron-observer/lib'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { CaretDownIcon, PlusIcon } from '@radix-ui/react-icons'
 import { Box, Button, Flex, Text } from '@radix-ui/themes'
@@ -8,8 +8,9 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Execution } from '../lib/types/execution'
 import { Project } from '../lib/types/project'
-import { Task, UpdateTaskRequest } from '../lib/types/task'
+import { CreateTaskRequest, Task, UpdateTaskRequest } from '../lib/types/task'
 import { CreateTaskGroupRequest, TaskGroup, UpdateTaskGroupRequest } from '../lib/types/taskgroup'
+import { CreateTaskDialog } from './CreateTaskDialog'
 import { CreateTaskGroupDialog } from './CreateTaskGroupDialog'
 import { ExecutionsList } from './ExecutionsList'
 import { ResizableSplitter } from './ResizableSplitter'
@@ -38,8 +39,10 @@ export function ProjectLayout({
   const [isTaskSettingsOpen, setIsTaskSettingsOpen] = useState(false)
   const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false)
   const [isCreateTaskGroupDialogOpen, setIsCreateTaskGroupDialogOpen] = useState(false)
+  const [selectedTaskGroupForCreate, setSelectedTaskGroupForCreate] = useState<TaskGroup | null>(null)
 
   const createTaskGroupMutation = useCreateTaskGroup(project.id)
+  const createTaskMutation = useCreateTask(project.id)
 
   const handleTaskGroupSettingsClick = (taskGroup: TaskGroup) => {
     setSelectedTaskGroup(taskGroup)
@@ -76,6 +79,30 @@ export function ProjectLayout({
       onError: (error: Error) => {
         // TODO: Add error toast/notification
         console.error('Failed to create task group:', error)
+      },
+    })
+  }
+
+  const handleCreateTaskClick = (taskGroup: TaskGroup) => {
+    setSelectedTaskGroupForCreate(taskGroup)
+    setIsCreateTaskDialogOpen(true)
+  }
+
+  const handleCreateTaskSubmit = (data: CreateTaskRequest) => {
+    // Set task_group_id from selected task group
+    const requestData: CreateTaskRequest = {
+      ...data,
+      task_group_id: selectedTaskGroupForCreate?.id,
+    }
+    createTaskMutation.mutate(requestData as any, {
+      onSuccess: () => {
+        // Dialog will close automatically via onOpenChange
+        // Tasks will be refetched automatically via query invalidation
+        setSelectedTaskGroupForCreate(null)
+      },
+      onError: (error: Error) => {
+        // TODO: Add error toast/notification
+        console.error('Failed to create task:', error)
       },
     })
   }
@@ -198,6 +225,7 @@ export function ProjectLayout({
               selectedTaskId={selectedTaskId}
               onSettingsClick={handleTaskGroupSettingsClick}
               onTaskSettingsClick={handleTaskSettingsClick}
+              onCreateTaskClick={handleCreateTaskClick}
             />
           }
           rightContent={<ExecutionsList executions={executions} />}
@@ -230,6 +258,14 @@ export function ProjectLayout({
         onOpenChange={setIsCreateTaskGroupDialogOpen}
         projectId={project.id}
         onSubmit={handleCreateTaskGroupSubmit}
+      />
+
+      <CreateTaskDialog
+        open={isCreateTaskDialogOpen}
+        onOpenChange={setIsCreateTaskDialogOpen}
+        projectId={project.id}
+        taskGroupId={selectedTaskGroupForCreate?.id}
+        onSubmit={handleCreateTaskSubmit}
       />
     </Flex>
   )

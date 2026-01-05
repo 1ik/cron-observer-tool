@@ -58,3 +58,23 @@ export const updateTaskSchema = z.object({
 
 export type UpdateTaskFormData = z.infer<typeof updateTaskSchema>
 
+export const createTaskSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Task name is required')
+    .max(255, 'Task name must be 255 characters or less')
+    .trim(),
+  description: z
+    .string()
+    .max(1000, 'Description must be 1000 characters or less')
+    .trim()
+    .optional()
+    .or(z.literal('')),
+  schedule_type: scheduleTypeSchema,
+  schedule_config: scheduleConfigSchema,
+  trigger_config: triggerConfigSchema,
+  metadata: z.record(z.string(), z.unknown()).optional(),
+})
+
+export type CreateTaskFormData = z.infer<typeof createTaskSchema>
+

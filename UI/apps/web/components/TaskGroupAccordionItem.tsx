@@ -1,13 +1,13 @@
 'use client'
 
 import * as Accordion from '@radix-ui/react-accordion'
-import { ChevronDownIcon, GearIcon } from '@radix-ui/react-icons'
+import { ChevronDownIcon, GearIcon, PlusIcon } from '@radix-ui/react-icons'
 import { Box, Flex, IconButton, Text } from '@radix-ui/themes'
 import { Task } from '../lib/types/task'
 import { TaskGroup } from '../lib/types/taskgroup'
-import { TaskListItem } from './TaskListItem'
-import { TaskRuntimeStatus, getStatusDotColor, getStatusTooltip } from '../lib/utils/task-status'
+import { TaskRuntimeStatus } from '../lib/utils/task-status'
 import { StatusDot } from './StatusDot'
+import { TaskListItem } from './TaskListItem'
 
 interface TaskGroupAccordionItemProps {
   taskGroup: TaskGroup
@@ -16,6 +16,7 @@ interface TaskGroupAccordionItemProps {
   selectedTaskId?: string | null
   onSettingsClick: (taskGroup: TaskGroup) => void
   onTaskSettingsClick: (task: Task) => void
+  onCreateTaskClick?: (taskGroup: TaskGroup) => void
 }
 
 export function TaskGroupAccordionItem({
@@ -25,6 +26,7 @@ export function TaskGroupAccordionItem({
   selectedTaskId,
   onSettingsClick,
   onTaskSettingsClick,
+  onCreateTaskClick,
 }: TaskGroupAccordionItemProps) {
   // Map TaskGroup status to TaskRuntimeStatus for consistency
   const getTaskGroupRuntimeStatus = (status: string): TaskRuntimeStatus => {
@@ -43,6 +45,11 @@ export function TaskGroupAccordionItem({
   const handleSettingsClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     onSettingsClick(taskGroup)
+  }
+
+  const handleCreateTaskClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onCreateTaskClick?.(taskGroup)
   }
 
   return (
@@ -99,6 +106,16 @@ export function TaskGroupAccordionItem({
               }
             />
           </Accordion.Trigger>
+          {onCreateTaskClick && (
+            <IconButton
+              variant="ghost"
+              size="1"
+              onClick={handleCreateTaskClick}
+              style={{ cursor: 'pointer', marginLeft: 'var(--space-2)' }}
+            >
+              <PlusIcon width="14" height="14" />
+            </IconButton>
+          )}
           <IconButton
             variant="ghost"
             size="1"

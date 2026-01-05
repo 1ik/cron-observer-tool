@@ -15,6 +15,7 @@ interface TaskGroupsListProps {
   selectedTaskId?: string | null
   onSettingsClick: (taskGroup: TaskGroup) => void
   onTaskSettingsClick: (task: Task) => void
+  onCreateTaskClick?: (taskGroup: TaskGroup) => void
 }
 
 export function TaskGroupsList({
@@ -25,6 +26,7 @@ export function TaskGroupsList({
   selectedTaskId,
   onSettingsClick,
   onTaskSettingsClick,
+  onCreateTaskClick,
 }: TaskGroupsListProps) {
   // Create a Set of task group IDs for quick lookup
   const taskGroupIds = new Set(taskGroups.map(tg => tg.id))
@@ -67,6 +69,7 @@ export function TaskGroupsList({
               selectedTaskId={selectedTaskId}
               onSettingsClick={onSettingsClick}
               onTaskSettingsClick={onTaskSettingsClick}
+              onCreateTaskClick={onCreateTaskClick}
             />
           ))}
         </Accordion.Root>

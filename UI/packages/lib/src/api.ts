@@ -83,6 +83,49 @@ export async function getTasksByProject(projectId: string) {
   return client.getProjectsProject_idtasks({ params: { project_id: projectId } });
 }
 
+/**
+ * Create a new task in a project
+ * @param projectId - Project ID
+ * @param task - Task creation data
+ * @returns Promise resolving to the created task
+ */
+export async function createTask(
+  projectId: string,
+  task: {
+    project_id: string;
+    task_group_id?: string;
+    name: string;
+    description?: string;
+    schedule_type: 'RECURRING' | 'ONEOFF';
+    status?: 'ACTIVE' | 'PAUSED' | 'DISABLED';
+    schedule_config: {
+      cron_expression?: string;
+      timezone: string;
+      time_range?: {
+        start: string;
+        end: string;
+        frequency: { value: number; unit: 's' | 'm' | 'h' };
+      };
+      days_of_week?: number[];
+      exclusions?: number[];
+    };
+    trigger_config: {
+      type: 'HTTP';
+      http: {
+        url: string;
+        method: string;
+        headers?: Record<string, string>;
+        body?: unknown;
+        timeout?: number;
+      };
+    };
+    metadata?: Record<string, unknown>;
+  }
+) {
+  const client = getApiClient();
+  return client.postProjectsProject_idtasks(task, { params: { project_id: projectId } });
+}
+
 // ============================================================================
 // Task Groups API
 // ============================================================================
