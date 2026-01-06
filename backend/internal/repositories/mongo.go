@@ -2,12 +2,14 @@ package repositories
 
 import (
 	"context"
+	"time"
 
 	"github.com/yourusername/cron-observer/backend/internal/database"
 	"github.com/yourusername/cron-observer/backend/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MongoRepository struct {
@@ -268,6 +270,43 @@ func (r *MongoRepository) CreateExecution(ctx context.Context, execution *models
 		return err
 	}
 	return nil
+}
+
+func (r *MongoRepository) GetExecutionsByTaskUUID(ctx context.Context, taskUUID string, startDate, endDate *time.Time) ([]*models.Execution, error) {
+	collection := r.db.Collection(database.CollectionExecutions)
+
+	filter := bson.M{"task_uuid": taskUUID}
+
+	// Add date filtering if provided
+	if startDate != nil || endDate != nil {
+		dateFilter := bson.M{}
+		if startDate != nil {
+			// Ensure startDate is in UTC for MongoDB comparison
+			startUTC := startDate.UTC()
+			dateFilter["$gte"] = startUTC
+		}
+		if endDate != nil {
+			// Ensure endDate is in UTC for MongoDB comparison
+			endUTC := endDate.UTC()
+			dateFilter["$lte"] = endUTC
+		}
+		filter["started_at"] = dateFilter
+	}
+
+	opts := options.Find().SetSort(bson.M{"started_at": -1}) // Most recent first
+	cursor, err := collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var executions []*models.Execution
+	err = cursor.All(ctx, &executions)
+	if err != nil {
+		return nil, err
+	}
+
+	return executions, nil
 }
 
 func NewMongoRepository(db *mongo.Database) *MongoRepository {

@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"time"
 
 	"github.com/yourusername/cron-observer/backend/internal/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -34,4 +35,5 @@ type Repository interface {
 
 	// executions
 	CreateExecution(ctx context.Context, execution *models.Execution) error
+	GetExecutionsByTaskUUID(ctx context.Context, taskUUID string, startDate, endDate *time.Time) ([]*models.Execution, error)
 }

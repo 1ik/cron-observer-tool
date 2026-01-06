@@ -146,6 +146,27 @@ const models_UpdateTaskRequest = z
     task_group_id: z.string().optional(),
   })
   .passthrough();
+const models_ExecutionStatus = z.enum([
+  "PENDING",
+  "RUNNING",
+  "SUCCESS",
+  "FAILED",
+]);
+const models_Execution = z
+  .object({
+    created_at: z.string(),
+    ended_at: z.string(),
+    error: z.string(),
+    id: z.string(),
+    started_at: z.string(),
+    status: models_ExecutionStatus,
+    task_id: z.string(),
+    task_uuid: z.string(),
+    updated_at: z.string(),
+    uuid: z.string(),
+  })
+  .partial()
+  .passthrough();
 
 export const schemas = {
   models_Project,
@@ -168,6 +189,8 @@ export const schemas = {
   models_Task,
   models_CreateTaskRequest,
   models_UpdateTaskRequest,
+  models_ExecutionStatus,
+  models_Execution,
 };
 
 const endpoints = makeApi([
@@ -642,6 +665,43 @@ const endpoints = makeApi([
       },
     ],
     response: z.void(),
+    errors: [
+      {
+        status: 400,
+        description: `Bad Request`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 500,
+        description: `Internal Server Error`,
+        schema: models_ErrorResponse,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/projects/:project_id/tasks/:task_uuid/executions",
+    alias: "getProjectsProject_idtasksTask_uuidexecutions",
+    description: `Retrieve all executions for a specific task filtered by date`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "project_id",
+        type: "Path",
+        schema: z.string(),
+      },
+      {
+        name: "task_uuid",
+        type: "Path",
+        schema: z.string(),
+      },
+      {
+        name: "date",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: z.array(models_Execution),
     errors: [
       {
         status: 400,

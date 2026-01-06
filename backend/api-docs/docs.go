@@ -91,6 +91,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/projects/{project_id}": {
+            "put": {
+                "description": "Update an existing project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Update a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Project update request",
+                        "name": "project",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateProjectRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Project"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/projects/{project_id}/task-groups": {
             "get": {
                 "description": "Retrieve all task groups belonging to a project",
@@ -727,6 +786,67 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/projects/{project_id}/tasks/{task_uuid}/executions": {
+            "get": {
+                "description": "Retrieve all executions for a specific task filtered by date",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "executions"
+                ],
+                "summary": "Get executions for a task",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Task UUID",
+                        "name": "task_uuid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by date (YYYY-MM-DD format). Returns executions for that date only",
+                        "name": "date",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Execution"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -800,8 +920,7 @@ const docTemplate = `{
                 "name",
                 "project_id",
                 "schedule_config",
-                "schedule_type",
-                "trigger_config"
+                "schedule_type"
             ],
             "properties": {
                 "description": {
@@ -849,9 +968,6 @@ const docTemplate = `{
                 "task_group_id": {
                     "description": "Optional task group ID",
                     "type": "string"
-                },
-                "trigger_config": {
-                    "$ref": "#/definitions/models.TriggerConfig"
                 }
             }
         },
@@ -872,6 +988,77 @@ const docTemplate = `{
                     "example": "Invalid request"
                 }
             }
+        },
+        "models.Execution": {
+            "description": "Execution represents a task execution record",
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-01-15T10:00:00Z"
+                },
+                "ended_at": {
+                    "type": "string",
+                    "example": "2025-01-15T10:00:05Z"
+                },
+                "error": {
+                    "type": "string",
+                    "example": "Connection timeout"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "507f1f77bcf86cd799439011"
+                },
+                "started_at": {
+                    "type": "string",
+                    "example": "2025-01-15T10:00:00Z"
+                },
+                "status": {
+                    "enum": [
+                        "PENDING",
+                        "RUNNING",
+                        "SUCCESS",
+                        "FAILED"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.ExecutionStatus"
+                        }
+                    ],
+                    "example": "PENDING"
+                },
+                "task_id": {
+                    "type": "string",
+                    "example": "507f1f77bcf86cd799439011"
+                },
+                "task_uuid": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2025-01-15T10:00:00Z"
+                },
+                "uuid": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "models.ExecutionStatus": {
+            "type": "string",
+            "enum": [
+                "PENDING",
+                "RUNNING",
+                "SUCCESS",
+                "FAILED"
+            ],
+            "x-enum-varnames": [
+                "ExecutionStatusPending",
+                "ExecutionStatusRunning",
+                "ExecutionStatusSuccess",
+                "ExecutionStatusFailed"
+            ]
         },
         "models.Frequency": {
             "type": "object",
@@ -944,6 +1131,10 @@ const docTemplate = `{
             "description": "Project represents a project entity that contains tasks",
             "type": "object",
             "properties": {
+                "alert_emails": {
+                    "type": "string",
+                    "example": "admin@example.com,ops@example.com"
+                },
                 "api_key": {
                     "type": "string",
                     "example": "sk_live_abc123..."
@@ -1087,7 +1278,12 @@ const docTemplate = `{
                     "example": "507f1f77bcf86cd799439011"
                 },
                 "trigger_config": {
-                    "$ref": "#/definitions/models.TriggerConfig"
+                    "description": "Deprecated: Tasks now use project's execution_endpoint",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.TriggerConfig"
+                        }
+                    ]
                 },
                 "updated_at": {
                     "type": "string",
@@ -1240,6 +1436,26 @@ const docTemplate = `{
                 "TriggerTypeHTTP"
             ]
         },
+        "models.UpdateProjectRequest": {
+            "type": "object",
+            "properties": {
+                "alert_emails": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "execution_endpoint": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                }
+            }
+        },
         "models.UpdateTaskGroupRequest": {
             "type": "object",
             "required": [
@@ -1285,8 +1501,7 @@ const docTemplate = `{
             "required": [
                 "name",
                 "schedule_config",
-                "schedule_type",
-                "trigger_config"
+                "schedule_type"
             ],
             "properties": {
                 "description": {
@@ -1331,9 +1546,6 @@ const docTemplate = `{
                 "task_group_id": {
                     "description": "Optional task group ID",
                     "type": "string"
-                },
-                "trigger_config": {
-                    "$ref": "#/definitions/models.TriggerConfig"
                 }
             }
         }

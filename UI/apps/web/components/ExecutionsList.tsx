@@ -2,7 +2,7 @@
 
 import { CalendarIcon, PauseIcon, PlayIcon } from '@radix-ui/react-icons'
 import * as Popover from '@radix-ui/react-popover'
-import { Box, Button, Flex, IconButton, Text } from '@radix-ui/themes'
+import { Box, Button, Flex, IconButton, Spinner, Text } from '@radix-ui/themes'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { DayPicker } from 'react-day-picker'
@@ -12,9 +12,10 @@ import { ExecutionItem } from './ExecutionItem'
 
 interface ExecutionsListProps {
   executions: Execution[]
+  isLoading?: boolean
 }
 
-export function ExecutionsList({ executions }: ExecutionsListProps) {
+export function ExecutionsList({ executions, isLoading = false }: ExecutionsListProps) {
   const [isPaused, setIsPaused] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
@@ -45,12 +46,21 @@ export function ExecutionsList({ executions }: ExecutionsListProps) {
 
   // Get selected date from URL or default to most recent
   const selectedDateString = searchParams.get('date') || availableDates[0] || ''
-  const selectedDate = selectedDateString ? new Date(selectedDateString) : new Date()
+  // Parse date string (YYYY-MM-DD) to Date object at local midnight to avoid timezone issues
+  const selectedDate = selectedDateString ? (() => {
+    const [year, month, day] = selectedDateString.split('-').map(Number)
+    return new Date(year, month - 1, day)
+  })() : new Date()
 
   const handleDateChange = (date: Date | undefined) => {
     if (!date) return
     
-    const dateString = date.toISOString().split('T')[0]
+    // Format date in local timezone (YYYY-MM-DD) to avoid timezone shift
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const dateString = `${year}-${month}-${day}`
+    
     const params = new URLSearchParams(searchParams.toString())
     params.set('date', dateString)
     const queryString = params.toString()
@@ -134,11 +144,6 @@ export function ExecutionsList({ executions }: ExecutionsListProps) {
                     mode="single"
                     selected={selectedDate}
                     onSelect={handleDateChange}
-                    disabled={(date) => {
-                      // Disable dates that are not in availableDates
-                      const dateString = date.toISOString().split('T')[0]
-                      return !availableDates.includes(dateString)
-                    }}
                     className="rdp"
                     classNames={{
                       months: 'rdp-months',
@@ -226,7 +231,16 @@ export function ExecutionsList({ executions }: ExecutionsListProps) {
           padding: 'var(--space-3)',
         }}
       >
-        {executions.length === 0 ? (
+        {isLoading ? (
+          <Flex justify="center" align="center" style={{ minHeight: '200px' }}>
+            <Flex direction="column" gap="3" align="center">
+              <Spinner size="3" />
+              <Text size="2" color="gray">
+                Loading executions...
+              </Text>
+            </Flex>
+          </Flex>
+        ) : executions.length === 0 ? (
           <Box>
             <Text size="3" color="gray" align="center">
               No executions yet

@@ -76,14 +76,11 @@ definitions:
       task_group_id:
         description: Optional task group ID
         type: string
-      trigger_config:
-        $ref: '#/definitions/models.TriggerConfig'
     required:
     - name
     - project_id
     - schedule_config
     - schedule_type
-    - trigger_config
     type: object
   models.ErrorResponse:
     properties:
@@ -97,6 +94,58 @@ definitions:
         example: Invalid request
         type: string
     type: object
+  models.Execution:
+    description: Execution represents a task execution record
+    properties:
+      created_at:
+        example: "2025-01-15T10:00:00Z"
+        type: string
+      ended_at:
+        example: "2025-01-15T10:00:05Z"
+        type: string
+      error:
+        example: Connection timeout
+        type: string
+      id:
+        example: 507f1f77bcf86cd799439011
+        type: string
+      started_at:
+        example: "2025-01-15T10:00:00Z"
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/models.ExecutionStatus'
+        enum:
+        - PENDING
+        - RUNNING
+        - SUCCESS
+        - FAILED
+        example: PENDING
+      task_id:
+        example: 507f1f77bcf86cd799439011
+        type: string
+      task_uuid:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      updated_at:
+        example: "2025-01-15T10:00:00Z"
+        type: string
+      uuid:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  models.ExecutionStatus:
+    enum:
+    - PENDING
+    - RUNNING
+    - SUCCESS
+    - FAILED
+    type: string
+    x-enum-varnames:
+    - ExecutionStatusPending
+    - ExecutionStatusRunning
+    - ExecutionStatusSuccess
+    - ExecutionStatusFailed
   models.Frequency:
     properties:
       unit:
@@ -147,6 +196,9 @@ definitions:
   models.Project:
     description: Project represents a project entity that contains tasks
     properties:
+      alert_emails:
+        example: admin@example.com,ops@example.com
+        type: string
       api_key:
         example: sk_live_abc123...
         type: string
@@ -246,7 +298,9 @@ definitions:
         example: 507f1f77bcf86cd799439011
         type: string
       trigger_config:
-        $ref: '#/definitions/models.TriggerConfig'
+        allOf:
+        - $ref: '#/definitions/models.TriggerConfig'
+        description: 'Deprecated: Tasks now use project''s execution_endpoint'
       updated_at:
         example: "2025-01-15T10:00:00Z"
         type: string
@@ -352,6 +406,20 @@ definitions:
     type: string
     x-enum-varnames:
     - TriggerTypeHTTP
+  models.UpdateProjectRequest:
+    properties:
+      alert_emails:
+        type: string
+      description:
+        maxLength: 1000
+        type: string
+      execution_endpoint:
+        type: string
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+    type: object
   models.UpdateTaskGroupRequest:
     properties:
       description:
@@ -409,13 +477,10 @@ definitions:
       task_group_id:
         description: Optional task group ID
         type: string
-      trigger_config:
-        $ref: '#/definitions/models.TriggerConfig'
     required:
     - name
     - schedule_config
     - schedule_type
-    - trigger_config
     type: object
 host: localhost:8080
 info:
@@ -472,6 +537,45 @@ paths:
           schema:
             $ref: '#/definitions/models.ErrorResponse'
       summary: Create a new project
+      tags:
+      - projects
+  /projects/{project_id}:
+    put:
+      consumes:
+      - application/json
+      description: Update an existing project
+      parameters:
+      - description: Project ID
+        in: path
+        name: project_id
+        required: true
+        type: string
+      - description: Project update request
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateProjectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Project'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Update a project
       tags:
       - projects
   /projects/{project_id}/task-groups:
@@ -899,4 +1003,46 @@ paths:
       summary: Update a task
       tags:
       - tasks
+  /projects/{project_id}/tasks/{task_uuid}/executions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all executions for a specific task filtered by date
+      parameters:
+      - description: Project ID
+        in: path
+        name: project_id
+        required: true
+        type: string
+      - description: Task UUID
+        in: path
+        name: task_uuid
+        required: true
+        type: string
+      - description: Filter by date (YYYY-MM-DD format). Returns executions for that
+          date only
+        in: query
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Execution'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get executions for a task
+      tags:
+      - executions
 swagger: "2.0"

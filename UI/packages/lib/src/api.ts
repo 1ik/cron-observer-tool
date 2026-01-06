@@ -200,6 +200,44 @@ export async function createTask(
 }
 
 // ============================================================================
+// Executions API
+// ============================================================================
+
+/**
+ * Get executions for a specific task
+ * @param projectId - Project ID (MongoDB ObjectID)
+ * @param taskUUID - Task UUID
+ * @param date - Required date filter (YYYY-MM-DD format). Returns executions for that date only
+ * @returns Promise resolving to an array of executions
+ */
+export async function getExecutionsByTaskUUID(projectId: string, taskUUID: string, date: string) {
+  if (!date || typeof date !== 'string' || date.trim() === '') {
+    throw new Error('Date parameter is required and must be a non-empty string (YYYY-MM-DD format)');
+  }
+  
+  const client = getApiClient();
+  const trimmedDate = date.trim();
+  
+  // Ensure all required params are present
+  if (!projectId || !taskUUID || !trimmedDate) {
+    throw new Error(`Missing required parameters: projectId=${!!projectId}, taskUUID=${!!taskUUID}, date=${!!trimmedDate}`);
+  }
+  
+  // openapi-zod-client generates incomplete types (doesn't include query params in method signature)
+  // Zodios supports query parameters via a separate 'queries' property
+  // We use 'as any' because the generated types are incomplete
+  return (client.getProjectsProject_idtasksTask_uuidexecutions as any)({
+    params: {
+      project_id: projectId,
+      task_uuid: taskUUID,
+    },
+    queries: {
+      date: trimmedDate,
+    },
+  });
+}
+
+// ============================================================================
 // Task Groups API
 // ============================================================================
 

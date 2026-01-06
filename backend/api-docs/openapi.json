@@ -924,6 +924,79 @@
                     }
                 }
             }
+        },
+        "/projects/{project_id}/tasks/{task_uuid}/executions": {
+            "get": {
+                "description": "Retrieve all executions for a specific task filtered by date",
+                "tags": [
+                    "executions"
+                ],
+                "summary": "Get executions for a task",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Task UUID",
+                        "name": "task_uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Filter by date (YYYY-MM-DD format). Returns executions for that date only",
+                        "name": "date",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/models.Execution"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "servers": [
@@ -1071,6 +1144,77 @@
                         "example": "Invalid request"
                     }
                 }
+            },
+            "models.Execution": {
+                "description": "Execution represents a task execution record",
+                "type": "object",
+                "properties": {
+                    "created_at": {
+                        "type": "string",
+                        "example": "2025-01-15T10:00:00Z"
+                    },
+                    "ended_at": {
+                        "type": "string",
+                        "example": "2025-01-15T10:00:05Z"
+                    },
+                    "error": {
+                        "type": "string",
+                        "example": "Connection timeout"
+                    },
+                    "id": {
+                        "type": "string",
+                        "example": "507f1f77bcf86cd799439011"
+                    },
+                    "started_at": {
+                        "type": "string",
+                        "example": "2025-01-15T10:00:00Z"
+                    },
+                    "status": {
+                        "enum": [
+                            "PENDING",
+                            "RUNNING",
+                            "SUCCESS",
+                            "FAILED"
+                        ],
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/models.ExecutionStatus"
+                            }
+                        ],
+                        "example": "PENDING"
+                    },
+                    "task_id": {
+                        "type": "string",
+                        "example": "507f1f77bcf86cd799439011"
+                    },
+                    "task_uuid": {
+                        "type": "string",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "example": "2025-01-15T10:00:00Z"
+                    },
+                    "uuid": {
+                        "type": "string",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                }
+            },
+            "models.ExecutionStatus": {
+                "type": "string",
+                "enum": [
+                    "PENDING",
+                    "RUNNING",
+                    "SUCCESS",
+                    "FAILED"
+                ],
+                "x-enum-varnames": [
+                    "ExecutionStatusPending",
+                    "ExecutionStatusRunning",
+                    "ExecutionStatusSuccess",
+                    "ExecutionStatusFailed"
+                ]
             },
             "models.Frequency": {
                 "type": "object",

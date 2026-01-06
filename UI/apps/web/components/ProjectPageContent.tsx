@@ -1,8 +1,9 @@
 'use client'
 
-import { useProjects, useTaskGroupsByProject, useTasksByProject } from '@cron-observer/lib'
+import { useExecutionsByTask, useProjects, useTaskGroupsByProject, useTasksByProject } from '@cron-observer/lib'
 import { Box, Flex, Heading, Spinner, Text } from '@radix-ui/themes'
-import { mockExecutions } from '../lib/mocks/executions'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useMemo } from 'react'
 import { Execution } from '../lib/types/execution'
 import { ProjectLayout } from './ProjectLayout'
 
@@ -12,6 +13,9 @@ interface ProjectPageContentProps {
 }
 
 export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageContentProps) {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  
   // Fetch projects to find the one we need
   const { data: projects = [], isLoading: isLoadingProjects } = useProjects()
   
@@ -26,7 +30,55 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
   const { data: tasks = [], isLoading: isLoadingTasks, error: tasksError } = useTasksByProject(projectObjectId || '')
   const { data: taskGroups = [], isLoading: isLoadingTaskGroups, error: taskGroupsError } = useTaskGroupsByProject(projectObjectId || '')
 
-  // Loading state
+  // Find the selected task to get its UUID
+  const selectedTask = selectedTaskId
+    ? tasks.find((t) => t.id === selectedTaskId || t.uuid === selectedTaskId)
+    : null
+  const selectedTaskUUID = selectedTask?.uuid || selectedTask?.id || null
+
+  // Get current date string (always computed synchronously)
+  const getCurrentDateString = () => {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  // Get selected date from URL params or default to current date
+  // Memoize to prevent unnecessary recalculations and query key changes
+  // Always ensure we have a valid date string
+  const selectedDate = useMemo(() => {
+    const dateParam = searchParams.get('date')
+    if (dateParam && dateParam.trim() !== '') {
+      return dateParam.trim()
+    }
+    return getCurrentDateString()
+  }, [searchParams])
+
+  // Ensure date is always in URL - update URL if missing
+  useEffect(() => {
+    const dateParam = searchParams.get('date')
+    if (!dateParam || dateParam.trim() === '') {
+      const currentDate = getCurrentDateString()
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('date', currentDate)
+      router.replace(`?${params.toString()}`, { scroll: false })
+    }
+  }, [searchParams, router])
+
+  // Fetch executions for the selected task (only if a task is selected)
+  // Ensure selectedDate is always a valid date string before passing to the query
+  const validDate = selectedDate && selectedDate.trim() !== '' ? selectedDate : getCurrentDateString()
+  
+  const { data: executionsData = [], isLoading: isLoadingExecutions } = useExecutionsByTask(
+    projectObjectId || null,
+    selectedTaskUUID,
+    validDate,
+    !!projectObjectId && !!selectedTaskUUID && !!validDate && validDate.trim() !== ''
+  )
+
+  // Loading state (excluding executions loading - that will be shown in ExecutionsList)
   if (isLoadingProjects || isLoadingTasks || isLoadingTaskGroups) {
     return (
       <Flex justify="center" align="center" style={{ minHeight: '400px' }}>
@@ -56,11 +108,19 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
     )
   }
 
-  // Filter executions for this project (using mock data for now)
-  const projectExecutions: Execution[] = mockExecutions.filter((e) => {
-    const task = tasks.find((t) => t.id === e.task_id || t.uuid === e.task_uuid)
-    return task !== undefined
-  })
+  // Map API executions to Execution type
+  const projectExecutions: Execution[] = executionsData.map((execution: any) => ({
+    id: execution.id || execution.uuid || '',
+    task_id: execution.task_id || '',
+    task_uuid: execution.task_uuid || '',
+    task_name: selectedTask?.name || '',
+    status: execution.status || 'PENDING',
+    started_at: execution.started_at || new Date().toISOString(),
+    completed_at: execution.ended_at || undefined,
+    duration_ms: execution.duration_ms,
+    error_message: execution.error || undefined,
+    created_at: execution.created_at || new Date().toISOString(),
+  }))
   
   // Map API response types to component types
   // The API returns types that match our component types, but we need to ensure
@@ -118,6 +178,7 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
         tasks={mappedTasks}
         executions={projectExecutions}
         selectedTaskId={selectedTaskId}
+        isLoadingExecutions={isLoadingExecutions}
       />
     </Box>
   )

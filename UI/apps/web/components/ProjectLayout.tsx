@@ -25,6 +25,7 @@ interface ProjectLayoutProps {
   tasks: Task[]
   executions: Execution[]
   selectedTaskId?: string | null
+  isLoadingExecutions?: boolean
 }
 
 export function ProjectLayout({
@@ -33,6 +34,7 @@ export function ProjectLayout({
   tasks,
   executions,
   selectedTaskId,
+  isLoadingExecutions = false,
 }: ProjectLayoutProps) {
   const [selectedTaskGroup, setSelectedTaskGroup] = useState<TaskGroup | null>(null)
   const [isTaskGroupSettingsOpen, setIsTaskGroupSettingsOpen] = useState(false)
@@ -257,7 +259,7 @@ export function ProjectLayout({
               onCreateTaskClick={handleCreateTaskClick}
             />
           }
-          rightContent={<ExecutionsList executions={executions} />}
+          rightContent={<ExecutionsList executions={executions} isLoading={isLoadingExecutions} />}
           initialLeftWidth={20}
           minLeftWidth={20}
           minRightWidth={20}
