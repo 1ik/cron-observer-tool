@@ -50,6 +50,26 @@ func (r *MongoRepository) CreateProject(ctx context.Context, project *models.Pro
 	return nil
 }
 
+func (r *MongoRepository) UpdateProject(ctx context.Context, projectID primitive.ObjectID, project *models.Project) error {
+	collection := r.db.Collection(database.CollectionProjects)
+
+	update := bson.M{
+		"$set": bson.M{
+			"name":               project.Name,
+			"description":        project.Description,
+			"execution_endpoint": project.ExecutionEndpoint,
+			"alert_emails":       project.AlertEmails,
+			"updated_at":         project.UpdatedAt,
+		},
+	}
+
+	_, err := collection.UpdateOne(ctx, bson.M{"_id": projectID}, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *MongoRepository) CreateTask(ctx context.Context, projectID string, task *models.Task) error {
 	collection := r.db.Collection(database.CollectionTasks)
 	_, err := collection.InsertOne(ctx, task)

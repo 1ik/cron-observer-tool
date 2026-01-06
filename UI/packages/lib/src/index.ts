@@ -8,3 +8,6 @@ export * from './hooks';
 export type { ZodiosOptions } from '@zodios/core';
 export { api, createApiClient } from './api-client';
 
+// Export API functions
+export { updateProject } from './api';
+

@@ -91,6 +91,79 @@
                 }
             }
         },
+        "/projects/{project_id}": {
+            "put": {
+                "description": "Update an existing project",
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Update a project",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/models.UpdateProjectRequest"
+                            }
+                        }
+                    },
+                    "description": "Project update request",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.Project"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/models.ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/projects/{project_id}/task-groups": {
             "get": {
                 "description": "Retrieve all task groups belonging to a project",
@@ -1070,6 +1143,10 @@
                 "description": "Project represents a project entity that contains tasks",
                 "type": "object",
                 "properties": {
+                    "alert_emails": {
+                        "type": "string",
+                        "example": "admin@example.com,ops@example.com"
+                    },
                     "api_key": {
                         "type": "string",
                         "example": "sk_live_abc123..."
@@ -1370,6 +1447,26 @@
                 "x-enum-varnames": [
                     "TriggerTypeHTTP"
                 ]
+            },
+            "models.UpdateProjectRequest": {
+                "type": "object",
+                "properties": {
+                    "alert_emails": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "execution_endpoint": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 1
+                    }
+                }
             },
             "models.UpdateTaskGroupRequest": {
                 "type": "object",

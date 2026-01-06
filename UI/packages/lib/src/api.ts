@@ -100,6 +100,48 @@ export async function createProject(project: {
   return client.postProjects(requestBody);
 }
 
+/**
+ * Update an existing project
+ * @param projectId - Project ID (MongoDB ObjectID)
+ * @param project - Project update data
+ * @returns Promise resolving to the updated project
+ */
+export async function updateProject(
+  projectId: string,
+  project: {
+    name?: string;
+    description?: string;
+    execution_endpoint?: string;
+    alert_emails?: string;
+  }
+) {
+  const client = getApiClient();
+
+  // Create a clean object that matches the schema exactly
+  const requestBody: {
+    name?: string;
+    description?: string;
+    execution_endpoint?: string;
+    alert_emails?: string;
+  } = {};
+
+  // Only include fields that are provided
+  if (project.name !== undefined) {
+    requestBody.name = project.name.trim();
+  }
+  if (project.description !== undefined) {
+    requestBody.description = project.description.trim() || '';
+  }
+  if (project.execution_endpoint !== undefined) {
+    requestBody.execution_endpoint = project.execution_endpoint.trim() || '';
+  }
+  if (project.alert_emails !== undefined) {
+    requestBody.alert_emails = project.alert_emails.trim() || '';
+  }
+
+  return client.putProjectsProject_id(requestBody, { params: { project_id: projectId } });
+}
+
 // ============================================================================
 // Tasks API
 // ============================================================================

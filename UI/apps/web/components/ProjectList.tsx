@@ -1,16 +1,22 @@
 'use client'
 
-import { useCreateProject, useProjects } from '@cron-observer/lib'
+import { updateProject, useCreateProject, useProjects } from '@cron-observer/lib'
 import { Box, Button, Flex, Grid, Heading, Spinner, Text } from '@radix-ui/themes'
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { CreateProjectRequest } from '../lib/types/project'
+import { CreateProjectRequest, Project, UpdateProjectRequest } from '../lib/types/project'
 import { CreateProjectDialog } from './CreateProjectDialog'
 import { ProjectCard } from './ProjectCard'
+import { ProjectSettingsDialog } from './ProjectSettingsDialog'
 
 export function ProjectList() {
   const { data: projects = [], isLoading, error } = useProjects()
   const createProject = useCreateProject()
+  const queryClient = useQueryClient()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [selectedProjectApiId, setSelectedProjectApiId] = useState<string | null>(null)
 
   const handleCreateProject = async (data: CreateProjectRequest) => {
     try {
@@ -20,6 +26,31 @@ export function ProjectList() {
     } catch (error) {
       // TODO: Add error toast/notification
       console.error('Failed to create project:', error)
+    }
+  }
+
+  const handleProjectSettingsClick = (project: Project, apiProjectId: string) => {
+    setSelectedProject(project)
+    setSelectedProjectApiId(apiProjectId)
+    setIsProjectSettingsOpen(true)
+  }
+
+  const handleProjectSettingsSubmit = async (data: UpdateProjectRequest) => {
+    if (!selectedProject || !selectedProjectApiId) return
+    
+    try {
+      await updateProject(selectedProjectApiId, data)
+      
+      // Invalidate queries to refetch projects
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      
+      setIsProjectSettingsOpen(false)
+      setSelectedProject(null)
+      setSelectedProjectApiId(null)
+      // TODO: Add success toast/notification
+    } catch (error) {
+      // TODO: Add error toast/notification
+      console.error('Failed to update project:', error)
     }
   }
 
@@ -88,21 +119,32 @@ export function ProjectList() {
       </Flex>
 
       <Grid columns={{ initial: '1', sm: '2', md: '3', lg: '4' }} gap="4">
-        {projects.map((project) => (
-          <ProjectCard
-            key={project.uuid || project.id}
-            project={{
-              id: project.id || project.uuid || '',
-              uuid: project.uuid || project.id || '',
-              name: project.name || '',
-              description: project.description,
-              api_key: project.api_key,
-              execution_endpoint: project.execution_endpoint,
-              created_at: project.created_at || new Date().toISOString(),
-              updated_at: project.updated_at || new Date().toISOString(),
-            }}
-          />
-        ))}
+        {projects.map((project) => {
+          const mappedProject: Project = {
+            id: project.id || project.uuid || '',
+            uuid: project.uuid || project.id || '',
+            name: project.name || '',
+            description: project.description,
+            api_key: project.api_key,
+            execution_endpoint: project.execution_endpoint,
+            alert_emails: (project as Record<string, unknown>).alert_emails && typeof (project as Record<string, unknown>).alert_emails === 'string' 
+              ? (project as Record<string, unknown>).alert_emails as string 
+              : undefined,
+            created_at: project.created_at || new Date().toISOString(),
+            updated_at: project.updated_at || new Date().toISOString(),
+          }
+          return (
+            <ProjectCard
+              key={project.uuid || project.id}
+              project={mappedProject}
+              onSettingsClick={(p) => {
+                if (project.id) {
+                  handleProjectSettingsClick(p, project.id)
+                }
+              }}
+            />
+          )
+        })}
       </Grid>
 
       <CreateProjectDialog
@@ -110,6 +152,15 @@ export function ProjectList() {
         onOpenChange={setIsCreateDialogOpen}
         onSubmit={handleCreateProject}
       />
+
+      {selectedProject && (
+        <ProjectSettingsDialog
+          open={isProjectSettingsOpen}
+          onOpenChange={setIsProjectSettingsOpen}
+          project={selectedProject}
+          onSubmit={handleProjectSettingsSubmit}
+        />
+      )}
     </Box>
   )
 }

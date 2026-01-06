@@ -85,6 +85,65 @@
                 }
             }
         },
+        "/projects/{project_id}": {
+            "put": {
+                "description": "Update an existing project",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "Update a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Project update request",
+                        "name": "project",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateProjectRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Project"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/projects/{project_id}/task-groups": {
             "get": {
                 "description": "Retrieve all task groups belonging to a project",
@@ -934,6 +993,10 @@
             "description": "Project represents a project entity that contains tasks",
             "type": "object",
             "properties": {
+                "alert_emails": {
+                    "type": "string",
+                    "example": "admin@example.com,ops@example.com"
+                },
                 "api_key": {
                     "type": "string",
                     "example": "sk_live_abc123..."
@@ -1234,6 +1297,26 @@
             "x-enum-varnames": [
                 "TriggerTypeHTTP"
             ]
+        },
+        "models.UpdateProjectRequest": {
+            "type": "object",
+            "properties": {
+                "alert_emails": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "execution_endpoint": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                }
+            }
         },
         "models.UpdateTaskGroupRequest": {
             "type": "object",

@@ -10,6 +10,7 @@ import (
 	"github.com/yourusername/cron-observer/backend/internal/models"
 	"github.com/yourusername/cron-observer/backend/internal/repositories"
 	"github.com/yourusername/cron-observer/backend/internal/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ProjectHandler struct {
@@ -64,7 +65,7 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Printf("JSON binding error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": []string{err.Error()},
 		})
 		return
@@ -107,4 +108,106 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
 
 	log.Printf("Project created successfully: ID=%s, UUID=%s, Name=%s", project.ID.Hex(), project.UUID, project.Name)
 	c.JSON(http.StatusCreated, project)
+}
+
+// UpdateProject updates an existing project
+// @Summary      Update a project
+// @Description  Update an existing project
+// @Tags         projects
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        project body models.UpdateProjectRequest true "Project update request"
+// @Success      200  {object}  models.Project
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      404  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id} [put]
+func (h *ProjectHandler) UpdateProject(c *gin.Context) {
+	var req models.UpdateProjectRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("JSON binding error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"details": []string{err.Error()},
+		})
+		return
+	}
+
+	// Get project_id from path parameter
+	projectIDParam := c.Param("project_id")
+	if projectIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "project_id is required in path",
+		})
+		return
+	}
+
+	// Convert project_id to ObjectID
+	projectID, err := primitive.ObjectIDFromHex(projectIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid project_id format in path",
+		})
+		return
+	}
+
+	// Get existing project to preserve UUID, APIKey, and timestamps
+	existingProject, err := h.repo.GetProjectByID(c.Request.Context(), projectID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Project not found",
+		})
+		return
+	}
+
+	// Update only provided fields
+	now := time.Now()
+	updatedProject := &models.Project{
+		ID:                existingProject.ID,
+		UUID:              existingProject.UUID,   // UUID cannot be changed
+		APIKey:            existingProject.APIKey, // API key cannot be changed
+		Name:              existingProject.Name,
+		Description:       existingProject.Description,
+		ExecutionEndpoint: existingProject.ExecutionEndpoint,
+		AlertEmails:       existingProject.AlertEmails,
+		CreatedAt:         existingProject.CreatedAt, // Preserve original creation time
+		UpdatedAt:         now,
+	}
+
+	// Update fields if provided in request
+	if req.Name != "" {
+		updatedProject.Name = req.Name
+	}
+	if req.Description != "" {
+		updatedProject.Description = req.Description
+	} else if req.Description == "" && c.GetHeader("Content-Type") == "application/json" {
+		// Allow clearing description by sending empty string
+		updatedProject.Description = ""
+	}
+	if req.ExecutionEndpoint != "" {
+		updatedProject.ExecutionEndpoint = req.ExecutionEndpoint
+	} else if req.ExecutionEndpoint == "" && c.GetHeader("Content-Type") == "application/json" {
+		// Allow clearing execution endpoint by sending empty string
+		updatedProject.ExecutionEndpoint = ""
+	}
+	if req.AlertEmails != "" {
+		updatedProject.AlertEmails = req.AlertEmails
+	} else if req.AlertEmails == "" && c.GetHeader("Content-Type") == "application/json" {
+		// Allow clearing alert emails by sending empty string
+		updatedProject.AlertEmails = ""
+	}
+
+	// Update the project
+	err = h.repo.UpdateProject(c.Request.Context(), projectID, updatedProject)
+	if err != nil {
+		log.Printf("Failed to update project: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update project",
+		})
+		return
+	}
+
+	log.Printf("Project updated successfully: ID=%s, UUID=%s, Name=%s", updatedProject.ID.Hex(), updatedProject.UUID, updatedProject.Name)
+	c.JSON(http.StatusOK, updatedProject)
 }

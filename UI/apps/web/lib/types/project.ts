@@ -5,6 +5,7 @@ export interface Project {
   description?: string
   api_key?: string
   execution_endpoint?: string
+  alert_emails?: string
   created_at: string
   updated_at: string
 }
@@ -13,5 +14,12 @@ export interface CreateProjectRequest {
   name: string
   description?: string
   execution_endpoint?: string
+}
+
+export interface UpdateProjectRequest {
+  name?: string
+  description?: string
+  execution_endpoint?: string
+  alert_emails?: string
 }
 

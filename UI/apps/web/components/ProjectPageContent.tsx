@@ -108,6 +108,9 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
           description: project.description,
           api_key: project.api_key,
           execution_endpoint: project.execution_endpoint,
+          alert_emails: (project as Record<string, unknown>).alert_emails && typeof (project as Record<string, unknown>).alert_emails === 'string' 
+            ? (project as Record<string, unknown>).alert_emails as string 
+            : undefined,
           created_at: project.created_at || new Date().toISOString(),
           updated_at: project.updated_at || new Date().toISOString(),
         }}

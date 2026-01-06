@@ -3,6 +3,7 @@ import { z } from "zod";
 
 const models_Project = z
   .object({
+    alert_emails: z.string(),
     api_key: z.string(),
     created_at: z.string(),
     description: z.string(),
@@ -24,6 +25,15 @@ const models_CreateProjectRequest = z
     execution_endpoint: z.string().optional(),
     name: z.string().min(1).max(255),
   })
+  .passthrough();
+const models_UpdateProjectRequest = z
+  .object({
+    alert_emails: z.string(),
+    description: z.string().max(1000),
+    execution_endpoint: z.string(),
+    name: z.string().min(1).max(255),
+  })
+  .partial()
   .passthrough();
 const models_TaskGroupStatus = z.enum(["ACTIVE", "PAUSED", "DISABLED"]);
 const models_TaskGroup = z
@@ -141,6 +151,7 @@ export const schemas = {
   models_Project,
   models_ErrorResponse,
   models_CreateProjectRequest,
+  models_UpdateProjectRequest,
   models_TaskGroupStatus,
   models_TaskGroup,
   models_CreateTaskGroupRequest,
@@ -194,6 +205,44 @@ const endpoints = makeApi([
       {
         status: 400,
         description: `Bad Request`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 500,
+        description: `Internal Server Error`,
+        schema: models_ErrorResponse,
+      },
+    ],
+  },
+  {
+    method: "put",
+    path: "/projects/:project_id",
+    alias: "putProjectsProject_id",
+    description: `Update an existing project`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        description: `Project update request`,
+        type: "Body",
+        schema: models_UpdateProjectRequest,
+      },
+      {
+        name: "project_id",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: models_Project,
+    errors: [
+      {
+        status: 400,
+        description: `Bad Request`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 404,
+        description: `Not Found`,
         schema: models_ErrorResponse,
       },
       {

@@ -1,18 +1,19 @@
 'use client'
 
-import { useCreateTask, useCreateTaskGroup } from '@cron-observer/lib'
+import { useCreateTask, useCreateTaskGroup, useUpdateProject } from '@cron-observer/lib'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { CaretDownIcon, PlusIcon } from '@radix-ui/react-icons'
-import { Box, Button, Flex, Text } from '@radix-ui/themes'
+import { CaretDownIcon, GearIcon, PlusIcon } from '@radix-ui/react-icons'
+import { Box, Button, Flex, IconButton, Text } from '@radix-ui/themes'
 import Link from 'next/link'
 import { useState } from 'react'
 import { Execution } from '../lib/types/execution'
-import { Project } from '../lib/types/project'
+import { Project, UpdateProjectRequest } from '../lib/types/project'
 import { CreateTaskRequest, Task, UpdateTaskRequest } from '../lib/types/task'
 import { CreateTaskGroupRequest, TaskGroup, UpdateTaskGroupRequest } from '../lib/types/taskgroup'
 import { CreateTaskDialog } from './CreateTaskDialog'
 import { CreateTaskGroupDialog } from './CreateTaskGroupDialog'
 import { ExecutionsList } from './ExecutionsList'
+import { ProjectSettingsDialog } from './ProjectSettingsDialog'
 import { ResizableSplitter } from './ResizableSplitter'
 import { TaskGroupSettingsDialog } from './TaskGroupSettingsDialog'
 import { TaskGroupsList } from './TaskGroupsList'
@@ -40,9 +41,11 @@ export function ProjectLayout({
   const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false)
   const [isCreateTaskGroupDialogOpen, setIsCreateTaskGroupDialogOpen] = useState(false)
   const [selectedTaskGroupForCreate, setSelectedTaskGroupForCreate] = useState<TaskGroup | null>(null)
+  const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false)
 
   const createTaskGroupMutation = useCreateTaskGroup(project.id)
   const createTaskMutation = useCreateTask(project.id)
+  const updateProjectMutation = useUpdateProject(project.id)
 
   const handleTaskGroupSettingsClick = (taskGroup: TaskGroup) => {
     setSelectedTaskGroup(taskGroup)
@@ -107,6 +110,20 @@ export function ProjectLayout({
     })
   }
 
+  const handleProjectSettingsSubmit = (data: UpdateProjectRequest) => {
+    updateProjectMutation.mutate(data as any, {
+      onSuccess: () => {
+        // Dialog will close automatically via onOpenChange
+        // Projects will be refetched automatically via query invalidation
+        setIsProjectSettingsOpen(false)
+      },
+      onError: (error: Error) => {
+        // TODO: Add error toast/notification
+        console.error('Failed to update project:', error)
+      },
+    })
+  }
+
   return (
     <Flex direction="column" height="100%" width="100%" overflow="hidden">
       {/* Top separator */}
@@ -142,8 +159,19 @@ export function ProjectLayout({
             </Text>
           </Flex>
           
-          {/* GitHub-style split button */}
-          <DropdownMenu.Root>
+          <Flex align="center" gap="2">
+            {/* Settings Icon */}
+            <IconButton
+              size="2"
+              variant="ghost"
+              onClick={() => setIsProjectSettingsOpen(true)}
+              style={{ cursor: 'pointer' }}
+            >
+              <GearIcon width="16" height="16" />
+            </IconButton>
+            
+            {/* GitHub-style split button */}
+            <DropdownMenu.Root>
             <Flex style={{ display: 'inline-flex', gap: 0 }}>
               <Button
                 size="2"
@@ -210,6 +238,7 @@ export function ProjectLayout({
               </DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Root>
+          </Flex>
         </Flex>
       </Box>
 
@@ -266,6 +295,13 @@ export function ProjectLayout({
         projectId={project.id}
         taskGroupId={selectedTaskGroupForCreate?.id}
         onSubmit={handleCreateTaskSubmit}
+      />
+
+      <ProjectSettingsDialog
+        open={isProjectSettingsOpen}
+        onOpenChange={setIsProjectSettingsOpen}
+        project={project}
+        onSubmit={handleProjectSettingsSubmit}
       />
     </Flex>
   )

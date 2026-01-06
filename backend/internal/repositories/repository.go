@@ -12,6 +12,7 @@ type Repository interface {
 	GetAllProjects(ctx context.Context) ([]*models.Project, error)
 	GetProjectByID(ctx context.Context, projectID primitive.ObjectID) (*models.Project, error)
 	CreateProject(ctx context.Context, project *models.Project) error
+	UpdateProject(ctx context.Context, projectID primitive.ObjectID, project *models.Project) error
 
 	// tasks
 	CreateTask(ctx context.Context, projectID string, task *models.Task) error

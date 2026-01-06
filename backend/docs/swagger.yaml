@@ -144,6 +144,9 @@ definitions:
   models.Project:
     description: Project represents a project entity that contains tasks
     properties:
+      alert_emails:
+        example: admin@example.com,ops@example.com
+        type: string
       api_key:
         example: sk_live_abc123...
         type: string
@@ -351,6 +354,20 @@ definitions:
     type: string
     x-enum-varnames:
     - TriggerTypeHTTP
+  models.UpdateProjectRequest:
+    properties:
+      alert_emails:
+        type: string
+      description:
+        maxLength: 1000
+        type: string
+      execution_endpoint:
+        type: string
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+    type: object
   models.UpdateTaskGroupRequest:
     properties:
       description:
@@ -468,6 +485,45 @@ paths:
           schema:
             $ref: '#/definitions/models.ErrorResponse'
       summary: Create a new project
+      tags:
+      - projects
+  /projects/{project_id}:
+    put:
+      consumes:
+      - application/json
+      description: Update an existing project
+      parameters:
+      - description: Project ID
+        in: path
+        name: project_id
+        required: true
+        type: string
+      - description: Project update request
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateProjectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Project'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Update a project
       tags:
       - projects
   /projects/{project_id}/task-groups:

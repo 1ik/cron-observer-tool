@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
-import { createProject, getProjects } from '../api';
+import { createProject, getProjects, updateProject } from '../api';
 import { schemas } from '../api-client';
 
 // Infer the Project type from the Zod schema
@@ -41,6 +41,25 @@ export function useCreateProject() {
     onSuccess: () => {
       // Invalidate and refetch projects list after creating a new project
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook to update an existing project
+ */
+export function useUpdateProject(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (project: z.infer<typeof schemas.models_UpdateProjectRequest>) => {
+      return updateProject(projectId, project);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch projects list
+      queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+      // Also invalidate the specific project if we have a detail query key
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) });
     },
   });
 }

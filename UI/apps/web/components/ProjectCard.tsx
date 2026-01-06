@@ -1,16 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { CheckIcon, CopyIcon, GearIcon } from '@radix-ui/react-icons'
 import { Card, Flex, Heading, IconButton, Text, Tooltip } from '@radix-ui/themes'
-import { CopyIcon, CheckIcon } from '@radix-ui/react-icons'
 import Link from 'next/link'
+import { useState } from 'react'
 import { Project } from '../lib/types/project'
 
 interface ProjectCardProps {
   project: Project
+  onSettingsClick?: (project: Project) => void
 }
 
-export function ProjectCard({ project }: ProjectCardProps) {
+export function ProjectCard({ project, onSettingsClick }: ProjectCardProps) {
   const [copiedApiKey, setCopiedApiKey] = useState(false)
   const [copiedEndpoint, setCopiedEndpoint] = useState(false)
 
@@ -64,9 +65,27 @@ export function ProjectCard({ project }: ProjectCardProps) {
         }}
       >
         <Flex direction="column" gap="3" p="4">
-          <Heading size="5" weight="bold">
-            {project.name}
-          </Heading>
+          <Flex justify="between" align="start">
+            <Heading size="5" weight="bold" style={{ flex: 1 }}>
+              {project.name}
+            </Heading>
+            {onSettingsClick && (
+              <Tooltip content="Project settings">
+                <IconButton
+                  size="2"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onSettingsClick(project)
+                  }}
+                  style={{ cursor: 'pointer', flexShrink: 0 }}
+                >
+                  <GearIcon width="16" height="16" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Flex>
 
           {project.description && (
             <Text size="3" color="gray">
