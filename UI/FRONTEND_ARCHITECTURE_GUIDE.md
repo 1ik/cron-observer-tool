@@ -19,6 +19,125 @@ graph TD
 
 ---
 
+## Packages vs Apps Architecture Principle
+
+### ⚠️ CRITICAL: Separation of Concerns
+
+**MANDATORY RULE**: Design system components, reusable UI components, and imperative APIs MUST reside in `packages/`, not in `apps/`.
+
+### Package Structure
+
+```
+UI/
+├── packages/
+│   ├── ui/              # Design system & reusable UI components
+│   │   └── src/
+│   │       └── components/
+│   │           └── Toast.tsx      # Styled components, imperative APIs
+│   └── lib/             # Business logic hooks, API clients
+│       └── src/
+│           └── hooks/   # React Query hooks, utilities
+│
+└── apps/
+    └── web/             # Application-specific code ONLY
+        ├── app/         # Next.js pages & layouts
+        ├── components/ # Business components (combine packages)
+        └── lib/         # App-specific types, validations
+```
+
+### What Goes Where?
+
+#### ✅ Packages (`packages/ui/` and `packages/lib/`)
+
+**Design System Components:**
+- Styled wrapper components for Radix UI Primitives
+- Reusable UI components (Toast, Dialog wrappers, etc.)
+- Imperative APIs (toast.show(), dialog.open(), etc.)
+- Theme-aware components
+- Components that can be used across multiple apps
+
+**Business Logic:**
+- React Query hooks (`useProjects`, `useTasks`, etc.)
+- API client functions
+- Shared utilities and helpers
+- Type definitions shared across apps
+
+**Examples:**
+```typescript
+// ✅ packages/ui/src/components/Toast.tsx
+export function ToastProvider() { ... }
+export function useToast() { ... }
+
+// ✅ packages/lib/src/hooks/use-projects.ts
+export function useProjects() { ... }
+```
+
+#### ✅ Apps (`apps/web/`)
+
+**Application-Specific Code:**
+- Next.js pages and layouts (`app/` directory)
+- Business components that combine packages (`components/`)
+- App-specific types and validations (`lib/types/`, `lib/validations/`)
+- Minimal layout styling (positioning, app-specific spacing)
+
+**Examples:**
+```typescript
+// ✅ apps/web/components/ProjectCard.tsx
+// Combines packages/ui components with business logic
+import { Card, Button } from '@radix-ui/themes'
+import { useProjects } from '@cron-observer/lib'
+import { useToast } from '@cron-observer/ui'
+
+// ✅ apps/web/app/layout.tsx
+// App-specific layout structure
+```
+
+### ❌ FORBIDDEN: Design System in Apps
+
+**NEVER put these in `apps/web/components/`:**
+- Styled wrapper components for primitives
+- Imperative APIs (toast, dialog, etc.)
+- Reusable design system components
+- Components that could be used in other apps
+
+**Why this matters:**
+- ✅ **Reusability**: Components can be shared across multiple apps
+- ✅ **Maintainability**: Single source of truth for design system
+- ✅ **Consistency**: All apps use the same components
+- ✅ **Testability**: Components can be tested in isolation
+- ✅ **Scalability**: Easy to add new apps that share components
+
+### Migration Pattern
+
+When you find yourself creating a reusable component in `apps/web/components/`:
+
+1. **Ask**: "Could another app use this?"
+2. **If yes**: Move to `packages/ui/src/components/`
+3. **Export**: Add to `packages/ui/src/index.ts`
+4. **Import**: Use `import { Component } from '@cron-observer/ui'`
+
+### Example: Toast Component Migration
+
+**Before (❌ WRONG):**
+```typescript
+// apps/web/components/StyledToast.tsx
+export function StyledToastRoot() { ... }
+```
+
+**After (✅ CORRECT):**
+```typescript
+// packages/ui/src/components/Toast.tsx
+export function ToastProvider() { ... }
+export function useToast() { ... }
+
+// apps/web/components/ExecutionsList.tsx
+import { useToast } from '@cron-observer/ui'
+const toast = useToast()
+toast.success('Task paused')
+```
+
+---
+
 ## 1. API Client with TanStack Query
 
 ### Setup Query Provider
@@ -215,26 +334,25 @@ import * as Accordion from '@radix-ui/react-accordion'
   <Toast.Viewport />
 </Toast.Provider>
 
-// Option 2: Using styled wrapper component (RECOMMENDED for reusable styling)
-import { StyledToastProvider, StyledToastRoot, StyledToastViewport } from './StyledToast'
+// Option 2: Using imperative API (RECOMMENDED - from packages/ui)
+import { useToast } from '@cron-observer/ui'
 
-<StyledToastProvider>
-  <StyledToastRoot type="success" title="Success">
-    Task paused successfully
-  </StyledToastRoot>
-  <StyledToastViewport />
-</StyledToastProvider>
+const toast = useToast()
+toast.success('Task paused successfully')
+toast.error('Failed to update task', 'Error')
 ```
 
 **Creating Styled Wrapper Components:**
 
-When you need to reuse styling for primitives across multiple components, create styled wrapper components:
+When you need to reuse styling for primitives across multiple components, create styled wrapper components in `packages/ui/src/components/`:
 
 ```typescript
-// Example: StyledToast.tsx
+// ✅ CORRECT: packages/ui/src/components/Toast.tsx
 import * as Toast from '@radix-ui/react-toast'
 import { Box, Text } from '@radix-ui/themes'
+import { createContext, useContext } from 'react'
 
+// Styled components
 export function StyledToastRoot({ type, title, children, ...props }) {
   return (
     <Toast.Root
@@ -253,6 +371,26 @@ export function StyledToastRoot({ type, title, children, ...props }) {
     </Toast.Root>
   )
 }
+
+// Imperative API
+export function ToastProvider({ children }) { ... }
+export function useToast() { ... }
+```
+
+**Usage in Apps:**
+```typescript
+// ✅ apps/web/app/layout.tsx
+import { ToastProvider } from '@cron-observer/ui'
+
+<ToastProvider>
+  <App />
+</ToastProvider>
+
+// ✅ apps/web/components/SomeComponent.tsx
+import { useToast } from '@cron-observer/ui'
+
+const toast = useToast()
+toast.success('Operation completed')
 ```
 
 **Benefits:**
@@ -260,6 +398,8 @@ export function StyledToastRoot({ type, title, children, ...props }) {
 - ✅ Consistent theming with centralized theme tokens
 - ✅ Easier maintenance (update styling in one place)
 - ✅ Cleaner component code (less inline styles)
+- ✅ Imperative API for better developer experience
+- ✅ Components live in packages, not apps
 ```
 
 **Component Architecture Philosophy:**

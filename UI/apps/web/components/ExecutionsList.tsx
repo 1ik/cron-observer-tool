@@ -1,16 +1,16 @@
 'use client'
 
 import { useTasksByProject, useUpdateTaskStatus } from '@cron-observer/lib'
+import { useToast } from '@cron-observer/ui'
 import { CalendarIcon, PauseIcon, PlayIcon } from '@radix-ui/react-icons'
 import * as Popover from '@radix-ui/react-popover'
 import { Box, Button, Flex, IconButton, Spinner, Text, Tooltip } from '@radix-ui/themes'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { DayPicker } from 'react-day-picker'
 import 'react-day-picker/dist/style.css'
 import { Execution } from '../lib/types/execution'
 import { ExecutionItem } from './ExecutionItem'
-import { StyledToastProvider, StyledToastRoot, StyledToastViewport } from './StyledToast'
 
 interface ExecutionsListProps {
   executions: Execution[]
@@ -33,10 +33,8 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
   const currentTaskStatus = selectedTask?.status || 'ACTIVE'
   const isTaskPaused = currentTaskStatus === 'PAUSED'
   
-  // Toast state
-  const [toastOpen, setToastOpen] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
-  const [toastType, setToastType] = useState<'success' | 'error'>('success')
+  // Toast hook for imperative API
+  const toast = useToast()
   
   // Update task status mutation
   const updateStatusMutation = useUpdateTaskStatus(projectId || '', selectedTaskUUID || '')
@@ -104,13 +102,14 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
     
     try {
       await updateStatusMutation.mutateAsync(newStatus)
-      setToastMessage(newStatus === 'PAUSED' ? 'Task paused successfully' : 'Task resumed successfully')
-      setToastType('success')
-      setToastOpen(true)
+      toast.success(
+        newStatus === 'PAUSED' ? 'Task paused successfully' : 'Task resumed successfully'
+      )
     } catch (error) {
-      setToastMessage(error instanceof Error ? error.message : 'Failed to update task status')
-      setToastType('error')
-      setToastOpen(true)
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update task status',
+        'Error'
+      )
     }
   }
   
@@ -310,19 +309,6 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
           </Box>
         )}
       </Box>
-      
-      {/* Toast notifications */}
-      <StyledToastProvider swipeDirection="right">
-        <StyledToastRoot
-          open={toastOpen}
-          onOpenChange={setToastOpen}
-          type={toastType}
-          title={toastType === 'success' ? 'Success' : 'Error'}
-        >
-          {toastMessage}
-        </StyledToastRoot>
-        <StyledToastViewport />
-      </StyledToastProvider>
     </Flex>
   )
 }
