@@ -199,6 +199,45 @@ export async function createTask(
   return client.postProjectsProject_idtasks(task, { params: { project_id: projectId } });
 }
 
+/**
+ * Update task status (pause/play)
+ * @param projectId - Project ID (MongoDB ObjectID)
+ * @param taskUUID - Task UUID
+ * @param status - New status (ACTIVE or PAUSED)
+ * @returns Promise resolving to the updated task
+ */
+export async function updateTaskStatus(projectId: string, taskUUID: string, status: 'ACTIVE' | 'PAUSED') {
+  const client = getApiClient();
+  
+  if (!projectId || !taskUUID || !status) {
+    throw new Error('Missing required parameters: projectId, taskUUID, and status are required');
+  }
+  
+  if (status !== 'ACTIVE' && status !== 'PAUSED') {
+    throw new Error('Status must be either ACTIVE or PAUSED');
+  }
+  
+  // Use fetch directly since the endpoint might not be in the generated client yet
+  const baseUrl = getDefaultApiBaseUrl();
+  const response = await fetch(
+    `${baseUrl}/projects/${projectId}/tasks/${taskUUID}/status`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status }),
+    }
+  );
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to update task status' }));
+    throw new Error(error.error || `HTTP ${response.status}: Failed to update task status`);
+  }
+  
+  return response.json();
+}
+
 // ============================================================================
 // Executions API
 // ============================================================================

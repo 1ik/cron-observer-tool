@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -14,14 +16,22 @@ import (
 )
 
 type TaskHandler struct {
-	repo     repositories.Repository
-	eventBus *events.EventBus
+	repo      repositories.Repository
+	eventBus  *events.EventBus
+	scheduler interface {
+		RegisterTask(ctx context.Context, task *models.Task) error
+		UnregisterTask(taskUUID string)
+	}
 }
 
-func NewTaskHandler(repo repositories.Repository, eventBus *events.EventBus) *TaskHandler {
+func NewTaskHandler(repo repositories.Repository, eventBus *events.EventBus, scheduler interface {
+	RegisterTask(ctx context.Context, task *models.Task) error
+	UnregisterTask(taskUUID string)
+}) *TaskHandler {
 	return &TaskHandler{
-		repo:     repo,
-		eventBus: eventBus,
+		repo:      repo,
+		eventBus:  eventBus,
+		scheduler: scheduler, // Can be nil if scheduler is not needed
 	}
 }
 
@@ -356,4 +366,116 @@ func (h *TaskHandler) DeleteTask(c *gin.Context) {
 	})
 
 	c.Status(http.StatusNoContent)
+}
+
+// UpdateTaskStatus updates a task's status (pause/play)
+// @Summary      Update task status
+// @Description  Update a task's status (ACTIVE or PAUSED) and update scheduler accordingly
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        task_uuid path string true "Task UUID"
+// @Param        request body object true "Status update request" example({"status": "PAUSED"})
+// @Success      200  {object}  models.Task
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      404  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/tasks/{task_uuid}/status [patch]
+func (h *TaskHandler) UpdateTaskStatus(c *gin.Context) {
+	// Get project_id and task_uuid from path parameters
+	projectIDParam := c.Param("project_id")
+	taskUUIDParam := c.Param("task_uuid")
+
+	if projectIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "project_id is required in path",
+		})
+		return
+	}
+
+	if taskUUIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "task_uuid is required in path",
+		})
+		return
+	}
+
+	// Convert project_id to ObjectID
+	projectID, err := primitive.ObjectIDFromHex(projectIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid project_id format in path",
+		})
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		Status models.TaskStatus `json:"status" binding:"required,oneof=ACTIVE PAUSED"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.HandleValidationError(c, err)
+		return
+	}
+
+	// Get existing task
+	existingTask, err := h.repo.GetTaskByUUID(c.Request.Context(), taskUUIDParam)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Task not found",
+		})
+		return
+	}
+
+	// Verify project_id matches
+	if existingTask.ProjectID != projectID {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Task does not belong to this project",
+		})
+		return
+	}
+
+	// Don't update if status is already the same
+	if existingTask.Status == req.Status {
+		c.JSON(http.StatusOK, existingTask)
+		return
+	}
+
+	// Update task status
+	updatedTask := *existingTask
+	updatedTask.Status = req.Status
+	updatedTask.UpdatedAt = time.Now()
+
+	// Update in database
+	err = h.repo.UpdateTask(c.Request.Context(), taskUUIDParam, &updatedTask)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update task status",
+		})
+		return
+	}
+
+	// Update scheduler if available
+	if h.scheduler != nil {
+		if req.Status == models.TaskStatusActive {
+			// Register task in scheduler
+			if err := h.scheduler.RegisterTask(c.Request.Context(), &updatedTask); err != nil {
+				log.Printf("Failed to register task %s in scheduler: %v", taskUUIDParam, err)
+				// Don't fail the request, just log the error
+			}
+		} else if req.Status == models.TaskStatusPaused {
+			// Unregister task from scheduler
+			h.scheduler.UnregisterTask(taskUUIDParam)
+		}
+	}
+
+	// Publish TaskUpdated event
+	h.eventBus.Publish(events.Event{
+		Type:    events.TaskUpdated,
+		Payload: events.TaskPayload{Task: &updatedTask},
+	})
+
+	c.JSON(http.StatusOK, &updatedTask)
 }

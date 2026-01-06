@@ -140,7 +140,12 @@ func (s *Scheduler) LoadAllActiveTasks(ctx context.Context) error {
 	return nil
 }
 
-// registerTask registers a task as a cron job
+// RegisterTask registers a task as a cron job (public method)
+func (s *Scheduler) RegisterTask(ctx context.Context, task *models.Task) error {
+	return s.registerTask(ctx, task)
+}
+
+// registerTask registers a task as a cron job (internal)
 func (s *Scheduler) registerTask(ctx context.Context, task *models.Task) error {
 	// Only register tasks with cron expressions
 	if task.ScheduleConfig.CronExpression == "" {
@@ -185,7 +190,12 @@ func (s *Scheduler) registerTask(ctx context.Context, task *models.Task) error {
 	return nil
 }
 
-// unregisterTask removes a task's cron job
+// UnregisterTask removes a task's cron job (public method)
+func (s *Scheduler) UnregisterTask(taskUUID string) {
+	s.unregisterTask(taskUUID)
+}
+
+// unregisterTask removes a task's cron job (internal)
 func (s *Scheduler) unregisterTask(taskUUID string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

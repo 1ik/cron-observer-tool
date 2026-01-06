@@ -1,7 +1,9 @@
 'use client'
 
+import { useTasksByProject, useUpdateTaskStatus } from '@cron-observer/lib'
 import { CalendarIcon, PauseIcon, PlayIcon } from '@radix-ui/react-icons'
 import * as Popover from '@radix-ui/react-popover'
+import * as Toast from '@radix-ui/react-toast'
 import { Box, Button, Flex, IconButton, Spinner, Text, Tooltip } from '@radix-ui/themes'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -13,13 +15,31 @@ import { ExecutionItem } from './ExecutionItem'
 interface ExecutionsListProps {
   executions: Execution[]
   isLoading?: boolean
+  selectedTaskId?: string | null
+  projectId?: string | null
 }
 
-export function ExecutionsList({ executions, isLoading = false }: ExecutionsListProps) {
-  const [isPaused, setIsPaused] = useState(false)
+export function ExecutionsList({ executions, isLoading = false, selectedTaskId, projectId }: ExecutionsListProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  
+  // Get tasks to find the selected task's status
+  const { data: tasks = [] } = useTasksByProject(projectId || '')
+  const selectedTask = selectedTaskId
+    ? tasks.find((t) => t.id === selectedTaskId || t.uuid === selectedTaskId)
+    : null
+  const selectedTaskUUID = selectedTask?.uuid || selectedTask?.id || null
+  const currentTaskStatus = selectedTask?.status || 'ACTIVE'
+  const isTaskPaused = currentTaskStatus === 'PAUSED'
+  
+  // Toast state
+  const [toastOpen, setToastOpen] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  const [toastType, setToastType] = useState<'success' | 'error'>('success')
+  
+  // Update task status mutation
+  const updateStatusMutation = useUpdateTaskStatus(projectId || '', selectedTaskUUID || '')
 
   // Extract unique dates from executions
   const availableDates = useMemo(() => {
@@ -75,10 +95,26 @@ export function ExecutionsList({ executions, isLoading = false }: ExecutionsList
     })
   }
 
-  const handleToggle = () => {
-    setIsPaused(!isPaused)
-    // TODO: Implement actual pause/play logic for executions
+  const handleToggle = async () => {
+    if (!selectedTaskUUID || !projectId) {
+      return
+    }
+    
+    const newStatus = isTaskPaused ? 'ACTIVE' : 'PAUSED'
+    
+    try {
+      await updateStatusMutation.mutateAsync(newStatus)
+      setToastMessage(newStatus === 'PAUSED' ? 'Task paused successfully' : 'Task resumed successfully')
+      setToastType('success')
+      setToastOpen(true)
+    } catch (error) {
+      setToastMessage(error instanceof Error ? error.message : 'Failed to update task status')
+      setToastType('error')
+      setToastOpen(true)
+    }
   }
+  
+  const isLoadingStatus = updateStatusMutation.isPending
 
   return (
     <Flex
@@ -208,20 +244,25 @@ export function ExecutionsList({ executions, isLoading = false }: ExecutionsList
               </Popover.Content>
             </Popover.Root>
           </Flex>
-          <Tooltip content={isPaused ? "Resume task" : "Pause task"}>
-            <IconButton
-              variant="outline"
-              size="2"
-              onClick={handleToggle}
-              style={{ cursor: 'pointer', marginRight: 'var(--space-1)' }}
-            >
-              {isPaused ? (
-                <PlayIcon width="16" height="16" />
-              ) : (
-                <PauseIcon width="16" height="16" />
-              )}
-            </IconButton>
-          </Tooltip>
+          {selectedTaskUUID && projectId && (
+            <Tooltip content={isTaskPaused ? "Resume task" : "Pause task"}>
+              <IconButton
+                variant="outline"
+                size="2"
+                onClick={handleToggle}
+                disabled={isLoadingStatus}
+                style={{ cursor: isLoadingStatus ? 'wait' : 'pointer', marginRight: 'var(--space-1)' }}
+              >
+                {isLoadingStatus ? (
+                  <Spinner size="1" />
+                ) : isTaskPaused ? (
+                  <PlayIcon width="16" height="16" />
+                ) : (
+                  <PauseIcon width="16" height="16" />
+                )}
+              </IconButton>
+            </Tooltip>
+          )}
         </Flex>
       </Box>
 
@@ -269,6 +310,35 @@ export function ExecutionsList({ executions, isLoading = false }: ExecutionsList
           </Box>
         )}
       </Box>
+      
+      {/* Toast notifications */}
+      <Toast.Provider swipeDirection="right">
+        <Toast.Root
+          open={toastOpen}
+          onOpenChange={setToastOpen}
+          style={{
+            backgroundColor: toastType === 'success' ? 'var(--green-9)' : 'var(--red-9)',
+            color: 'white',
+            padding: 'var(--space-3)',
+            borderRadius: 'var(--radius-3)',
+            boxShadow: 'var(--shadow-6)',
+            minWidth: '300px',
+          }}
+        >
+          <Toast.Title style={{ fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--space-1)' }}>
+            {toastType === 'success' ? 'Success' : 'Error'}
+          </Toast.Title>
+          <Toast.Description>{toastMessage}</Toast.Description>
+        </Toast.Root>
+        <Toast.Viewport
+          style={{
+            position: 'fixed',
+            bottom: 'var(--space-4)',
+            right: 'var(--space-4)',
+            zIndex: 9999,
+          }}
+        />
+      </Toast.Provider>
     </Flex>
   )
 }

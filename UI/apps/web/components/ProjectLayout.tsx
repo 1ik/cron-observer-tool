@@ -259,7 +259,14 @@ export function ProjectLayout({
               onCreateTaskClick={handleCreateTaskClick}
             />
           }
-          rightContent={<ExecutionsList executions={executions} isLoading={isLoadingExecutions} />}
+          rightContent={
+            <ExecutionsList
+              executions={executions}
+              isLoading={isLoadingExecutions}
+              selectedTaskId={selectedTaskId}
+              projectId={project.id}
+            />
+          }
           initialLeftWidth={20}
           minLeftWidth={20}
           minRightWidth={20}
