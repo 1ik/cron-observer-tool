@@ -1,9 +1,9 @@
 'use client'
 
+import { CaretRightIcon } from '@radix-ui/react-icons'
+import { Badge, Box, Flex, Separator, Text } from '@radix-ui/themes'
 import { useState } from 'react'
-import { ChevronDownIcon } from '@radix-ui/react-icons'
-import { Box, Card, Flex, Text, Badge } from '@radix-ui/themes'
-import { Execution, LogEntry } from '../lib/types/execution'
+import { Execution } from '../lib/types/execution'
 
 interface ExecutionItemProps {
   execution: Execution
@@ -44,23 +44,25 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
+      hour12: false,
+    })
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
     })
   }
 
@@ -74,120 +76,224 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
   const hasLogs = execution.logs && execution.logs.length > 0
 
   return (
-    <Card size="2">
-      <Flex direction="column" gap="2">
-        {/* Header - clickable to expand */}
-        <Box
-          onClick={() => hasLogs && setIsExpanded(!isExpanded)}
-          style={{
-            cursor: hasLogs ? 'pointer' : 'default',
-          }}
-        >
-          <Flex direction="column" gap="2" p="3">
-            <Flex justify="between" align="center">
-              <Flex align="center" gap="2" style={{ flex: 1 }}>
-                {hasLogs && (
-                  <ChevronDownIcon
-                    width="16"
-                    height="16"
+    <Box
+      style={{
+        borderBottom: '1px solid var(--gray-4)',
+        backgroundColor: 'var(--color-panel)',
+        transition: 'background-color 0.15s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = 'var(--gray-2)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'var(--color-panel)'
+      }}
+    >
+      {/* Main execution row */}
+      <Box
+        onClick={() => hasLogs && setIsExpanded(!isExpanded)}
+        style={{
+          cursor: hasLogs ? 'pointer' : 'default',
+          padding: 'var(--space-3)',
+        }}
+      >
+        <Flex direction="column" gap="2">
+          {/* First row: Task name, status, and expand icon */}
+          <Flex justify="between" align="center" gap="3">
+            <Flex align="center" gap="2" style={{ flex: 1, minWidth: 0 }}>
+              {hasLogs && (
+                <Box
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '16px',
+                    height: '16px',
+                    flexShrink: 0,
+                    transition: 'transform 0.2s ease',
+                    transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                  }}
+                >
+                  <CaretRightIcon
+                    width="12"
+                    height="12"
                     style={{
-                      transition: 'transform 0.2s',
-                      transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)',
-                      color: 'var(--gray-11)',
+                      color: 'var(--gray-10)',
                     }}
                   />
-                )}
-                <Text size="3" weight="medium">
-                  {execution.task_name}
-                </Text>
-              </Flex>
-              <Badge color={getStatusColor(execution.status)} variant="soft" radius="full">
-                {execution.status}
-              </Badge>
-            </Flex>
-
-            <Flex gap="4" wrap="wrap">
-              <Text size="2" color="gray">
-                Started: {formatDate(execution.started_at)}
-              </Text>
-              {execution.completed_at && (
-                <Text size="2" color="gray">
-                  Completed: {formatDate(execution.completed_at)}
-                </Text>
+                </Box>
               )}
-              {execution.duration_ms && (
-                <Text size="2" color="gray">
-                  Duration: {formatDuration(execution.duration_ms)}
-                </Text>
-              )}
-            </Flex>
-
-            {execution.response_status && (
-              <Text size="2" color="gray">
-                Status Code: {execution.response_status}
-              </Text>
-            )}
-
-            {execution.error_message && (
-              <Box
-                p="2"
+              {!hasLogs && <Box style={{ width: '16px', flexShrink: 0 }} />}
+              <Text
+                size="2"
+                weight="medium"
                 style={{
-                  backgroundColor: 'var(--red-2)',
-                  borderRadius: 'var(--radius-2)',
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--gray-12)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                <Text size="2" color="red">
-                  Error: {execution.error_message}
+                {execution.task_name}
+              </Text>
+            </Flex>
+            <Badge color={getStatusColor(execution.status)} variant="soft" size="1" radius="full">
+              {execution.status}
+            </Badge>
+          </Flex>
+
+          {/* Second row: Timestamp and duration */}
+          <Flex gap="4" wrap="wrap" align="center" pl="5">
+            <Text
+              size="1"
+              color="gray"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '11px',
+              }}
+            >
+              {formatDate(execution.started_at)}
+            </Text>
+            {execution.duration_ms && (
+              <>
+                <Text size="1" color="gray" style={{ fontSize: '11px' }}>
+                  •
                 </Text>
-              </Box>
+                <Text
+                  size="1"
+                  color="gray"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                  }}
+                >
+                  {formatDuration(execution.duration_ms)}
+                </Text>
+              </>
+            )}
+            {execution.response_status && (
+              <>
+                <Text size="1" color="gray" style={{ fontSize: '11px' }}>
+                  •
+                </Text>
+                <Text
+                  size="1"
+                  color="gray"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                  }}
+                >
+                  HTTP {execution.response_status}
+                </Text>
+              </>
             )}
           </Flex>
-        </Box>
 
-        {/* Expanded logs section */}
-        {isExpanded && hasLogs && (
+          {/* Error message */}
+          {execution.error_message && (
+            <Box pl="5">
+              <Text
+                size="1"
+                color="red"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '11px',
+                }}
+              >
+                ERROR: {execution.error_message}
+              </Text>
+            </Box>
+          )}
+        </Flex>
+      </Box>
+
+      {/* Expanded logs section */}
+      {isExpanded && hasLogs && (
+        <>
+          <Separator size="4" />
           <Box
-            p="3"
             style={{
-              borderTop: '1px solid var(--gray-6)',
-              backgroundColor: 'var(--gray-2)',
+              padding: 'var(--space-3)',
+              backgroundColor: 'var(--gray-1)',
+              borderTop: '1px solid var(--gray-4)',
             }}
           >
-            <Text size="2" weight="medium" color="gray" mb="2">
+            <Text
+              size="1"
+              weight="medium"
+              color="gray"
+              mb="3"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}
+            >
               Logs ({execution.logs!.length})
             </Text>
             <Flex direction="column" gap="1">
-              {execution.logs!.map((log) => (
+              {execution.logs!.map((log, index) => (
                 <Box
-                  key={log.id}
+                  key={log.id || index}
                   p="2"
                   style={{
-                    backgroundColor: 'var(--gray-1)',
-                    borderRadius: 'var(--radius-1)',
-                    fontFamily: 'monospace',
+                    backgroundColor: 'var(--color-panel-solid)',
+                    border: '1px solid var(--gray-4)',
+                    borderRadius: '2px',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    lineHeight: '1.5',
                   }}
                 >
-                  <Flex align="center" gap="2" mb="1">
-                    <Text size="1" color="gray">
+                  <Flex align="flex-start" gap="2" mb="1">
+                    <Text
+                      size="1"
+                      color="gray"
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '10px',
+                        flexShrink: 0,
+                      }}
+                    >
                       {formatTime(log.timestamp)}
                     </Text>
-                    <Badge
-                      color={getLogLevelColor(log.level)}
-                      variant="soft"
-                      size="1"
-                    >
-                      {log.level}
-                    </Badge>
+                    {log.level && (
+                      <Badge
+                        color={getLogLevelColor(log.level)}
+                        variant="soft"
+                        size="1"
+                        radius="full"
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '9px',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {log.level}
+                      </Badge>
+                    )}
                   </Flex>
-                  <Text size="1" style={{ wordBreak: 'break-word' }}>
+                  <Text
+                    size="1"
+                    style={{
+                      wordBreak: 'break-word',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '11px',
+                      color: 'var(--gray-12)',
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
                     {log.message}
                   </Text>
                 </Box>
               ))}
             </Flex>
           </Box>
-        )}
-      </Flex>
-    </Card>
+        </>
+      )}
+    </Box>
   )
 }

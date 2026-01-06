@@ -2,7 +2,7 @@
 
 import { CalendarIcon, PauseIcon, PlayIcon } from '@radix-ui/react-icons'
 import * as Popover from '@radix-ui/react-popover'
-import { Box, Button, Flex, IconButton, Spinner, Text } from '@radix-ui/themes'
+import { Box, Button, Flex, IconButton, Spinner, Text, Tooltip } from '@radix-ui/themes'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { DayPicker } from 'react-day-picker'
@@ -208,18 +208,20 @@ export function ExecutionsList({ executions, isLoading = false }: ExecutionsList
               </Popover.Content>
             </Popover.Root>
           </Flex>
-          <IconButton
-            variant="ghost"
-            size="2"
-            onClick={handleToggle}
-            style={{ cursor: 'pointer' }}
-          >
-            {isPaused ? (
-              <PlayIcon width="16" height="16" />
-            ) : (
-              <PauseIcon width="16" height="16" />
-            )}
-          </IconButton>
+          <Tooltip content={isPaused ? "Resume task" : "Pause task"}>
+            <IconButton
+              variant="outline"
+              size="2"
+              onClick={handleToggle}
+              style={{ cursor: 'pointer', marginRight: 'var(--space-1)' }}
+            >
+              {isPaused ? (
+                <PlayIcon width="16" height="16" />
+              ) : (
+                <PauseIcon width="16" height="16" />
+              )}
+            </IconButton>
+          </Tooltip>
         </Flex>
       </Box>
 
@@ -241,17 +243,30 @@ export function ExecutionsList({ executions, isLoading = false }: ExecutionsList
             </Flex>
           </Flex>
         ) : executions.length === 0 ? (
-          <Box>
-            <Text size="3" color="gray" align="center">
-              No executions yet
+          <Flex justify="center" align="center" style={{ minHeight: '200px' }}>
+            <Text
+              size="2"
+              color="gray"
+              style={{
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              No executions found
             </Text>
-          </Box>
-        ) : (
-          <Flex direction="column" gap="3">
-            {executions.map((execution) => (
-              <ExecutionItem key={execution.id} execution={execution} />
-            ))}
           </Flex>
+        ) : (
+          <Box
+            style={{
+              border: '1px solid var(--gray-4)',
+              borderRadius: 'var(--radius-2)',
+              overflow: 'hidden',
+              backgroundColor: 'var(--color-panel)',
+            }}
+          >
+            {executions.map((execution, index) => (
+              <ExecutionItem key={execution.id || index} execution={execution} />
+            ))}
+          </Box>
         )}
       </Box>
     </Flex>
