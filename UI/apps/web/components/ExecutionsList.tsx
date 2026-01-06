@@ -3,7 +3,6 @@
 import { useTasksByProject, useUpdateTaskStatus } from '@cron-observer/lib'
 import { CalendarIcon, PauseIcon, PlayIcon } from '@radix-ui/react-icons'
 import * as Popover from '@radix-ui/react-popover'
-import * as Toast from '@radix-ui/react-toast'
 import { Box, Button, Flex, IconButton, Spinner, Text, Tooltip } from '@radix-ui/themes'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -11,6 +10,7 @@ import { DayPicker } from 'react-day-picker'
 import 'react-day-picker/dist/style.css'
 import { Execution } from '../lib/types/execution'
 import { ExecutionItem } from './ExecutionItem'
+import { StyledToastProvider, StyledToastRoot, StyledToastViewport } from './StyledToast'
 
 interface ExecutionsListProps {
   executions: Execution[]
@@ -254,7 +254,7 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
                 style={{ cursor: isLoadingStatus ? 'wait' : 'pointer', marginRight: 'var(--space-1)' }}
               >
                 {isLoadingStatus ? (
-                  <Spinner size="1" />
+                  <Spinner size="2" />
                 ) : isTaskPaused ? (
                   <PlayIcon width="16" height="16" />
                 ) : (
@@ -312,33 +312,17 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
       </Box>
       
       {/* Toast notifications */}
-      <Toast.Provider swipeDirection="right">
-        <Toast.Root
+      <StyledToastProvider swipeDirection="right">
+        <StyledToastRoot
           open={toastOpen}
           onOpenChange={setToastOpen}
-          style={{
-            backgroundColor: toastType === 'success' ? 'var(--green-9)' : 'var(--red-9)',
-            color: 'white',
-            padding: 'var(--space-3)',
-            borderRadius: 'var(--radius-3)',
-            boxShadow: 'var(--shadow-6)',
-            minWidth: '300px',
-          }}
+          type={toastType}
+          title={toastType === 'success' ? 'Success' : 'Error'}
         >
-          <Toast.Title style={{ fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--space-1)' }}>
-            {toastType === 'success' ? 'Success' : 'Error'}
-          </Toast.Title>
-          <Toast.Description>{toastMessage}</Toast.Description>
-        </Toast.Root>
-        <Toast.Viewport
-          style={{
-            position: 'fixed',
-            bottom: 'var(--space-4)',
-            right: 'var(--space-4)',
-            zIndex: 9999,
-          }}
-        />
-      </Toast.Provider>
+          {toastMessage}
+        </StyledToastRoot>
+        <StyledToastViewport />
+      </StyledToastProvider>
     </Flex>
   )
 }

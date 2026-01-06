@@ -189,6 +189,77 @@ import * as Accordion from '@radix-ui/react-accordion'
     <Select.Item value="2">Option 2</Select.Item>
   </Select.Content>
 </Select.Root>
+
+// Popover Example (Primitive with Themes components inside)
+<Popover.Root>
+  <Popover.Trigger asChild>
+    <Button variant="soft" size="2">Open</Button>
+  </Popover.Trigger>
+  <Popover.Content style={{ padding: 'var(--space-3)' }}>
+    <Box>
+      <Text size="3" weight="medium" mb="2">Title</Text>
+      <Text size="2" color="gray">Description</Text>
+    </Box>
+  </Popover.Content>
+</Popover.Root>
+
+// Toast Example (Primitive with Themes components inside)
+// Option 1: Direct usage with inline styles (for one-off cases)
+<Toast.Provider>
+  <Toast.Root style={{ backgroundColor: 'var(--green-9)', padding: 'var(--space-3)' }}>
+    <Box>
+      <Text size="3" weight="medium" style={{ color: 'white' }}>Success</Text>
+      <Text size="2" style={{ color: 'white' }}>Message</Text>
+    </Box>
+  </Toast.Root>
+  <Toast.Viewport />
+</Toast.Provider>
+
+// Option 2: Using styled wrapper component (RECOMMENDED for reusable styling)
+import { StyledToastProvider, StyledToastRoot, StyledToastViewport } from './StyledToast'
+
+<StyledToastProvider>
+  <StyledToastRoot type="success" title="Success">
+    Task paused successfully
+  </StyledToastRoot>
+  <StyledToastViewport />
+</StyledToastProvider>
+```
+
+**Creating Styled Wrapper Components:**
+
+When you need to reuse styling for primitives across multiple components, create styled wrapper components:
+
+```typescript
+// Example: StyledToast.tsx
+import * as Toast from '@radix-ui/react-toast'
+import { Box, Text } from '@radix-ui/themes'
+
+export function StyledToastRoot({ type, title, children, ...props }) {
+  return (
+    <Toast.Root
+      style={{
+        backgroundColor: type === 'success' ? 'var(--green-9)' : 'var(--red-9)',
+        padding: 'var(--space-3)',
+        borderRadius: 'var(--radius-3)',
+        // ... theme tokens
+      }}
+      {...props}
+    >
+      <Box>
+        {title && <Text size="3" weight="medium">{title}</Text>}
+        <Text size="2">{children}</Text>
+      </Box>
+    </Toast.Root>
+  )
+}
+```
+
+**Benefits:**
+- ✅ Reusable styling across the application
+- ✅ Consistent theming with centralized theme tokens
+- ✅ Easier maintenance (update styling in one place)
+- ✅ Cleaner component code (less inline styles)
 ```
 
 **Component Architecture Philosophy:**
@@ -202,11 +273,13 @@ This architecture separates concerns into three clear layers:
    - Cards: Card, Inset
    - Feedback: Spinner, Badge, Separator
    - **Purpose**: Complete design system with built-in theming
+   - **Priority**: ALWAYS prefer Themes components when available
 
 2. **Radix UI Primitives (`@radix-ui/react-*`)**: Provides unstyled, accessible interactive components
    - Dialogs, Selects, Checkboxes, Radio Groups, Switches
-   - Dropdowns, Popovers, Tooltips, Tabs, Accordions
+   - Dropdowns, Popovers, Tooltips, Tabs, Accordions, Toasts
    - **Purpose**: Accessible primitives for complex interactions
+   - **Usage**: Use when Themes doesn't provide the component, but ALWAYS style with Themes tokens and use Themes components inside them
 
 3. **Business Components (`@cron-observer/ui`)**: Custom composite components
    - **ONLY** for components that combine multiple Radix components with business logic
@@ -214,27 +287,49 @@ This architecture separates concerns into three clear layers:
    - **NOT** for design system components (use `@radix-ui/themes` instead)
    - **Purpose**: Reusable business logic components
 
+### Component Preference Hierarchy
+
+**MANDATORY RULE**: Always follow this order when selecting components:
+
+1. **First Choice**: Radix UI Themes components (`@radix-ui/themes`)
+   - Use when available: Box, Flex, Text, Heading, Button, Card, Spinner, Badge, etc.
+   - These components are fully styled and theme-aware
+
+2. **Second Choice**: Radix UI Primitives (`@radix-ui/react-*`) styled with Themes
+   - Use when Themes doesn't provide the component (e.g., Popover, Toast, Dialog)
+   - **CRITICAL**: Always use Themes components (Box, Text, Button, etc.) inside primitives
+   - Always use Themes styling tokens (`var(--space-*)`, `var(--color-*)`, etc.)
+   - Example: `<Popover.Content>` should contain `<Box>`, `<Text>`, `<Button>` from Themes
+
+3. **Last Resort**: Custom components
+   - Only for business logic that combines multiple Radix components
+   - Must still use Radix components internally, never raw HTML
+
 ### Component Selection Guide
 
-| **Use Case** | **Component** | **Import Source** | **❌ FORBIDDEN** |
-|-------------|--------------|------------------|-----------------|
-| **Layout** | `Box`, `Flex`, `Grid`, `Container` | `@radix-ui/themes` | `div`, `section`, `article`, `main`, `aside` |
-| **Typography** | `Text`, `Heading`, `Strong`, `Em` | `@radix-ui/themes` | `p`, `span`, `h1-h6`, `strong`, `em` |
-| **Buttons** | `Button`, `IconButton` | `@radix-ui/themes` | `button` |
-| **Cards** | `Card`, `Inset` | `@radix-ui/themes` | `div` with border/shadow |
-| **Feedback** | `Spinner`, `Badge`, `Separator` | `@radix-ui/themes` | Custom spinners, `hr` |
-| **Dialogs** | `Dialog.*`, `AlertDialog.*` | `@radix-ui/react-dialog`, `@radix-ui/react-alert-dialog` | `div` with custom modal |
-| **Dropdowns** | `DropdownMenu.*` | `@radix-ui/react-dropdown-menu` | Custom dropdown |
-| **Select** | `Select.*` | `@radix-ui/react-select` | `select` |
-| **Tabs** | `Tabs.*` | `@radix-ui/react-tabs` | Custom tab implementation |
-| **Toast** | `Toast.*` | `@radix-ui/react-toast` | Custom toast |
-| **Tooltip** | `Tooltip.*` | `@radix-ui/react-tooltip` | `title` attribute |
-| **Forms** | `Checkbox.*`, `RadioGroup.*`, `Switch.*` | `@radix-ui/react-checkbox`, `@radix-ui/react-radio-group`, `@radix-ui/react-switch` | `input[type="checkbox"]`, `input[type="radio"]` |
-| **Avatar** | `Avatar.*` | `@radix-ui/react-avatar` | `img` for avatars |
-| **Popover** | `Popover.*` | `@radix-ui/react-popover` | Custom popover |
-| **Accordion** | `Accordion.*` | `@radix-ui/react-accordion` | Custom accordion |
-| **Slider** | `Slider.*` | `@radix-ui/react-slider` | `input[type="range"]` |
-| **Business Components** | Custom composite components | `@cron-observer/ui` | N/A - only for business logic |
+| **Use Case** | **Component** | **Import Source** | **Notes** | **❌ FORBIDDEN** |
+|-------------|--------------|------------------|----------|-----------------|
+| **Layout** | `Box`, `Flex`, `Grid`, `Container` | `@radix-ui/themes` | ✅ Themes component | `div`, `section`, `article`, `main`, `aside` |
+| **Typography** | `Text`, `Heading`, `Strong`, `Em` | `@radix-ui/themes` | ✅ Themes component | `p`, `span`, `h1-h6`, `strong`, `em` |
+| **Buttons** | `Button`, `IconButton` | `@radix-ui/themes` | ✅ Themes component | `button` |
+| **Cards** | `Card`, `Inset` | `@radix-ui/themes` | ✅ Themes component | `div` with border/shadow |
+| **Feedback** | `Spinner`, `Badge`, `Separator` | `@radix-ui/themes` | ✅ Themes component | Custom spinners, `hr` |
+| **Dialogs** | `Dialog.*`, `AlertDialog.*` | `@radix-ui/react-dialog`, `@radix-ui/react-alert-dialog` | ⚠️ Primitive - use Themes components inside | `div` with custom modal |
+| **Dropdowns** | `DropdownMenu.*` | `@radix-ui/react-dropdown-menu` | ⚠️ Primitive - use Themes components inside | Custom dropdown |
+| **Select** | `Select.*` | `@radix-ui/react-select` | ⚠️ Primitive - use Themes components inside | `select` |
+| **Tabs** | `Tabs.*` | `@radix-ui/react-tabs` | ⚠️ Primitive - use Themes components inside | Custom tab implementation |
+| **Toast** | `Toast.*` | `@radix-ui/react-toast` | ⚠️ Primitive - use `Text`, `Box` from Themes inside | Custom toast |
+| **Tooltip** | `Tooltip.*` | `@radix-ui/react-tooltip` | ⚠️ Primitive - use Themes components inside | `title` attribute |
+| **Forms** | `Checkbox.*`, `RadioGroup.*`, `Switch.*` | `@radix-ui/react-checkbox`, `@radix-ui/react-radio-group`, `@radix-ui/react-switch` | ⚠️ Primitive - use Themes components inside | `input[type="checkbox"]`, `input[type="radio"]` |
+| **Avatar** | `Avatar.*` | `@radix-ui/react-avatar` | ⚠️ Primitive - use Themes components inside | `img` for avatars |
+| **Popover** | `Popover.*` | `@radix-ui/react-popover` | ⚠️ Primitive - use `Box`, `Button`, `Text` from Themes inside | Custom popover |
+| **Accordion** | `Accordion.*` | `@radix-ui/react-accordion` | ⚠️ Primitive - use Themes components inside | Custom accordion |
+| **Slider** | `Slider.*` | `@radix-ui/react-slider` | ⚠️ Primitive - use Themes components inside | `input[type="range"]` |
+| **Business Components** | Custom composite components | `@cron-observer/ui` | ✅ Only for business logic | N/A - only for business logic |
+
+**Legend:**
+- ✅ **Themes component**: Available in `@radix-ui/themes` - ALWAYS prefer these
+- ⚠️ **Primitive**: Only available as primitive - use Themes components inside and style with Themes tokens
 
 ### Theme Configuration
 
