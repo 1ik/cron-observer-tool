@@ -6,6 +6,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// LogEntry represents a single log entry for an execution
+type LogEntry struct {
+	Message   string    `json:"message" bson:"message"`
+	Level     string    `json:"level" bson:"level"` // info, warn, error
+	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
+}
+
 // Execution represents a task execution record
 // @Description Execution represents a task execution record
 type Execution struct {
@@ -17,6 +24,7 @@ type Execution struct {
 	StartedAt time.Time          `json:"started_at" bson:"started_at" example:"2025-01-15T10:00:00Z"`
 	EndedAt   *time.Time         `json:"ended_at,omitempty" bson:"ended_at,omitempty" example:"2025-01-15T10:00:05Z"`
 	Error     string             `json:"error,omitempty" bson:"error,omitempty" example:"Connection timeout"`
+	Logs      []LogEntry         `json:"logs,omitempty" bson:"logs,omitempty"`
 	CreatedAt time.Time          `json:"created_at" bson:"created_at" example:"2025-01-15T10:00:00Z"`
 	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at" example:"2025-01-15T10:00:00Z"`
 }

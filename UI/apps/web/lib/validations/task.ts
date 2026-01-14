@@ -35,7 +35,6 @@ export const updateTaskSchema = z.object({
     .trim()
     .optional()
     .or(z.literal('')),
-  schedule_type: scheduleTypeSchema,
   status: taskStatusSchema.optional(),
   schedule_config: scheduleConfigSchema,
   task_group_id: z.string().trim().optional().or(z.literal('')),
@@ -56,7 +55,6 @@ export const createTaskSchema = z.object({
     .trim()
     .optional()
     .or(z.literal('')),
-  schedule_type: scheduleTypeSchema,
   schedule_config: scheduleConfigSchema,
   metadata: z.record(z.string(), z.unknown()).optional(),
 })

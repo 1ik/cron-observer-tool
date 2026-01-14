@@ -109,18 +109,41 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
   }
 
   // Map API executions to Execution type
-  const projectExecutions: Execution[] = executionsData.map((execution: any) => ({
-    id: execution.id || execution.uuid || '',
-    task_id: execution.task_id || '',
-    task_uuid: execution.task_uuid || '',
-    task_name: selectedTask?.name || '',
-    status: execution.status || 'PENDING',
-    started_at: execution.started_at || new Date().toISOString(),
-    completed_at: execution.ended_at || undefined,
-    duration_ms: execution.duration_ms,
-    error_message: execution.error || undefined,
-    created_at: execution.created_at || new Date().toISOString(),
-  }))
+  const projectExecutions: Execution[] = executionsData.map((execution: any) => {
+    // Transform logs if they exist
+    const transformedLogs = execution.logs && Array.isArray(execution.logs) && execution.logs.length > 0
+      ? execution.logs.map((log: any, index: number) => {
+          // Normalize log level: backend sends lowercase ("info", "warn", "error"), frontend expects uppercase
+          const levelUpper = (log.level || 'info').toUpperCase()
+          // Ensure it's a valid log level, default to INFO if not
+          const validLevel = ['INFO', 'WARN', 'ERROR', 'DEBUG'].includes(levelUpper) 
+            ? levelUpper as 'INFO' | 'WARN' | 'ERROR' | 'DEBUG'
+            : 'INFO'
+          
+          return {
+            id: `${execution.id || execution.uuid}-log-${index}`,
+            timestamp: log.timestamp || new Date().toISOString(),
+            level: validLevel,
+            message: log.message || '',
+            metadata: log.metadata,
+          }
+        })
+      : undefined
+
+    return {
+      id: execution.id || execution.uuid || '',
+      task_id: execution.task_id || '',
+      task_uuid: execution.task_uuid || '',
+      task_name: selectedTask?.name || '',
+      status: execution.status || 'PENDING',
+      started_at: execution.started_at || new Date().toISOString(),
+      completed_at: execution.ended_at || undefined,
+      duration_ms: execution.duration_ms,
+      error_message: execution.error || undefined,
+      logs: transformedLogs,
+      created_at: execution.created_at || new Date().toISOString(),
+    }
+  })
   
   // Map API response types to component types
   // The API returns types that match our component types, but we need to ensure

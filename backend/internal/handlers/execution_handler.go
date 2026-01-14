@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/yourusername/cron-observer/backend/internal/models"
 	"github.com/yourusername/cron-observer/backend/internal/repositories"
 )
 
@@ -86,3 +87,138 @@ func (h *ExecutionHandler) GetExecutionsByTaskUUID(c *gin.Context) {
 	c.JSON(http.StatusOK, executions)
 }
 
+// AppendLogToExecution appends a log entry to an execution
+// @Summary      Append log to execution
+// @Description  Append a log entry to an execution by execution UUID
+// @Tags         executions
+// @Accept       json
+// @Produce      json
+// @Param        execution_uuid path string true "Execution UUID"
+// @Param        log body object true "Log entry" example({"message": "Processing started", "level": "info"})
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      404  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /executions/{execution_uuid}/logs [post]
+func (h *ExecutionHandler) AppendLogToExecution(c *gin.Context) {
+	executionUUID := c.Param("execution_uuid")
+	if executionUUID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "execution_uuid is required in path",
+		})
+		return
+	}
+
+	var logRequest struct {
+		Message string `json:"message" binding:"required"`
+		Level   string `json:"level" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&logRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"details": []string{err.Error()},
+		})
+		return
+	}
+
+	// Validate log level
+	validLevels := map[string]bool{"info": true, "warn": true, "error": true}
+	if !validLevels[logRequest.Level] {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid log level. Must be one of: info, warn, error",
+		})
+		return
+	}
+
+	logEntry := models.LogEntry{
+		Message:   logRequest.Message,
+		Level:     logRequest.Level,
+		Timestamp: time.Now(),
+	}
+
+	if err := h.repo.AppendLogToExecution(c.Request.Context(), executionUUID, logEntry); err != nil {
+		log.Printf("Failed to append log to execution %s: %v", executionUUID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to append log",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Log appended successfully",
+	})
+}
+
+// UpdateExecutionStatus updates the status of an execution
+// @Summary      Update execution status
+// @Description  Update the status of an execution (SUCCESS, FAILED, RUNNING)
+// @Tags         executions
+// @Accept       json
+// @Produce      json
+// @Param        execution_uuid path string true "Execution UUID"
+// @Param        status body object true "Status update" example({"status": "SUCCESS"}) or example({"status": "FAILED", "error": "Error message"})
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      404  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /executions/{execution_uuid}/status [patch]
+func (h *ExecutionHandler) UpdateExecutionStatus(c *gin.Context) {
+	executionUUID := c.Param("execution_uuid")
+	if executionUUID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "execution_uuid is required in path",
+		})
+		return
+	}
+
+	var statusRequest struct {
+		Status string `json:"status" binding:"required"`
+		Error  string `json:"error,omitempty"`
+	}
+
+	if err := c.ShouldBindJSON(&statusRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+			"details": []string{err.Error()},
+		})
+		return
+	}
+
+	// Validate status
+	validStatuses := map[string]bool{
+		"PENDING": true,
+		"RUNNING": true,
+		"SUCCESS": true,
+		"FAILED":  true,
+	}
+	if !validStatuses[statusRequest.Status] {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid status. Must be one of: PENDING, RUNNING, SUCCESS, FAILED",
+		})
+		return
+	}
+
+	var errorMsg *string
+	if statusRequest.Error != "" {
+		errorMsg = &statusRequest.Error
+	}
+
+	if err := h.repo.UpdateExecutionStatus(
+		c.Request.Context(),
+		executionUUID,
+		models.ExecutionStatus(statusRequest.Status),
+		errorMsg,
+	); err != nil {
+		log.Printf("Failed to update execution status for %s: %v", executionUUID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update execution status",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Execution status updated successfully",
+		"status":  statusRequest.Status,
+	})
+}

@@ -2,10 +2,8 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as Dialog from '@radix-ui/react-dialog'
-import { ChevronDownIcon } from '@radix-ui/react-icons'
 import * as Label from '@radix-ui/react-label'
-import * as Select from '@radix-ui/react-select'
-import { Box, Button, Flex, Heading, Text, TextArea, TextField } from '@radix-ui/themes'
+import { Box, Button, Flex, Heading, Select, Text, TextArea, TextField } from '@radix-ui/themes'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Task, TaskStatus, UpdateTaskRequest } from '../lib/types/task'
@@ -36,7 +34,6 @@ export function TaskSettingsDialog({
     defaultValues: {
       name: task.name,
       description: task.description || '',
-      schedule_type: task.schedule_type,
       status: task.status,
       schedule_config: task.schedule_config,
       trigger_config: task.trigger_config,
@@ -50,7 +47,6 @@ export function TaskSettingsDialog({
       reset({
         name: task.name,
         description: task.description || '',
-        schedule_type: task.schedule_type,
         status: task.status,
         schedule_config: task.schedule_config,
         trigger_config: task.trigger_config,
@@ -64,7 +60,7 @@ export function TaskSettingsDialog({
     const requestData: UpdateTaskRequest = {
       name: data.name,
       description: data.description || undefined,
-      schedule_type: data.schedule_type,
+      schedule_type: 'RECURRING', // Default value since schedule_type is no longer shown in UI
       status: data.status,
       schedule_config: data.schedule_config,
       trigger_config: data.trigger_config,
@@ -198,11 +194,8 @@ export function TaskSettingsDialog({
                             flexShrink: 0,
                           }}
                         />
-                        <Select.Value />
+                        <Text>{field.value}</Text>
                       </Flex>
-                      <Select.Icon>
-                        <ChevronDownIcon />
-                      </Select.Icon>
                     </Select.Trigger>
                     <Select.Content>
                       <Select.Item value="ACTIVE">
@@ -251,45 +244,6 @@ export function TaskSettingsDialog({
               {errors.status && (
                 <Text size="2" color="red">
                   {errors.status.message}
-                </Text>
-              )}
-            </Flex>
-
-            {/* Schedule Type */}
-            <Flex direction="column" gap="2">
-              <Label.Root htmlFor="task-schedule-type">
-                <Text size="3" weight="medium">
-                  Schedule Type <Text color="red">*</Text>
-                </Text>
-              </Label.Root>
-              <Controller
-                name="schedule_type"
-                control={control}
-                render={({ field }) => (
-                  <Select.Root
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <Select.Trigger id="task-schedule-type" style={{ width: '100%' }}>
-                      <Select.Value />
-                      <Select.Icon>
-                        <ChevronDownIcon />
-                      </Select.Icon>
-                    </Select.Trigger>
-                    <Select.Content>
-                      <Select.Item value="RECURRING">
-                        <Text>RECURRING</Text>
-                      </Select.Item>
-                      <Select.Item value="ONEOFF">
-                        <Text>ONEOFF</Text>
-                      </Select.Item>
-                    </Select.Content>
-                  </Select.Root>
-                )}
-              />
-              {errors.schedule_type && (
-                <Text size="2" color="red">
-                  {errors.schedule_type.message}
                 </Text>
               )}
             </Flex>
@@ -378,28 +332,13 @@ export function TaskSettingsDialog({
                     value={field.value}
                     onValueChange={field.onChange}
                   >
-                    <Select.Trigger id="task-trigger-method" style={{ width: '100%' }}>
-                      <Select.Value />
-                      <Select.Icon>
-                        <ChevronDownIcon />
-                      </Select.Icon>
-                    </Select.Trigger>
+                    <Select.Trigger id="task-trigger-method" style={{ width: '100%' }} />
                     <Select.Content>
-                      <Select.Item value="GET">
-                        <Text>GET</Text>
-                      </Select.Item>
-                      <Select.Item value="POST">
-                        <Text>POST</Text>
-                      </Select.Item>
-                      <Select.Item value="PUT">
-                        <Text>PUT</Text>
-                      </Select.Item>
-                      <Select.Item value="PATCH">
-                        <Text>PATCH</Text>
-                      </Select.Item>
-                      <Select.Item value="DELETE">
-                        <Text>DELETE</Text>
-                      </Select.Item>
+                      <Select.Item value="GET">GET</Select.Item>
+                      <Select.Item value="POST">POST</Select.Item>
+                      <Select.Item value="PUT">PUT</Select.Item>
+                      <Select.Item value="PATCH">PATCH</Select.Item>
+                      <Select.Item value="DELETE">DELETE</Select.Item>
                     </Select.Content>
                   </Select.Root>
                 )}

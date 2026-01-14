@@ -3,9 +3,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Label from '@radix-ui/react-label'
-import { Box, Button, Flex, Heading, Select, Text, TextArea, TextField } from '@radix-ui/themes'
+import { Box, Button, Flex, Heading, Text, TextArea, TextField } from '@radix-ui/themes'
 import { useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { CreateTaskRequest } from '../lib/types/task'
 import { CreateTaskFormData, createTaskSchema } from '../lib/validations/task'
 import { StyledDialogContent } from './StyledDialogContent'
@@ -36,7 +36,6 @@ export function CreateTaskDialog({
     defaultValues: {
       name: '',
       description: '',
-      schedule_type: 'RECURRING',
       schedule_config: {
         timezone: 'UTC',
         cron_expression: '',
@@ -50,7 +49,6 @@ export function CreateTaskDialog({
       reset({
         name: '',
         description: '',
-        schedule_type: 'RECURRING',
         schedule_config: {
           timezone: 'UTC',
           cron_expression: '',
@@ -66,7 +64,7 @@ export function CreateTaskDialog({
       task_group_id: taskGroupId,
       name: data.name,
       description: data.description || undefined,
-      schedule_type: data.schedule_type,
+      schedule_type: 'RECURRING', // Default value since schedule_type is no longer shown in UI
       schedule_config: {
         timezone: data.schedule_config.timezone,
         cron_expression: data.schedule_config.cron_expression || undefined,
@@ -162,36 +160,6 @@ export function CreateTaskDialog({
                 {errors.description && (
                   <Text size="2" color="red">
                     {errors.description.message}
-                  </Text>
-                )}
-              </Flex>
-
-              {/* Schedule Type */}
-              <Flex direction="column" gap="2">
-                <Label.Root htmlFor="task-schedule-type">
-                  <Text size="3" weight="medium">
-                    Schedule Type <Text color="red">*</Text>
-                  </Text>
-                </Label.Root>
-                <Controller
-                  name="schedule_type"
-                  control={control}
-                  render={({ field }) => (
-                    <Select.Root
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <Select.Trigger id="task-schedule-type" style={{ width: '100%' }} />
-                      <Select.Content>
-                        <Select.Item value="RECURRING">RECURRING</Select.Item>
-                        <Select.Item value="ONEOFF">ONEOFF</Select.Item>
-                      </Select.Content>
-                    </Select.Root>
-                  )}
-                />
-                {errors.schedule_type && (
-                  <Text size="2" color="red">
-                    {errors.schedule_type.message}
                   </Text>
                 )}
               </Flex>

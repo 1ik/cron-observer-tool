@@ -36,4 +36,6 @@ type Repository interface {
 	// executions
 	CreateExecution(ctx context.Context, execution *models.Execution) error
 	GetExecutionsByTaskUUID(ctx context.Context, taskUUID string, startDate, endDate *time.Time) ([]*models.Execution, error)
+	AppendLogToExecution(ctx context.Context, executionUUID string, logEntry models.LogEntry) error
+	UpdateExecutionStatus(ctx context.Context, executionUUID string, status models.ExecutionStatus, errorMessage *string) error
 }

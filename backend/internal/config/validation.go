@@ -62,5 +62,3 @@ func (e *MissingConfigError) Error() string {
 
 	return sb.String()
 }
-
-

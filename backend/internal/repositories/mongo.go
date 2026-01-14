@@ -309,6 +309,50 @@ func (r *MongoRepository) GetExecutionsByTaskUUID(ctx context.Context, taskUUID 
 	return executions, nil
 }
 
+func (r *MongoRepository) AppendLogToExecution(ctx context.Context, executionUUID string, logEntry models.LogEntry) error {
+	collection := r.db.Collection(database.CollectionExecutions)
+
+	filter := bson.M{"uuid": executionUUID}
+	update := bson.M{
+		"$push": bson.M{
+			"logs": logEntry,
+		},
+		"$set": bson.M{
+			"updated_at": time.Now(),
+		},
+	}
+
+	_, err := collection.UpdateOne(ctx, filter, update)
+	return err
+}
+
+func (r *MongoRepository) UpdateExecutionStatus(ctx context.Context, executionUUID string, status models.ExecutionStatus, errorMessage *string) error {
+	collection := r.db.Collection(database.CollectionExecutions)
+
+	filter := bson.M{"uuid": executionUUID}
+	now := time.Now()
+	
+	update := bson.M{
+		"$set": bson.M{
+			"status":     status,
+			"updated_at": now,
+		},
+	}
+
+	// Set ended_at if status is SUCCESS or FAILED
+	if status == models.ExecutionStatusSuccess || status == models.ExecutionStatusFailed {
+		update["$set"].(bson.M)["ended_at"] = now
+	}
+
+	// Set error message if provided
+	if errorMessage != nil {
+		update["$set"].(bson.M)["error"] = *errorMessage
+	}
+
+	_, err := collection.UpdateOne(ctx, filter, update)
+	return err
+}
+
 func NewMongoRepository(db *mongo.Database) *MongoRepository {
 	return &MongoRepository{
 		db: db,
