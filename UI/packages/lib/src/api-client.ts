@@ -1,6 +1,10 @@
 import { makeApi, Zodios, type ZodiosOptions } from "@zodios/core";
 import { z } from "zod";
 
+const models_ErrorResponse = z
+  .object({ details: z.array(z.string()), error: z.string() })
+  .partial()
+  .passthrough();
 const models_Project = z
   .object({
     alert_emails: z.string(),
@@ -13,10 +17,6 @@ const models_Project = z
     updated_at: z.string(),
     uuid: z.string(),
   })
-  .partial()
-  .passthrough();
-const models_ErrorResponse = z
-  .object({ details: z.array(z.string()), error: z.string() })
   .partial()
   .passthrough();
 const models_CreateProjectRequest = z
@@ -35,8 +35,8 @@ const models_UpdateProjectRequest = z
   })
   .partial()
   .passthrough();
-const models_TaskGroupStatus = z.enum(["ACTIVE", "PAUSED", "DISABLED"]);
 const models_TaskGroupState = z.enum(["RUNNING", "NOT_RUNNING"]);
+const models_TaskGroupStatus = z.enum(["ACTIVE", "PAUSED", "DISABLED"]);
 const models_TaskGroup = z
   .object({
     created_at: z.string(),
@@ -46,8 +46,8 @@ const models_TaskGroup = z
     name: z.string(),
     project_id: z.string(),
     start_time: z.string(),
-    status: models_TaskGroupStatus.or(z.literal("RUNNING")), // Handle legacy RUNNING status
-    state: models_TaskGroupState.optional(), // System-controlled state
+    state: models_TaskGroupState,
+    status: models_TaskGroupStatus,
     timezone: z.string(),
     updated_at: z.string(),
     uuid: z.string(),
@@ -92,8 +92,8 @@ const models_ScheduleConfig = z
   })
   .passthrough();
 const models_ScheduleType = z.enum(["RECURRING", "ONEOFF"]);
-const models_TaskStatus = z.enum(["ACTIVE", "PAUSED", "DISABLED"]);
 const models_TaskState = z.enum(["RUNNING", "NOT_RUNNING"]);
+const models_TaskStatus = z.enum(["ACTIVE", "PAUSED", "DISABLED"]);
 const models_HTTPTriggerConfig = z
   .object({
     body: z.unknown().optional(),
@@ -118,8 +118,8 @@ const models_Task = z
     project_id: z.string(),
     schedule_config: models_ScheduleConfig,
     schedule_type: models_ScheduleType,
-    status: models_TaskStatus.or(z.literal("RUNNING")), // Handle legacy RUNNING status
-    state: models_TaskState.optional(), // System-controlled state
+    state: models_TaskState,
+    status: models_TaskStatus,
     task_group_id: z.string(),
     trigger_config: models_TriggerConfig,
     updated_at: z.string(),
@@ -150,6 +150,10 @@ const models_UpdateTaskRequest = z
     task_group_id: z.string().optional(),
   })
   .passthrough();
+const models_LogEntry = z
+  .object({ level: z.string(), message: z.string(), timestamp: z.string() })
+  .partial()
+  .passthrough();
 const models_ExecutionStatus = z.enum([
   "PENDING",
   "RUNNING",
@@ -162,6 +166,7 @@ const models_Execution = z
     ended_at: z.string(),
     error: z.string(),
     id: z.string(),
+    logs: z.array(models_LogEntry),
     started_at: z.string(),
     status: models_ExecutionStatus,
     task_id: z.string(),
@@ -173,12 +178,12 @@ const models_Execution = z
   .passthrough();
 
 export const schemas = {
-  models_Project,
   models_ErrorResponse,
+  models_Project,
   models_CreateProjectRequest,
   models_UpdateProjectRequest,
-  models_TaskGroupStatus,
   models_TaskGroupState,
+  models_TaskGroupStatus,
   models_TaskGroup,
   models_CreateTaskGroupRequest,
   models_UpdateTaskGroupRequest,
@@ -187,19 +192,96 @@ export const schemas = {
   models_TimeRange,
   models_ScheduleConfig,
   models_ScheduleType,
-  models_TaskStatus,
   models_TaskState,
+  models_TaskStatus,
   models_HTTPTriggerConfig,
   models_TriggerType,
   models_TriggerConfig,
   models_Task,
   models_CreateTaskRequest,
   models_UpdateTaskRequest,
+  models_LogEntry,
   models_ExecutionStatus,
   models_Execution,
 };
 
 const endpoints = makeApi([
+  {
+    method: "post",
+    path: "/executions/:execution_uuid/logs",
+    alias: "postExecutionsExecution_uuidlogs",
+    description: `Append a log entry to an execution by execution UUID`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        description: `Log entry`,
+        type: "Body",
+        schema: z.object({}).partial().passthrough(),
+      },
+      {
+        name: "execution_uuid",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: z.record(z.string()),
+    errors: [
+      {
+        status: 400,
+        description: `Bad Request`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 404,
+        description: `Not Found`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 500,
+        description: `Internal Server Error`,
+        schema: models_ErrorResponse,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/executions/:execution_uuid/status",
+    alias: "patchExecutionsExecution_uuidstatus",
+    description: `Update the status of an execution (SUCCESS, FAILED, RUNNING)`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        description: `Status update`,
+        type: "Body",
+        schema: z.object({}).partial().passthrough(),
+      },
+      {
+        name: "execution_uuid",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: z.record(z.string()),
+    errors: [
+      {
+        status: 400,
+        description: `Bad Request`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 404,
+        description: `Not Found`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 500,
+        description: `Internal Server Error`,
+        schema: models_ErrorResponse,
+      },
+    ],
+  },
   {
     method: "get",
     path: "/projects",
@@ -712,6 +794,49 @@ const endpoints = makeApi([
       {
         status: 400,
         description: `Bad Request`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 500,
+        description: `Internal Server Error`,
+        schema: models_ErrorResponse,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/projects/:project_id/tasks/:task_uuid/status",
+    alias: "patchProjectsProject_idtasksTask_uuidstatus",
+    description: `Update a task&#x27;s status (ACTIVE or PAUSED) and update scheduler accordingly`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        description: `Status update request`,
+        type: "Body",
+        schema: z.object({}).partial().passthrough(),
+      },
+      {
+        name: "project_id",
+        type: "Path",
+        schema: z.string(),
+      },
+      {
+        name: "task_uuid",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: models_Task,
+    errors: [
+      {
+        status: 400,
+        description: `Bad Request`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 404,
+        description: `Not Found`,
         schema: models_ErrorResponse,
       },
       {

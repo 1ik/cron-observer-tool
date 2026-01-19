@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
-import { createTask, getTasksByProject, updateTaskStatus } from '../api';
+import { createTask, getTasksByProject, updateTask, updateTaskStatus } from '../api';
 import { schemas } from '../api-client';
 
 // Infer the Task type from the Zod schema
@@ -8,6 +8,9 @@ export type Task = z.infer<typeof schemas.models_Task>;
 
 // CreateTaskRequest type inferred from schema
 type CreateTaskRequest = z.infer<typeof schemas.models_CreateTaskRequest>;
+
+// UpdateTaskRequest type inferred from schema
+type UpdateTaskRequest = z.infer<typeof schemas.models_UpdateTaskRequest>;
 
 /**
  * Query keys for tasks
@@ -57,6 +60,25 @@ export function useCreateTask(projectId: string) {
 }
 
 /**
+ * Hook to update a task (full update)
+ * @param projectId - The ID of the project
+ */
+export function useUpdateTask(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ taskUUID, data }: { taskUUID: string; data: UpdateTaskRequest }) => {
+      return updateTask(projectId, taskUUID, data);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch tasks for this project
+      queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+    },
+    retry: false, // Disable retries
+  });
+}
+
+/**
  * Hook to update task status (pause/play)
  * @param projectId - The ID of the project
  * @param taskUUID - The UUID of the task
@@ -77,6 +99,6 @@ export function useUpdateTaskStatus(projectId: string, taskUUID: string) {
   });
 }
 
-export type { CreateTaskRequest };
+export type { CreateTaskRequest, UpdateTaskRequest };
 
 

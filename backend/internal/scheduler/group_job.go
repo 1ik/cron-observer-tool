@@ -47,15 +47,19 @@ func (j *GroupStartJob) Run() {
 
 	log.Printf("[GROUP] Registering %d tasks for group %s (start time: %s)", len(tasks), taskGroup.UUID, taskGroup.StartTime)
 
-	// Register each task and update state to RUNNING (status remains ACTIVE)
+	// Update state for ALL tasks first (state is independent of status)
 	for _, task := range tasks {
-		if err := j.Scheduler.registerTask(ctx, task); err != nil {
-			log.Printf("[GROUP] Failed to register task %s in group %s: %v", task.UUID, taskGroup.UUID, err)
-			continue
-		}
-		// Update task state to RUNNING (status remains ACTIVE)
 		if err := j.Repo.UpdateTaskState(ctx, task.UUID, models.TaskStateRunning); err != nil {
 			log.Printf("[GROUP] Failed to update task %s state to RUNNING: %v", task.UUID, err)
+		}
+	}
+
+	// Register tasks that are ACTIVE (only ACTIVE tasks get registered for execution)
+	for _, task := range tasks {
+		if task.Status == models.TaskStatusActive {
+			if err := j.Scheduler.registerTask(ctx, task); err != nil {
+				log.Printf("[GROUP] Failed to register task %s in group %s: %v", task.UUID, taskGroup.UUID, err)
+			}
 		}
 	}
 }

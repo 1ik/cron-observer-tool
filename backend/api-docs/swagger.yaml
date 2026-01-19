@@ -71,6 +71,7 @@ definitions:
         - $ref: '#/definitions/models.TaskStatus'
         enum:
         - ACTIVE
+        - RUNNING
         - PAUSED
         - DISABLED
       task_group_id:
@@ -109,6 +110,10 @@ definitions:
       id:
         example: 507f1f77bcf86cd799439011
         type: string
+      logs:
+        items:
+          $ref: '#/definitions/models.LogEntry'
+        type: array
       started_at:
         example: "2025-01-15T10:00:00Z"
         type: string
@@ -192,6 +197,16 @@ definitions:
     required:
     - method
     - url
+    type: object
+  models.LogEntry:
+    properties:
+      level:
+        description: info, warn, error
+        type: string
+      message:
+        type: string
+      timestamp:
+        type: string
     type: object
   models.Project:
     description: Project represents a project entity that contains tasks
@@ -285,11 +300,20 @@ definitions:
         - RECURRING
         - ONEOFF
         example: RECURRING
+      state:
+        allOf:
+        - $ref: '#/definitions/models.TaskState'
+        description: 'System-controlled: based on time window'
+        enum:
+        - RUNNING
+        - NOT_RUNNING
+        example: NOT_RUNNING
       status:
         allOf:
         - $ref: '#/definitions/models.TaskStatus'
         enum:
         - ACTIVE
+        - RUNNING
         - PAUSED
         - DISABLED
         example: ACTIVE
@@ -334,6 +358,14 @@ definitions:
         description: 'Format: "HH:MM"'
         example: "09:00"
         type: string
+      state:
+        allOf:
+        - $ref: '#/definitions/models.TaskGroupState'
+        description: 'System-controlled: based on time window'
+        enum:
+        - RUNNING
+        - NOT_RUNNING
+        example: NOT_RUNNING
       status:
         allOf:
         - $ref: '#/definitions/models.TaskGroupStatus'
@@ -353,6 +385,14 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
     type: object
+  models.TaskGroupState:
+    enum:
+    - RUNNING
+    - NOT_RUNNING
+    type: string
+    x-enum-varnames:
+    - TaskGroupStateRunning
+    - TaskGroupStateNotRunning
   models.TaskGroupStatus:
     enum:
     - ACTIVE
@@ -363,6 +403,14 @@ definitions:
     - TaskGroupStatusActive
     - TaskGroupStatusPaused
     - TaskGroupStatusDisabled
+  models.TaskState:
+    enum:
+    - RUNNING
+    - NOT_RUNNING
+    type: string
+    x-enum-varnames:
+    - TaskStateRunning
+    - TaskStateNotRunning
   models.TaskStatus:
     enum:
     - ACTIVE
@@ -472,6 +520,7 @@ definitions:
         - $ref: '#/definitions/models.TaskStatus'
         enum:
         - ACTIVE
+        - RUNNING
         - PAUSED
         - DISABLED
       task_group_id:
@@ -489,6 +538,88 @@ info:
   title: Cron Observer API
   version: "1.0"
 paths:
+  /executions/{execution_uuid}/logs:
+    post:
+      consumes:
+      - application/json
+      description: Append a log entry to an execution by execution UUID
+      parameters:
+      - description: Execution UUID
+        in: path
+        name: execution_uuid
+        required: true
+        type: string
+      - description: Log entry
+        in: body
+        name: log
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Append log to execution
+      tags:
+      - executions
+  /executions/{execution_uuid}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of an execution (SUCCESS, FAILED, RUNNING)
+      parameters:
+      - description: Execution UUID
+        in: path
+        name: execution_uuid
+        required: true
+        type: string
+      - description: Status update
+        in: body
+        name: status
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Update execution status
+      tags:
+      - executions
   /projects:
     get:
       consumes:
@@ -1045,4 +1176,49 @@ paths:
       summary: Get executions for a task
       tags:
       - executions
+  /projects/{project_id}/tasks/{task_uuid}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update a task's status (ACTIVE or PAUSED) and update scheduler
+        accordingly
+      parameters:
+      - description: Project ID
+        in: path
+        name: project_id
+        required: true
+        type: string
+      - description: Task UUID
+        in: path
+        name: task_uuid
+        required: true
+        type: string
+      - description: Status update request
+        in: body
+        name: request
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Task'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Update task status
+      tags:
+      - tasks
 swagger: "2.0"

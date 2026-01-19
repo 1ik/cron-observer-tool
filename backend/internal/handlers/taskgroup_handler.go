@@ -347,7 +347,30 @@ func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 		log.Printf("Failed to update task group state: %v", err)
 	}
 
-	// Publish TaskGroupUpdated event
+	// Update ALL tasks' states in this group BEFORE returning the response
+	// This ensures the frontend gets the updated task states when it refetches
+	tasks, err := h.repo.GetTasksByGroupID(c.Request.Context(), taskGroup.ID)
+	if err != nil {
+		log.Printf("Failed to get tasks for group %s: %v", taskGroup.UUID, err)
+	} else {
+		// Determine task state based on group state
+		var taskState models.TaskState
+		if state == models.TaskGroupStateRunning {
+			taskState = models.TaskStateRunning
+		} else {
+			taskState = models.TaskStateNotRunning
+		}
+
+		// Update all tasks' states
+		for _, task := range tasks {
+			if err := h.repo.UpdateTaskState(c.Request.Context(), task.UUID, taskState); err != nil {
+				log.Printf("Failed to update task %s state to %s: %v", task.UUID, taskState, err)
+			}
+		}
+		log.Printf("[GROUP] Updated %d tasks' state to %s for group %s", len(tasks), taskState, taskGroup.UUID)
+	}
+
+	// Publish TaskGroupUpdated event (for scheduler to register/unregister cron jobs)
 	h.eventBus.Publish(events.Event{
 		Type:    events.TaskGroupUpdated,
 		Payload: events.TaskGroupPayload{TaskGroup: taskGroup},

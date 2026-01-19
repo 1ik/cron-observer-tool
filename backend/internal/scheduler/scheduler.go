@@ -277,76 +277,101 @@ func (s *Scheduler) handleTaskGroupUpdated(event events.Event) {
 		return
 	}
 
-	taskGroup := payload.TaskGroup
+	updatedTaskGroup := payload.TaskGroup
 	ctx := context.Background()
 
-	// Remove old window jobs
+	// Fetch the latest task group from DB to ensure we have current state
+	// (The event payload might be stale if multiple updates happened quickly)
+	existingTaskGroup, err := s.repo.GetTaskGroupByUUID(ctx, updatedTaskGroup.UUID)
+	if err != nil {
+		log.Printf("[GROUP] Failed to fetch task group %s: %v", updatedTaskGroup.UUID, err)
+		// Fallback to using payload data
+		existingTaskGroup = updatedTaskGroup
+	}
+
+	taskGroup := existingTaskGroup // Use the fetched one for consistency
+
+	// Always unregister old window cron jobs first
 	s.unregisterGroupWindowJobs(taskGroup.UUID)
 
-	// If group has a time window defined, check if we need to register/unregister tasks immediately
-	// Only process if group is ACTIVE, RUNNING, or PAUSED (we don't process DISABLED groups)
-	if taskGroup.Status != models.TaskGroupStatusDisabled && taskGroup.StartTime != "" && taskGroup.EndTime != "" {
-		// Check if we're currently within the window
+	// Get all tasks in this group (needed for all scenarios)
+	tasks, err := s.repo.GetTasksByGroupID(ctx, taskGroup.ID)
+	if err != nil {
+		log.Printf("[GROUP] Failed to get tasks for group %s: %v", taskGroup.UUID, err)
+		return
+	}
+
+	// Handle based on status
+	switch taskGroup.Status {
+	case models.TaskGroupStatusDisabled:
+		// DISABLED: Unregister ALL tasks regardless of window and set their states to NOT_RUNNING
+		log.Printf("[GROUP] Group %s is DISABLED, unregistering all %d tasks and setting states to NOT_RUNNING", taskGroup.UUID, len(tasks))
+
+		// Update group state to NOT_RUNNING (if not already set)
+		if err := s.repo.UpdateTaskGroupState(ctx, taskGroup.UUID, models.TaskGroupStateNotRunning); err != nil {
+			log.Printf("[GROUP] Failed to update group %s state to NOT_RUNNING: %v", taskGroup.UUID, err)
+		}
+
+		// Unregister all tasks and update their states to NOT_RUNNING
+		for _, task := range tasks {
+			s.unregisterTask(task.UUID)
+			// Update task state to NOT_RUNNING regardless of window
+			if err := s.repo.UpdateTaskState(ctx, task.UUID, models.TaskStateNotRunning); err != nil {
+				log.Printf("[GROUP] Failed to update task %s state to NOT_RUNNING: %v", task.UUID, err)
+			}
+		}
+		log.Printf("[GROUP] Updated %d tasks' state to NOT_RUNNING for disabled group %s", len(tasks), taskGroup.UUID)
+		// Don't register cron jobs for disabled groups
+		return
+
+	case models.TaskGroupStatusActive, models.TaskGroupStatusPaused:
+		// ACTIVE or PAUSED: Process based on time window
+		if taskGroup.StartTime == "" || taskGroup.EndTime == "" {
+			// No window defined: Unregister all tasks
+			log.Printf("[GROUP] Group %s has no time window, unregistering all %d tasks", taskGroup.UUID, len(tasks))
+			for _, task := range tasks {
+				s.unregisterTask(task.UUID)
+			}
+			// Don't register cron jobs if no window
+			return
+		}
+
+		// Window exists: Check if we're currently within the window
 		isWithinWindow := s.isWithinGroupWindow(ctx, taskGroup)
 
-		// Get all tasks in this group
-		tasks, err := s.repo.GetTasksByGroupID(ctx, taskGroup.ID)
-		if err != nil {
-			log.Printf("[GROUP] Failed to get tasks for group %s: %v", taskGroup.UUID, err)
-		} else {
-			if isWithinWindow {
-				// We're within the window, register all tasks and set state to RUNNING
-				log.Printf("[GROUP] Group %s updated: within window (start: %s, end: %s), registering %d tasks and setting state to RUNNING",
-					taskGroup.UUID, taskGroup.StartTime, taskGroup.EndTime, len(tasks))
+		if isWithinWindow {
+			// Within window: Register ACTIVE/PAUSED tasks
+			log.Printf("[GROUP] Group %s updated: within window (start: %s, end: %s), registering tasks",
+				taskGroup.UUID, taskGroup.StartTime, taskGroup.EndTime)
 
-				// Update group state to RUNNING (status remains ACTIVE/PAUSED)
-				if err := s.repo.UpdateTaskGroupState(ctx, taskGroup.UUID, models.TaskGroupStateRunning); err != nil {
-					log.Printf("[GROUP] Failed to update group %s state to RUNNING: %v", taskGroup.UUID, err)
-				}
-
-				// Register and update all tasks that are ACTIVE or PAUSED
-				for _, task := range tasks {
-					// Only register tasks that are ACTIVE or PAUSED (skip DISABLED)
-					if task.Status == models.TaskStatusActive || task.Status == models.TaskStatusPaused {
-						// Unregister first to avoid duplicates, then register
-						s.unregisterTask(task.UUID)
-
-						if err := s.registerTask(ctx, task); err != nil {
-							log.Printf("[GROUP] Failed to register task %s: %v", task.UUID, err)
-						} else {
-							// Update task state to RUNNING (status remains ACTIVE/PAUSED)
-							if err := s.repo.UpdateTaskState(ctx, task.UUID, models.TaskStateRunning); err != nil {
-								log.Printf("[GROUP] Failed to update task %s state to RUNNING: %v", task.UUID, err)
-							}
-						}
-					}
-				}
-			} else {
-				// We're outside the window, unregister all tasks and set state to NOT_RUNNING
-				log.Printf("[GROUP] Group %s updated: outside window (start: %s, end: %s), unregistering %d tasks and setting state to NOT_RUNNING",
-					taskGroup.UUID, taskGroup.StartTime, taskGroup.EndTime, len(tasks))
-
-				// Update group state to NOT_RUNNING (status remains unchanged)
-				if err := s.repo.UpdateTaskGroupState(ctx, taskGroup.UUID, models.TaskGroupStateNotRunning); err != nil {
-					log.Printf("[GROUP] Failed to update group %s state to NOT_RUNNING: %v", taskGroup.UUID, err)
-				}
-
-				// Unregister and update all tasks
-				for _, task := range tasks {
+			registeredCount := 0
+			for _, task := range tasks {
+				// Only register ACTIVE or PAUSED tasks (skip DISABLED tasks)
+				if task.Status == models.TaskStatusActive || task.Status == models.TaskStatusPaused {
+					// Unregister first to avoid duplicates, then register
 					s.unregisterTask(task.UUID)
-					// Update task state to NOT_RUNNING (status remains unchanged)
-					if err := s.repo.UpdateTaskState(ctx, task.UUID, models.TaskStateNotRunning); err != nil {
-						log.Printf("[GROUP] Failed to update task %s state to NOT_RUNNING: %v", task.UUID, err)
+
+					if err := s.registerTask(ctx, task); err != nil {
+						log.Printf("[GROUP] Failed to register task %s: %v", task.UUID, err)
+					} else {
+						registeredCount++
 					}
 				}
 			}
-		}
-	}
+			log.Printf("[GROUP] Registered %d tasks for group %s", registeredCount, taskGroup.UUID)
+		} else {
+			// Outside window: Unregister all tasks
+			log.Printf("[GROUP] Group %s updated: outside window (start: %s, end: %s), unregistering %d tasks",
+				taskGroup.UUID, taskGroup.StartTime, taskGroup.EndTime, len(tasks))
 
-	// Register new window jobs if group has windows
-	if taskGroup.StartTime != "" && taskGroup.EndTime != "" {
+			for _, task := range tasks {
+				s.unregisterTask(task.UUID)
+			}
+		}
+
+		// Register new window cron jobs (only for ACTIVE/PAUSED groups with windows)
 		if err := s.registerGroupWindowJobs(taskGroup); err != nil {
-			log.Printf("Failed to register updated group window jobs: %v", err)
+			log.Printf("[GROUP] Failed to register window jobs for group %s: %v", taskGroup.UUID, err)
 		}
 	}
 }

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { createTaskGroup, getTaskGroupsByProject, updateTaskGroup } from '../api';
 import { schemas } from '../api-client';
+import { taskKeys } from './use-tasks';
 
 // CreateTaskGroupRequest type inferred from schema
 type CreateTaskGroupRequest = z.infer<typeof schemas.models_CreateTaskGroupRequest>;
@@ -73,6 +74,9 @@ export function useUpdateTaskGroup(projectId: string) {
     onSuccess: () => {
       // Invalidate and refetch task groups for this project
       queryClient.invalidateQueries({ queryKey: taskGroupKeys.list(projectId) });
+      // Also invalidate tasks because group updates can change task states
+      // (e.g., when time window changes, all tasks' states are updated)
+      queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
     },
   });
 }

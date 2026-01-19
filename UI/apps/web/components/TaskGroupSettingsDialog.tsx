@@ -319,31 +319,19 @@ export function TaskGroupSettingsDialog({
                 </Text>
               )}
             </Flex>
-            </form>
-          </Flex>
-        </Box>
 
-        {/* Footer - Sticky */}
-        <Box
-          p="5"
-          style={{
-            flexShrink: 0,
-            borderTop: '1px solid var(--gray-6)',
-          }}
-        >
-          <Flex gap="3" justify="end">
-            <Dialog.Close asChild>
-              <Button type="button" variant="soft" onClick={handleCancel}>
-                Cancel
+            {/* Footer buttons inside form */}
+            <Flex gap="3" justify="end" mt="4">
+              <Dialog.Close asChild>
+                <Button type="button" variant="soft" onClick={handleCancel}>
+                  Cancel
+                </Button>
+              </Dialog.Close>
+              <Button type="submit" variant="solid">
+                Save Changes
               </Button>
-            </Dialog.Close>
-            <Button
-              type="submit"
-              variant="solid"
-              onClick={handleSubmit(onFormSubmit)}
-            >
-              Save Changes
-            </Button>
+            </Flex>
+            </form>
           </Flex>
         </Box>
       </StyledDialogContent>

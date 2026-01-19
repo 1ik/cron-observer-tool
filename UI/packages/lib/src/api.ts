@@ -202,6 +202,45 @@ export async function createTask(
 }
 
 /**
+ * Update a task (full update)
+ * @param projectId - Project ID (MongoDB ObjectID)
+ * @param taskUUID - Task UUID
+ * @param task - Task update request
+ * @returns Promise resolving to the updated task
+ */
+export async function updateTask(
+  projectId: string,
+  taskUUID: string,
+  task: {
+    name?: string;
+    description?: string;
+    schedule_type?: 'RECURRING' | 'ONEOFF';
+    status?: 'ACTIVE' | 'PAUSED' | 'DISABLED';
+    schedule_config?: {
+      cron_expression?: string;
+      timezone: string;
+      time_range?: {
+        start: string;
+        end: string;
+        frequency: {
+          value: number;
+          unit: 's' | 'm' | 'h';
+        };
+      };
+      days_of_week?: number[];
+      exclusions?: number[];
+    };
+    metadata?: Record<string, unknown>;
+    task_group_id?: string;
+  }
+) {
+  const client = getApiClient();
+  return client.putProjectsProject_idtasksTask_uuid(task, {
+    params: { project_id: projectId, task_uuid: taskUUID },
+  });
+}
+
+/**
  * Update task status (pause/play)
  * @param projectId - Project ID (MongoDB ObjectID)
  * @param taskUUID - Task UUID

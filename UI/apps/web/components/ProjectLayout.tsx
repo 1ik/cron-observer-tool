@@ -1,6 +1,6 @@
 'use client'
 
-import { useCreateTask, useCreateTaskGroup, useUpdateProject, useUpdateTaskGroup } from '@cron-observer/lib'
+import { useCreateTask, useCreateTaskGroup, useUpdateProject, useUpdateTask, useUpdateTaskGroup } from '@cron-observer/lib'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { CaretDownIcon, GearIcon, PlusIcon } from '@radix-ui/react-icons'
 import { Box, Button, Flex, IconButton, Text } from '@radix-ui/themes'
@@ -49,6 +49,7 @@ export function ProjectLayout({
   const createTaskMutation = useCreateTask(project.id)
   const updateProjectMutation = useUpdateProject(project.id)
   const updateTaskGroupMutation = useUpdateTaskGroup(project.id)
+  const updateTaskMutation = useUpdateTask(project.id)
 
   const handleTaskGroupSettingsClick = (taskGroup: TaskGroup) => {
     setSelectedTaskGroup(taskGroup)
@@ -68,7 +69,7 @@ export function ProjectLayout({
     console.log('Updating task group:', { groupUuid, id: selectedTaskGroup.id, uuid: selectedTaskGroup.uuid, data })
     
     updateTaskGroupMutation.mutate(
-      { groupUuid, data },
+      { groupUuid, data: data as any },
       {
         onSuccess: () => {
           // Dialog will close automatically via onOpenChange
@@ -90,10 +91,28 @@ export function ProjectLayout({
 
   const handleTaskSettingsSubmit = (data: UpdateTaskRequest) => {
     if (!selectedTask) return
-    // TODO: Implement API call to update task
-    console.log('Updating task:', selectedTask.id, data)
-    // TODO: Add success toast/notification
-    setIsTaskSettingsOpen(false)
+    
+    // Ensure we use the UUID field, not the ID field
+    const taskUuid = selectedTask.uuid || selectedTask.id
+    if (!taskUuid) {
+      console.error('Task missing both uuid and id:', selectedTask)
+      return
+    }
+    
+    updateTaskMutation.mutate(
+      { taskUUID: taskUuid, data: data as any },
+      {
+        onSuccess: () => {
+          // Dialog will close automatically via onOpenChange
+          // Tasks will be refetched automatically via query invalidation
+          setIsTaskSettingsOpen(false)
+        },
+        onError: (error: Error) => {
+          // TODO: Add error toast/notification
+          console.error('Failed to update task:', error)
+        },
+      }
+    )
   }
 
   const handleCreateTaskGroupSubmit = (data: CreateTaskGroupRequest) => {

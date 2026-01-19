@@ -1,11 +1,10 @@
 'use client'
 
-import { Box, Flex, Text, IconButton } from '@radix-ui/themes'
 import { GearIcon } from '@radix-ui/react-icons'
+import { Box, Flex, IconButton, Text } from '@radix-ui/themes'
 import { useRouter } from 'next/navigation'
 import { Task } from '../lib/types/task'
-import { getTaskRuntimeStatus } from '../lib/utils/task-status'
-import { StatusAndStateDots } from './StatusAndStateDots'
+import { StateDot } from './StateDot'
 
 interface TaskListItemProps {
   task: Task
@@ -25,8 +24,6 @@ export function TaskListItem({ task, projectUuid, isSelected, onSettingsClick }:
     e.stopPropagation()
     onSettingsClick?.(task)
   }
-
-  const runtimeStatus = getTaskRuntimeStatus(task)
 
   return (
     <Box
@@ -74,7 +71,7 @@ export function TaskListItem({ task, projectUuid, isSelected, onSettingsClick }:
               <GearIcon width="14" height="14" />
             </IconButton>
           )}
-          <StatusAndStateDots status={runtimeStatus} state={task.state} size={6} />
+          <StateDot state={task.state} size={6} />
         </Flex>
       </Flex>
       {task.description && (

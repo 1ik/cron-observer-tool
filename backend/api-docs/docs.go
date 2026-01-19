@@ -15,6 +15,130 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/executions/{execution_uuid}/logs": {
+            "post": {
+                "description": "Append a log entry to an execution by execution UUID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "executions"
+                ],
+                "summary": "Append log to execution",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution UUID",
+                        "name": "execution_uuid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Log entry",
+                        "name": "log",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/executions/{execution_uuid}/status": {
+            "patch": {
+                "description": "Update the status of an execution (SUCCESS, FAILED, RUNNING)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "executions"
+                ],
+                "summary": "Update execution status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution UUID",
+                        "name": "execution_uuid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status update",
+                        "name": "status",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/projects": {
             "get": {
                 "description": "Retrieve a list of all projects",
@@ -847,6 +971,72 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/projects/{project_id}/tasks/{task_uuid}/status": {
+            "patch": {
+                "description": "Update a task's status (ACTIVE or PAUSED) and update scheduler accordingly",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Update task status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Task UUID",
+                        "name": "task_uuid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status update request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Task"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -956,6 +1146,7 @@ const docTemplate = `{
                 "status": {
                     "enum": [
                         "ACTIVE",
+                        "RUNNING",
                         "PAUSED",
                         "DISABLED"
                     ],
@@ -1008,6 +1199,12 @@ const docTemplate = `{
                 "id": {
                     "type": "string",
                     "example": "507f1f77bcf86cd799439011"
+                },
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.LogEntry"
+                    }
                 },
                 "started_at": {
                     "type": "string",
@@ -1123,6 +1320,21 @@ const docTemplate = `{
                     "minimum": 1
                 },
                 "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.LogEntry": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "description": "info, warn, error",
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "timestamp": {
                     "type": "string"
                 }
             }
@@ -1259,9 +1471,23 @@ const docTemplate = `{
                     ],
                     "example": "RECURRING"
                 },
+                "state": {
+                    "description": "System-controlled: based on time window",
+                    "enum": [
+                        "RUNNING",
+                        "NOT_RUNNING"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.TaskState"
+                        }
+                    ],
+                    "example": "NOT_RUNNING"
+                },
                 "status": {
                     "enum": [
                         "ACTIVE",
+                        "RUNNING",
                         "PAUSED",
                         "DISABLED"
                     ],
@@ -1329,6 +1555,19 @@ const docTemplate = `{
                     "type": "string",
                     "example": "09:00"
                 },
+                "state": {
+                    "description": "System-controlled: based on time window",
+                    "enum": [
+                        "RUNNING",
+                        "NOT_RUNNING"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.TaskGroupState"
+                        }
+                    ],
+                    "example": "NOT_RUNNING"
+                },
                 "status": {
                     "enum": [
                         "ACTIVE",
@@ -1357,6 +1596,17 @@ const docTemplate = `{
                 }
             }
         },
+        "models.TaskGroupState": {
+            "type": "string",
+            "enum": [
+                "RUNNING",
+                "NOT_RUNNING"
+            ],
+            "x-enum-varnames": [
+                "TaskGroupStateRunning",
+                "TaskGroupStateNotRunning"
+            ]
+        },
         "models.TaskGroupStatus": {
             "type": "string",
             "enum": [
@@ -1368,6 +1618,17 @@ const docTemplate = `{
                 "TaskGroupStatusActive",
                 "TaskGroupStatusPaused",
                 "TaskGroupStatusDisabled"
+            ]
+        },
+        "models.TaskState": {
+            "type": "string",
+            "enum": [
+                "RUNNING",
+                "NOT_RUNNING"
+            ],
+            "x-enum-varnames": [
+                "TaskStateRunning",
+                "TaskStateNotRunning"
             ]
         },
         "models.TaskStatus": {
@@ -1534,6 +1795,7 @@ const docTemplate = `{
                 "status": {
                     "enum": [
                         "ACTIVE",
+                        "RUNNING",
                         "PAUSED",
                         "DISABLED"
                     ],
