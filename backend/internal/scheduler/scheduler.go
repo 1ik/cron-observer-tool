@@ -277,12 +277,75 @@ func (s *Scheduler) handleTaskGroupUpdated(event events.Event) {
 		return
 	}
 
-	// Remove old jobs
-	s.unregisterGroupWindowJobs(payload.TaskGroup.UUID)
+	taskGroup := payload.TaskGroup
+	ctx := context.Background()
 
-	// Register new jobs if group has windows
-	if payload.TaskGroup.StartTime != "" && payload.TaskGroup.EndTime != "" {
-		if err := s.registerGroupWindowJobs(payload.TaskGroup); err != nil {
+	// Remove old window jobs
+	s.unregisterGroupWindowJobs(taskGroup.UUID)
+
+	// If group has a time window defined, check if we need to register/unregister tasks immediately
+	// Only process if group is ACTIVE, RUNNING, or PAUSED (we don't process DISABLED groups)
+	if taskGroup.Status != models.TaskGroupStatusDisabled && taskGroup.StartTime != "" && taskGroup.EndTime != "" {
+		// Check if we're currently within the window
+		isWithinWindow := s.isWithinGroupWindow(ctx, taskGroup)
+
+		// Get all tasks in this group
+		tasks, err := s.repo.GetTasksByGroupID(ctx, taskGroup.ID)
+		if err != nil {
+			log.Printf("[GROUP] Failed to get tasks for group %s: %v", taskGroup.UUID, err)
+		} else {
+			if isWithinWindow {
+				// We're within the window, register all tasks and set state to RUNNING
+				log.Printf("[GROUP] Group %s updated: within window (start: %s, end: %s), registering %d tasks and setting state to RUNNING",
+					taskGroup.UUID, taskGroup.StartTime, taskGroup.EndTime, len(tasks))
+
+				// Update group state to RUNNING (status remains ACTIVE/PAUSED)
+				if err := s.repo.UpdateTaskGroupState(ctx, taskGroup.UUID, models.TaskGroupStateRunning); err != nil {
+					log.Printf("[GROUP] Failed to update group %s state to RUNNING: %v", taskGroup.UUID, err)
+				}
+
+				// Register and update all tasks that are ACTIVE or PAUSED
+				for _, task := range tasks {
+					// Only register tasks that are ACTIVE or PAUSED (skip DISABLED)
+					if task.Status == models.TaskStatusActive || task.Status == models.TaskStatusPaused {
+						// Unregister first to avoid duplicates, then register
+						s.unregisterTask(task.UUID)
+
+						if err := s.registerTask(ctx, task); err != nil {
+							log.Printf("[GROUP] Failed to register task %s: %v", task.UUID, err)
+						} else {
+							// Update task state to RUNNING (status remains ACTIVE/PAUSED)
+							if err := s.repo.UpdateTaskState(ctx, task.UUID, models.TaskStateRunning); err != nil {
+								log.Printf("[GROUP] Failed to update task %s state to RUNNING: %v", task.UUID, err)
+							}
+						}
+					}
+				}
+			} else {
+				// We're outside the window, unregister all tasks and set state to NOT_RUNNING
+				log.Printf("[GROUP] Group %s updated: outside window (start: %s, end: %s), unregistering %d tasks and setting state to NOT_RUNNING",
+					taskGroup.UUID, taskGroup.StartTime, taskGroup.EndTime, len(tasks))
+
+				// Update group state to NOT_RUNNING (status remains unchanged)
+				if err := s.repo.UpdateTaskGroupState(ctx, taskGroup.UUID, models.TaskGroupStateNotRunning); err != nil {
+					log.Printf("[GROUP] Failed to update group %s state to NOT_RUNNING: %v", taskGroup.UUID, err)
+				}
+
+				// Unregister and update all tasks
+				for _, task := range tasks {
+					s.unregisterTask(task.UUID)
+					// Update task state to NOT_RUNNING (status remains unchanged)
+					if err := s.repo.UpdateTaskState(ctx, task.UUID, models.TaskStateNotRunning); err != nil {
+						log.Printf("[GROUP] Failed to update task %s state to NOT_RUNNING: %v", task.UUID, err)
+					}
+				}
+			}
+		}
+	}
+
+	// Register new window jobs if group has windows
+	if taskGroup.StartTime != "" && taskGroup.EndTime != "" {
+		if err := s.registerGroupWindowJobs(taskGroup); err != nil {
 			log.Printf("Failed to register updated group window jobs: %v", err)
 		}
 	}
@@ -410,6 +473,23 @@ func (s *Scheduler) isWithinGroupWindow(ctx context.Context, taskGroup *models.T
 	currentTime := time.Date(nowInLoc.Year(), nowInLoc.Month(), nowInLoc.Day(), nowInLoc.Hour(), nowInLoc.Minute(), 0, 0, loc)
 
 	return (currentTime.Equal(startTime) || currentTime.After(startTime)) && currentTime.Before(endTime)
+}
+
+// IsWithinGroupWindow checks if current time is within the group's time window (public method)
+func (s *Scheduler) IsWithinGroupWindow(ctx context.Context, taskGroup *models.TaskGroup) bool {
+	return s.isWithinGroupWindow(ctx, taskGroup)
+}
+
+// calculateTaskGroupState calculates the state of a task group based on its time window
+func (s *Scheduler) calculateTaskGroupState(ctx context.Context, taskGroup *models.TaskGroup) models.TaskGroupState {
+	if taskGroup.StartTime == "" || taskGroup.EndTime == "" {
+		return models.TaskGroupStateNotRunning // No window defined, default to NOT_RUNNING
+	}
+
+	if s.isWithinGroupWindow(ctx, taskGroup) {
+		return models.TaskGroupStateRunning
+	}
+	return models.TaskGroupStateNotRunning
 }
 
 // timeToCronExpression converts HH:MM time to daily cron expression

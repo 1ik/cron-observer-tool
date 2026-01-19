@@ -38,7 +38,9 @@ let apiClient: ReturnType<typeof createApiClient> | null = null;
  */
 function getApiClient(): ReturnType<typeof createApiClient> {
   if (!apiClient) {
-    apiClient = createApiClient(DEFAULT_API_BASE_URL);
+    apiClient = createApiClient(DEFAULT_API_BASE_URL, {
+      validate: false, // Disable Zod validation
+    });
   }
   return apiClient;
 }
@@ -310,5 +312,23 @@ export async function createTaskGroup(
 ) {
   const client = getApiClient();
   return client.postProjectsProject_idtaskGroups(taskGroup, { params: { project_id: projectId } });
+}
+
+export async function updateTaskGroup(
+  projectId: string,
+  groupUuid: string,
+  taskGroup: {
+    name?: string;
+    description?: string;
+    status?: 'ACTIVE' | 'PAUSED' | 'DISABLED';
+    start_time?: string;
+    end_time?: string;
+    timezone?: string;
+  }
+) {
+  const client = getApiClient();
+  return client.putProjectsProject_idtaskGroupsGroup_uuid(taskGroup, {
+    params: { project_id: projectId, group_uuid: groupUuid },
+  });
 }
 

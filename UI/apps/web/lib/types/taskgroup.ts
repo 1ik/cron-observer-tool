@@ -1,4 +1,5 @@
 export type TaskGroupStatus = 'ACTIVE' | 'PAUSED' | 'DISABLED'
+export type TaskGroupState = 'RUNNING' | 'NOT_RUNNING' // System-controlled: based on time window
 
 export interface TaskGroup {
   id: string
@@ -7,6 +8,7 @@ export interface TaskGroup {
   name: string
   description?: string
   status: TaskGroupStatus
+  state: TaskGroupState // System-controlled: based on time window
   start_time?: string // "HH:MM"
   end_time?: string // "HH:MM"
   timezone?: string

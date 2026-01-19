@@ -144,6 +144,36 @@ func (r *MongoRepository) UpdateTask(ctx context.Context, taskUUID string, task 
 	return err
 }
 
+func (r *MongoRepository) UpdateTaskStatus(ctx context.Context, taskUUID string, status models.TaskStatus) error {
+	collection := r.db.Collection(database.CollectionTasks)
+
+	filter := bson.M{"uuid": taskUUID}
+	update := bson.M{
+		"$set": bson.M{
+			"status":     status,
+			"updated_at": time.Now(),
+		},
+	}
+
+	_, err := collection.UpdateOne(ctx, filter, update)
+	return err
+}
+
+func (r *MongoRepository) UpdateTaskState(ctx context.Context, taskUUID string, state models.TaskState) error {
+	collection := r.db.Collection(database.CollectionTasks)
+
+	filter := bson.M{"uuid": taskUUID}
+	update := bson.M{
+		"$set": bson.M{
+			"state":      state,
+			"updated_at": time.Now(),
+		},
+	}
+
+	_, err := collection.UpdateOne(ctx, filter, update)
+	return err
+}
+
 func (r *MongoRepository) DeleteTask(ctx context.Context, taskUUID string) error {
 	collection := r.db.Collection(database.CollectionTasks)
 
@@ -208,6 +238,36 @@ func (r *MongoRepository) UpdateTaskGroup(ctx context.Context, taskGroupUUID str
 
 	filter := bson.M{"uuid": taskGroupUUID}
 	update := bson.M{"$set": taskGroup}
+
+	_, err := collection.UpdateOne(ctx, filter, update)
+	return err
+}
+
+func (r *MongoRepository) UpdateTaskGroupStatus(ctx context.Context, taskGroupUUID string, status models.TaskGroupStatus) error {
+	collection := r.db.Collection(database.CollectionTaskGroups)
+
+	filter := bson.M{"uuid": taskGroupUUID}
+	update := bson.M{
+		"$set": bson.M{
+			"status":     status,
+			"updated_at": time.Now(),
+		},
+	}
+
+	_, err := collection.UpdateOne(ctx, filter, update)
+	return err
+}
+
+func (r *MongoRepository) UpdateTaskGroupState(ctx context.Context, taskGroupUUID string, state models.TaskGroupState) error {
+	collection := r.db.Collection(database.CollectionTaskGroups)
+
+	filter := bson.M{"uuid": taskGroupUUID}
+	update := bson.M{
+		"$set": bson.M{
+			"state":      state,
+			"updated_at": time.Now(),
+		},
+	}
 
 	_, err := collection.UpdateOne(ctx, filter, update)
 	return err
@@ -304,6 +364,11 @@ func (r *MongoRepository) GetExecutionsByTaskUUID(ctx context.Context, taskUUID 
 	err = cursor.All(ctx, &executions)
 	if err != nil {
 		return nil, err
+	}
+
+	// Ensure we always return an empty slice instead of nil
+	if executions == nil {
+		executions = []*models.Execution{}
 	}
 
 	return executions, nil

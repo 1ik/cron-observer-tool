@@ -1,4 +1,5 @@
 export type TaskStatus = 'ACTIVE' | 'PAUSED' | 'DISABLED'
+export type TaskState = 'RUNNING' | 'NOT_RUNNING' // System-controlled: based on time window
 export type ScheduleType = 'RECURRING' | 'ONEOFF'
 export type FrequencyUnit = 's' | 'm' | 'h'
 
@@ -43,6 +44,7 @@ export interface Task {
   description?: string
   schedule_type: ScheduleType
   status: TaskStatus
+  state: TaskState // System-controlled: based on time window
   schedule_config: ScheduleConfig
   trigger_config?: TriggerConfig // Deprecated: Tasks now use project's execution_endpoint
   metadata?: Record<string, unknown>

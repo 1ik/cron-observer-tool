@@ -2,10 +2,8 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as Dialog from '@radix-ui/react-dialog'
-import { ChevronDownIcon } from '@radix-ui/react-icons'
 import * as Label from '@radix-ui/react-label'
-import * as Select from '@radix-ui/react-select'
-import { Box, Button, Flex, Heading, Text, TextArea, TextField } from '@radix-ui/themes'
+import { Box, Button, Flex, Heading, Select, Text, TextArea, TextField } from '@radix-ui/themes'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { TaskGroup, TaskGroupStatus, UpdateTaskGroupRequest } from '../lib/types/taskgroup'
@@ -183,65 +181,62 @@ export function TaskGroupSettingsDialog({
                     value={field.value}
                     onValueChange={field.onChange}
                   >
-                <Select.Trigger id="task-group-status" style={{ width: '100%' }}>
-                  <Flex align="center" gap="2">
-                    <Box
-                      style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: getStatusDotColor(field.value),
-                        flexShrink: 0,
-                      }}
-                    />
-                    <Select.Value />
-                  </Flex>
-                  <Select.Icon>
-                    <ChevronDownIcon />
-                  </Select.Icon>
-                </Select.Trigger>
-                <Select.Content>
-                  <Select.Item value="ACTIVE">
-                    <Flex align="center" gap="2">
-                      <Box
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: getStatusDotColor('ACTIVE'),
-                        }}
-                      />
-                      <Text>ACTIVE</Text>
-                    </Flex>
-                  </Select.Item>
-                  <Select.Item value="PAUSED">
-                    <Flex align="center" gap="2">
-                      <Box
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: getStatusDotColor('PAUSED'),
-                        }}
-                      />
-                      <Text>PAUSED</Text>
-                    </Flex>
-                  </Select.Item>
-                  <Select.Item value="DISABLED">
-                    <Flex align="center" gap="2">
-                      <Box
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: getStatusDotColor('DISABLED'),
-                        }}
-                      />
-                      <Text>DISABLED</Text>
-                    </Flex>
-                  </Select.Item>
-                </Select.Content>
-              </Select.Root>
+                    <Select.Trigger id="task-group-status" style={{ width: '100%' }}>
+                      <Flex align="center" gap="2">
+                        <Box
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: getStatusDotColor(field.value),
+                            flexShrink: 0,
+                          }}
+                        />
+                        <Text>{field.value}</Text>
+                      </Flex>
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Item value="ACTIVE">
+                        <Flex align="center" gap="2">
+                          <Box
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              backgroundColor: getStatusDotColor('ACTIVE'),
+                            }}
+                          />
+                          <Text>ACTIVE</Text>
+                        </Flex>
+                      </Select.Item>
+                      <Select.Item value="PAUSED">
+                        <Flex align="center" gap="2">
+                          <Box
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              backgroundColor: getStatusDotColor('PAUSED'),
+                            }}
+                          />
+                          <Text>PAUSED</Text>
+                        </Flex>
+                      </Select.Item>
+                      <Select.Item value="DISABLED">
+                        <Flex align="center" gap="2">
+                          <Box
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              backgroundColor: getStatusDotColor('DISABLED'),
+                            }}
+                          />
+                          <Text>DISABLED</Text>
+                        </Flex>
+                      </Select.Item>
+                    </Select.Content>
+                  </Select.Root>
                 )}
               />
               {errors.status && (

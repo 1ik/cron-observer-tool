@@ -27,6 +27,7 @@ export function useProjects() {
       const response = await getProjects();
       return response;
     },
+    retry: false, // Disable retries
     refetchOnMount: false, // Don't refetch when component remounts
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
     refetchOnReconnect: false, // Don't refetch on reconnect

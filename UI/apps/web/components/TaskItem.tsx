@@ -81,10 +81,6 @@ export function TaskItem({ task, compact = false }: TaskItemProps) {
         <Text size="1" color="gray">
           Schedule: {getScheduleDisplay()}
         </Text>
-
-        <Text size="1" color="gray">
-          Trigger: {task.trigger_config.http.method} {task.trigger_config.http.url}
-        </Text>
       </Flex>
     </Box>
   )

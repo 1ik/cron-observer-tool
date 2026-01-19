@@ -5,7 +5,7 @@ import { GearIcon } from '@radix-ui/react-icons'
 import { useRouter } from 'next/navigation'
 import { Task } from '../lib/types/task'
 import { getTaskRuntimeStatus } from '../lib/utils/task-status'
-import { StatusDot } from './StatusDot'
+import { StatusAndStateDots } from './StatusAndStateDots'
 
 interface TaskListItemProps {
   task: Task
@@ -74,7 +74,7 @@ export function TaskListItem({ task, projectUuid, isSelected, onSettingsClick }:
               <GearIcon width="14" height="14" />
             </IconButton>
           )}
-          <StatusDot status={runtimeStatus} size={6} />
+          <StatusAndStateDots status={runtimeStatus} state={task.state} size={6} />
         </Flex>
       </Flex>
       {task.description && (

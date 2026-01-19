@@ -84,6 +84,11 @@ func (h *ExecutionHandler) GetExecutionsByTaskUUID(c *gin.Context) {
 		return
 	}
 
+	// Ensure we always return an empty array instead of null
+	if executions == nil {
+		executions = []*models.Execution{}
+	}
+
 	c.JSON(http.StatusOK, executions)
 }
 

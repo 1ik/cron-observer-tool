@@ -36,6 +36,7 @@ const models_UpdateProjectRequest = z
   .partial()
   .passthrough();
 const models_TaskGroupStatus = z.enum(["ACTIVE", "PAUSED", "DISABLED"]);
+const models_TaskGroupState = z.enum(["RUNNING", "NOT_RUNNING"]);
 const models_TaskGroup = z
   .object({
     created_at: z.string(),
@@ -45,7 +46,8 @@ const models_TaskGroup = z
     name: z.string(),
     project_id: z.string(),
     start_time: z.string(),
-    status: models_TaskGroupStatus,
+    status: models_TaskGroupStatus.or(z.literal("RUNNING")), // Handle legacy RUNNING status
+    state: models_TaskGroupState.optional(), // System-controlled state
     timezone: z.string(),
     updated_at: z.string(),
     uuid: z.string(),
@@ -91,6 +93,7 @@ const models_ScheduleConfig = z
   .passthrough();
 const models_ScheduleType = z.enum(["RECURRING", "ONEOFF"]);
 const models_TaskStatus = z.enum(["ACTIVE", "PAUSED", "DISABLED"]);
+const models_TaskState = z.enum(["RUNNING", "NOT_RUNNING"]);
 const models_HTTPTriggerConfig = z
   .object({
     body: z.unknown().optional(),
@@ -115,7 +118,8 @@ const models_Task = z
     project_id: z.string(),
     schedule_config: models_ScheduleConfig,
     schedule_type: models_ScheduleType,
-    status: models_TaskStatus,
+    status: models_TaskStatus.or(z.literal("RUNNING")), // Handle legacy RUNNING status
+    state: models_TaskState.optional(), // System-controlled state
     task_group_id: z.string(),
     trigger_config: models_TriggerConfig,
     updated_at: z.string(),
@@ -174,6 +178,7 @@ export const schemas = {
   models_CreateProjectRequest,
   models_UpdateProjectRequest,
   models_TaskGroupStatus,
+  models_TaskGroupState,
   models_TaskGroup,
   models_CreateTaskGroupRequest,
   models_UpdateTaskGroupRequest,
@@ -183,6 +188,7 @@ export const schemas = {
   models_ScheduleConfig,
   models_ScheduleType,
   models_TaskStatus,
+  models_TaskState,
   models_HTTPTriggerConfig,
   models_TriggerType,
   models_TriggerConfig,

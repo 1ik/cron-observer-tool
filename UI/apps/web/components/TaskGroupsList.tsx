@@ -30,7 +30,7 @@ export function TaskGroupsList({
 }: TaskGroupsListProps) {
   // Create a Set of task group IDs for quick lookup
   const taskGroupIds = new Set(taskGroups.map(tg => tg.id))
-  
+
   // Group tasks by task_group_id
   const tasksByGroup = new Map<string, Task[]>()
   const ungroupedTasks: Task[] = []

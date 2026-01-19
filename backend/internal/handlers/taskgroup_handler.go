@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -141,6 +142,20 @@ func (h *TaskGroupHandler) CreateTaskGroup(c *gin.Context) {
 		timezone = "UTC"
 	}
 
+	// Calculate initial state based on time window
+	state := models.TaskGroupStateNotRunning
+	if req.StartTime != "" && req.EndTime != "" {
+		// Check if current time is within the window
+		tempTaskGroup := &models.TaskGroup{
+			StartTime: req.StartTime,
+			EndTime:   req.EndTime,
+			Timezone:  timezone,
+		}
+		if h.scheduler.IsWithinGroupWindow(c.Request.Context(), tempTaskGroup) {
+			state = models.TaskGroupStateRunning
+		}
+	}
+
 	// Convert request DTO to TaskGroup model
 	taskGroup := &models.TaskGroup{
 		ProjectID:   projectID,
@@ -148,6 +163,7 @@ func (h *TaskGroupHandler) CreateTaskGroup(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		Status:      status,
+		State:       state, // Set calculated state
 		StartTime:   req.StartTime,
 		EndTime:     req.EndTime,
 		Timezone:    timezone,
@@ -279,6 +295,28 @@ func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 		}
 	}
 
+	// Calculate state based on time window (if start_time or end_time changed)
+	state := existingTaskGroup.State // Preserve existing state by default
+	if req.StartTime != "" && req.EndTime != "" {
+		// Check if start_time or end_time changed
+		if req.StartTime != existingTaskGroup.StartTime || req.EndTime != existingTaskGroup.EndTime || req.Timezone != existingTaskGroup.Timezone {
+			// Calculate new state based on updated window
+			tempTaskGroup := &models.TaskGroup{
+				StartTime: req.StartTime,
+				EndTime:   req.EndTime,
+				Timezone:  timezone,
+			}
+			if h.scheduler.IsWithinGroupWindow(c.Request.Context(), tempTaskGroup) {
+				state = models.TaskGroupStateRunning
+			} else {
+				state = models.TaskGroupStateNotRunning
+			}
+		}
+	} else if req.StartTime == "" || req.EndTime == "" {
+		// Window removed, set to NOT_RUNNING
+		state = models.TaskGroupStateNotRunning
+	}
+
 	// Update task group fields
 	taskGroup := &models.TaskGroup{
 		ID:          existingTaskGroup.ID,
@@ -287,6 +325,7 @@ func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		Status:      status,
+		State:       state, // Set calculated state
 		StartTime:   req.StartTime,
 		EndTime:     req.EndTime,
 		Timezone:    timezone,
@@ -301,6 +340,11 @@ func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 			"error": "Failed to update task group",
 		})
 		return
+	}
+
+	// Update state separately to ensure it's persisted
+	if err := h.repo.UpdateTaskGroupState(c.Request.Context(), taskGroupUUIDParam, state); err != nil {
+		log.Printf("Failed to update task group state: %v", err)
 	}
 
 	// Publish TaskGroupUpdated event

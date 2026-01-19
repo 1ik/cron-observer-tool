@@ -6,7 +6,7 @@ import { Box, Flex, IconButton, Text } from '@radix-ui/themes'
 import { Task } from '../lib/types/task'
 import { TaskGroup } from '../lib/types/taskgroup'
 import { TaskRuntimeStatus } from '../lib/utils/task-status'
-import { StatusDot } from './StatusDot'
+import { StatusAndStateDots } from './StatusAndStateDots'
 import { TaskListItem } from './TaskListItem'
 
 interface TaskGroupAccordionItemProps {
@@ -94,8 +94,9 @@ export function TaskGroupAccordionItem({
                 </Text>
               )}
             </Flex>
-            <StatusDot
+            <StatusAndStateDots
               status={runtimeStatus}
+              state={taskGroup.state}
               size={8}
               tooltip={
                 taskGroup.status === 'ACTIVE'

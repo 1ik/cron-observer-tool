@@ -155,6 +155,19 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		taskGroupID = &groupID
 	}
 
+	// Calculate initial state based on task group window (if task belongs to a group)
+	state := models.TaskStateNotRunning
+	if taskGroupID != nil {
+		// Get the task group to check its window
+		taskGroup, err := h.repo.GetTaskGroupByID(c.Request.Context(), *taskGroupID)
+		if err == nil && taskGroup != nil && taskGroup.StartTime != "" && taskGroup.EndTime != "" {
+			// Check if current time is within the group's window
+			// Note: We can't use scheduler here as it's an interface, so we'll calculate state after creation
+			// For now, default to NOT_RUNNING - it will be updated by scheduler when group window starts
+			state = models.TaskStateNotRunning
+		}
+	}
+
 	// Convert request DTO to Task model
 	task := &models.Task{
 		ProjectID:    projectID,
@@ -164,6 +177,7 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		Description:  req.Description,
 		ScheduleType: req.ScheduleType,
 		Status:       status,
+		State:        state, // Set initial state
 		ScheduleConfig: models.ScheduleConfig{
 			CronExpression: req.ScheduleConfig.CronExpression,
 			Timezone:       req.ScheduleConfig.Timezone,
@@ -282,6 +296,7 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 		Description:  req.Description,
 		ScheduleType: req.ScheduleType,
 		Status:       status,
+		State:        existingTask.State, // Preserve state - it's system-controlled
 		ScheduleConfig: models.ScheduleConfig{
 			CronExpression: req.ScheduleConfig.CronExpression,
 			Timezone:       req.ScheduleConfig.Timezone,

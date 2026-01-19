@@ -29,9 +29,13 @@ type Repository interface {
 	GetTaskGroupByUUID(ctx context.Context, taskGroupUUID string) (*models.TaskGroup, error)
 	GetTaskGroupByID(ctx context.Context, taskGroupID primitive.ObjectID) (*models.TaskGroup, error)
 	UpdateTaskGroup(ctx context.Context, taskGroupUUID string, taskGroup *models.TaskGroup) error
+	UpdateTaskGroupStatus(ctx context.Context, taskGroupUUID string, status models.TaskGroupStatus) error
+	UpdateTaskGroupState(ctx context.Context, taskGroupUUID string, state models.TaskGroupState) error
 	DeleteTaskGroup(ctx context.Context, taskGroupUUID string) error
 	GetTasksByGroupID(ctx context.Context, taskGroupID primitive.ObjectID) ([]*models.Task, error)
 	GetActiveTaskGroupsWithWindows(ctx context.Context) ([]*models.TaskGroup, error)
+	UpdateTaskStatus(ctx context.Context, taskUUID string, status models.TaskStatus) error
+	UpdateTaskState(ctx context.Context, taskUUID string, state models.TaskState) error
 
 	// executions
 	CreateExecution(ctx context.Context, execution *models.Execution) error

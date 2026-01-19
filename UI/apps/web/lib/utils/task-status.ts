@@ -68,10 +68,12 @@ export function getTaskRuntimeStatus(task: Task): TaskRuntimeStatus {
   }
 
   if (task.status === 'ACTIVE') {
-    // Check if task is within its schedule window
+    // Use state to determine if task is running
+    if (task.state === 'RUNNING') {
+      return 'running'
+    }
+    // Check if task is within its schedule window (fallback for backward compatibility)
     if (isTaskWithinWindow(task)) {
-      // For now, we'll use 'success' for active tasks within window
-      // 'running' would require execution data to know if it's currently executing
       return 'success'
     } else {
       return 'not-running'

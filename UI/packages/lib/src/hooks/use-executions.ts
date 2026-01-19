@@ -39,6 +39,7 @@ export function useExecutionsByTask(projectId: string | null | undefined, taskUU
       return getExecutionsByTaskUUID(projectId, taskUUID, trimmedDate);
     },
     enabled: enabled && !!projectId && !!taskUUID && !!date && date.trim() !== '',
+    retry: false, // Disable retries
     staleTime: 30 * 1000, // Consider data fresh for 30 seconds to prevent duplicate requests
     refetchOnMount: false, // Don't refetch when component remounts if data is fresh
     refetchOnWindowFocus: false, // Don't refetch when window regains focus

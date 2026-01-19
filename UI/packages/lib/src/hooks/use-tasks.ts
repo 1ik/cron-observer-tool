@@ -31,6 +31,7 @@ export function useTasksByProject(projectId: string) {
       return response;
     },
     enabled: !!projectId, // Only fetch if projectId is provided
+    retry: false, // Disable retries
     refetchOnMount: false, // Don't refetch when component remounts
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
     refetchOnReconnect: false, // Don't refetch on reconnect

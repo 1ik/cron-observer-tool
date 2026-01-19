@@ -152,33 +152,41 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
       id: task.id || task.uuid || '',
       uuid: task.uuid || task.id || '',
       project_id: task.project_id || projectId,
-      task_group_id: task.task_group_id,
+      task_group_id: task.task_group_id || undefined, // Preserve task_group_id, convert empty string to undefined
       name: task.name || '',
       description: task.description,
       schedule_type: task.schedule_type || 'RECURRING',
       status: task.status || 'ACTIVE',
+      state: task.state || 'NOT_RUNNING', // System-controlled state
       schedule_config: task.schedule_config || { timezone: 'UTC' },
-      trigger_config: (task.trigger_config?.type === 'HTTP' && task.trigger_config?.http)
-        ? { type: 'HTTP' as const, http: task.trigger_config.http }
-        : { type: 'HTTP' as const, http: { url: '', method: 'GET' } },
+      trigger_config: task.trigger_config,
       metadata: task.metadata,
       created_at: task.created_at || new Date().toISOString(),
       updated_at: task.updated_at || new Date().toISOString(),
     }))
 
-  const mappedTaskGroups = taskGroups.map((tg) => ({
-    id: tg.id || tg.uuid || '',
-    uuid: tg.uuid || tg.id || '',
-    project_id: tg.project_id || projectId,
-    name: tg.name || '',
-    description: tg.description,
-    status: tg.status || 'ACTIVE',
-    start_time: tg.start_time,
-    end_time: tg.end_time,
-    timezone: tg.timezone,
-    created_at: tg.created_at || new Date().toISOString(),
-    updated_at: tg.updated_at || new Date().toISOString(),
-    }))
+  const mappedTaskGroups = taskGroups.map((tg) => {
+    // Handle status: if it's "RUNNING" (which we removed), convert to "ACTIVE"
+    let status = tg.status || 'ACTIVE'
+    if (status === 'RUNNING') {
+      status = 'ACTIVE'
+    }
+    
+    return {
+      id: tg.id || tg.uuid || '',
+      uuid: tg.uuid || '', // Always use uuid field, don't fall back to id
+      project_id: tg.project_id || projectId,
+      name: tg.name || '',
+      description: tg.description,
+      status: status as 'ACTIVE' | 'PAUSED' | 'DISABLED',
+      state: (tg.state && tg.state !== '') ? tg.state : 'NOT_RUNNING', // System-controlled state
+      start_time: tg.start_time,
+      end_time: tg.end_time,
+      timezone: tg.timezone,
+      created_at: tg.created_at || new Date().toISOString(),
+      updated_at: tg.updated_at || new Date().toISOString(),
+    }
+  })
 
 
   return (

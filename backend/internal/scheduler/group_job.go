@@ -33,6 +33,11 @@ func (j *GroupStartJob) Run() {
 		return
 	}
 
+	// Update group state to RUNNING (status remains ACTIVE)
+	if err := j.Repo.UpdateTaskGroupState(ctx, taskGroup.UUID, models.TaskGroupStateRunning); err != nil {
+		log.Printf("[GROUP] Failed to update group %s state to RUNNING: %v", taskGroup.UUID, err)
+	}
+
 	// Get all tasks in this group
 	tasks, err := j.Repo.GetTasksByGroupID(ctx, j.TaskGroupID)
 	if err != nil {
@@ -42,11 +47,15 @@ func (j *GroupStartJob) Run() {
 
 	log.Printf("[GROUP] Registering %d tasks for group %s (start time: %s)", len(tasks), taskGroup.UUID, taskGroup.StartTime)
 
-	// Register each task
+	// Register each task and update state to RUNNING (status remains ACTIVE)
 	for _, task := range tasks {
 		if err := j.Scheduler.registerTask(ctx, task); err != nil {
 			log.Printf("[GROUP] Failed to register task %s in group %s: %v", task.UUID, taskGroup.UUID, err)
 			continue
+		}
+		// Update task state to RUNNING (status remains ACTIVE)
+		if err := j.Repo.UpdateTaskState(ctx, task.UUID, models.TaskStateRunning); err != nil {
+			log.Printf("[GROUP] Failed to update task %s state to RUNNING: %v", task.UUID, err)
 		}
 	}
 }
@@ -69,6 +78,11 @@ func (j *GroupEndJob) Run() {
 		return
 	}
 
+	// Update group state to NOT_RUNNING (status remains ACTIVE)
+	if err := j.Repo.UpdateTaskGroupState(ctx, taskGroup.UUID, models.TaskGroupStateNotRunning); err != nil {
+		log.Printf("[GROUP] Failed to update group %s state to NOT_RUNNING: %v", taskGroup.UUID, err)
+	}
+
 	// Get all tasks in this group
 	tasks, err := j.Repo.GetTasksByGroupID(ctx, j.TaskGroupID)
 	if err != nil {
@@ -78,8 +92,12 @@ func (j *GroupEndJob) Run() {
 
 	log.Printf("[GROUP] Unregistering %d tasks for group %s (end time: %s)", len(tasks), taskGroup.UUID, taskGroup.EndTime)
 
-	// Unregister each task
+	// Unregister each task and update state to NOT_RUNNING (status remains ACTIVE)
 	for _, task := range tasks {
 		j.Scheduler.unregisterTask(task.UUID)
+		// Update task state to NOT_RUNNING (status remains ACTIVE)
+		if err := j.Repo.UpdateTaskState(ctx, task.UUID, models.TaskStateNotRunning); err != nil {
+			log.Printf("[GROUP] Failed to update task %s state to NOT_RUNNING: %v", task.UUID, err)
+		}
 	}
 }

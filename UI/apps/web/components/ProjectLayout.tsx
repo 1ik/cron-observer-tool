@@ -1,6 +1,6 @@
 'use client'
 
-import { useCreateTask, useCreateTaskGroup, useUpdateProject } from '@cron-observer/lib'
+import { useCreateTask, useCreateTaskGroup, useUpdateProject, useUpdateTaskGroup } from '@cron-observer/lib'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { CaretDownIcon, GearIcon, PlusIcon } from '@radix-ui/react-icons'
 import { Box, Button, Flex, IconButton, Text } from '@radix-ui/themes'
@@ -48,6 +48,7 @@ export function ProjectLayout({
   const createTaskGroupMutation = useCreateTaskGroup(project.id)
   const createTaskMutation = useCreateTask(project.id)
   const updateProjectMutation = useUpdateProject(project.id)
+  const updateTaskGroupMutation = useUpdateTaskGroup(project.id)
 
   const handleTaskGroupSettingsClick = (taskGroup: TaskGroup) => {
     setSelectedTaskGroup(taskGroup)
@@ -56,10 +57,30 @@ export function ProjectLayout({
 
   const handleTaskGroupSettingsSubmit = (data: UpdateTaskGroupRequest) => {
     if (!selectedTaskGroup) return
-    // TODO: Implement API call to update task group
-    console.log('Updating task group:', selectedTaskGroup.id, data)
-    // TODO: Add success toast/notification
-    setIsTaskGroupSettingsOpen(false)
+    
+    // Ensure we use the UUID field, not the ID field
+    const groupUuid = selectedTaskGroup.uuid || selectedTaskGroup.id
+    if (!groupUuid) {
+      console.error('Task group missing both uuid and id:', selectedTaskGroup)
+      return
+    }
+    
+    console.log('Updating task group:', { groupUuid, id: selectedTaskGroup.id, uuid: selectedTaskGroup.uuid, data })
+    
+    updateTaskGroupMutation.mutate(
+      { groupUuid, data },
+      {
+        onSuccess: () => {
+          // Dialog will close automatically via onOpenChange
+          // Task groups will be refetched automatically via query invalidation
+          setIsTaskGroupSettingsOpen(false)
+        },
+        onError: (error: Error) => {
+          // TODO: Add error toast/notification
+          console.error('Failed to update task group:', error)
+        },
+      }
+    )
   }
 
   const handleTaskSettingsClick = (task: Task) => {
