@@ -3,9 +3,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Label from '@radix-ui/react-label'
-import { Box, Button, Flex, Heading, Text, TextArea, TextField } from '@radix-ui/themes'
+import { Box, Button, Flex, Heading, Select, Text, TextArea, TextField } from '@radix-ui/themes'
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
+import { TIMEZONES } from '../lib/constants/timezones'
+import { useCronDescription } from '../lib/hooks/use-cron-description'
 import { CreateTaskRequest } from '../lib/types/task'
 import { CreateTaskFormData, createTaskSchema } from '../lib/validations/task'
 import { StyledDialogContent } from './StyledDialogContent'
@@ -32,16 +34,24 @@ export function CreateTaskDialog({
     formState: { errors },
     reset,
   } = useForm<CreateTaskFormData>({
+    mode: 'onChange', // Enable onChange mode to watch cron expression changes
     resolver: zodResolver(createTaskSchema),
     defaultValues: {
       name: '',
       description: '',
       schedule_config: {
-        timezone: 'UTC',
+        timezone: 'Asia/Dhaka',
         cron_expression: '',
       },
     },
   })
+
+  // Watch cron expression to show description
+  const cronExpression = useWatch({
+    control,
+    name: 'schedule_config.cron_expression',
+  })
+  const cronDescription = useCronDescription(cronExpression)
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -50,7 +60,7 @@ export function CreateTaskDialog({
         name: '',
         description: '',
         schedule_config: {
-          timezone: 'UTC',
+          timezone: 'Asia/Dhaka',
           cron_expression: '',
         },
       })
@@ -171,16 +181,34 @@ export function CreateTaskDialog({
                     Timezone <Text color="red">*</Text>
                   </Text>
                 </Label.Root>
-                <TextField.Root
-                  id="task-timezone"
-                  {...register('schedule_config.timezone')}
-                  placeholder="e.g., America/New_York, UTC"
-                  size="3"
-                  color={errors.schedule_config?.timezone ? 'red' : undefined}
+                <Controller
+                  name="schedule_config.timezone"
+                  control={control}
+                  render={({ field }) => {
+                    const selectedTimezone = TIMEZONES.find((tz) => tz.value === field.value)
+                    return (
+                      <Select.Root
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <Select.Trigger
+                          id="task-timezone"
+                          style={{ width: '100%' }}
+                          color={errors.schedule_config?.timezone ? 'red' : undefined}
+                        >
+                          <Text>{selectedTimezone ? selectedTimezone.label : 'Select timezone'}</Text>
+                        </Select.Trigger>
+                        <Select.Content>
+                          {TIMEZONES.map((tz) => (
+                            <Select.Item key={tz.value} value={tz.value}>
+                              {tz.label}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select.Root>
+                    )
+                  }}
                 />
-                <Text size="1" color="gray">
-                  IANA timezone identifier (e.g., America/New_York, UTC)
-                </Text>
                 {errors.schedule_config?.timezone && (
                   <Text size="2" color="red">
                     {errors.schedule_config.timezone.message}
@@ -202,6 +230,11 @@ export function CreateTaskDialog({
                   size="3"
                   color={errors.schedule_config?.cron_expression ? 'red' : undefined}
                 />
+                {cronDescription && (
+                  <Text size="2" color="gray">
+                    {cronDescription}
+                  </Text>
+                )}
                 <Text size="1" color="gray">
                   If provided, TimeRange and DaysOfWeek are ignored
                 </Text>

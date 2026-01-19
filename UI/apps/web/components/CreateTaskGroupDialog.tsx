@@ -3,9 +3,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Label from '@radix-ui/react-label'
-import { Box, Button, Flex, Heading, Text, TextArea, TextField } from '@radix-ui/themes'
+import { Box, Button, Flex, Heading, Select, Text, TextArea, TextField } from '@radix-ui/themes'
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
+import { TIMEZONES } from '../lib/constants/timezones'
 import { CreateTaskGroupRequest } from '../lib/types/taskgroup'
 import { CreateTaskGroupFormData, createTaskGroupSchema } from '../lib/validations/taskgroup'
 import { StyledDialogContent } from './StyledDialogContent'
@@ -25,6 +26,7 @@ export function CreateTaskGroupDialog({
 }: CreateTaskGroupDialogProps) {
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
     reset,
@@ -35,7 +37,7 @@ export function CreateTaskGroupDialog({
       description: '',
       start_time: '',
       end_time: '',
-      timezone: '',
+      timezone: 'Asia/Dhaka',
     },
   })
 
@@ -47,7 +49,7 @@ export function CreateTaskGroupDialog({
         description: '',
         start_time: '',
         end_time: '',
-        timezone: '',
+        timezone: 'Asia/Dhaka',
       })
     }
   }, [open, reset])
@@ -209,16 +211,34 @@ export function CreateTaskGroupDialog({
                     Timezone
                   </Text>
                 </Label.Root>
-                <TextField.Root
-                  id="task-group-timezone"
-                  {...register('timezone')}
-                  placeholder="e.g., America/New_York"
-                  size="3"
-                  color={errors.timezone ? 'red' : undefined}
+                <Controller
+                  name="timezone"
+                  control={control}
+                  render={({ field }) => {
+                    const selectedTimezone = TIMEZONES.find((tz) => tz.value === field.value)
+                    return (
+                      <Select.Root
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <Select.Trigger
+                          id="task-group-timezone"
+                          style={{ width: '100%' }}
+                          color={errors.timezone ? 'red' : undefined}
+                        >
+                          <Text>{selectedTimezone ? selectedTimezone.label : 'Select timezone'}</Text>
+                        </Select.Trigger>
+                        <Select.Content>
+                          {TIMEZONES.map((tz) => (
+                            <Select.Item key={tz.value} value={tz.value}>
+                              {tz.label}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select.Root>
+                    )
+                  }}
                 />
-                <Text size="1" color="gray">
-                  IANA timezone identifier (e.g., America/New_York, UTC)
-                </Text>
                 {errors.timezone && (
                   <Text size="2" color="red">
                     {errors.timezone.message}
