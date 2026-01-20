@@ -6,21 +6,20 @@ import { TaskRuntimeStatus, getStatusDotColor, getStatusTooltip } from '../lib/u
 interface StatusDotProps {
   status: TaskRuntimeStatus
   size?: number
-  tooltip?: string // Optional custom tooltip text
 }
 
-export function StatusDot({ status, size = 6, tooltip }: StatusDotProps) {
-  const color = getStatusDotColor(status)
-  const tooltipText = tooltip || getStatusTooltip(status)
+export function StatusDot({ status, size = 6 }: StatusDotProps) {
+  const statusColor = getStatusDotColor(status)
+  const statusTooltipText = getStatusTooltip(status)
 
   return (
-    <Tooltip content={tooltipText}>
+    <Tooltip content={statusTooltipText}>
       <Box
         style={{
           width: `${size}px`,
           height: `${size}px`,
           borderRadius: '50%',
-          backgroundColor: color,
+          backgroundColor: statusColor,
           flexShrink: 0,
           cursor: 'help',
         }}
@@ -28,4 +27,3 @@ export function StatusDot({ status, size = 6, tooltip }: StatusDotProps) {
     </Tooltip>
   )
 }
-
