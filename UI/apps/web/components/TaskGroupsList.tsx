@@ -2,6 +2,7 @@
 
 import * as Accordion from '@radix-ui/react-accordion'
 import { Box, Text } from '@radix-ui/themes'
+import { useEffect, useMemo, useState } from 'react'
 import { Task } from '../lib/types/task'
 import { TaskGroup } from '../lib/types/taskgroup'
 import { TaskGroupAccordionItem } from './TaskGroupAccordionItem'
@@ -28,25 +29,51 @@ export function TaskGroupsList({
   onTaskSettingsClick,
   onCreateTaskClick,
 }: TaskGroupsListProps) {
-  // Create a Set of task group IDs for quick lookup
-  const taskGroupIds = new Set(taskGroups.map(tg => tg.id))
+  // Create a Set of task group IDs for quick lookup (memoized)
+  const taskGroupIds = useMemo(() => new Set(taskGroups.map(tg => tg.id)), [taskGroups])
 
   // Group tasks by task_group_id
-  const tasksByGroup = new Map<string, Task[]>()
-  const ungroupedTasks: Task[] = []
+  const tasksByGroup = useMemo(() => {
+    const map = new Map<string, Task[]>()
+    tasks.forEach((task) => {
+      if (task.task_group_id && taskGroupIds.has(task.task_group_id)) {
+        const groupTasks = map.get(task.task_group_id) || []
+        groupTasks.push(task)
+        map.set(task.task_group_id, groupTasks)
+      }
+    })
+    return map
+  }, [tasks, taskGroupIds])
 
-  tasks.forEach((task) => {
-    // If task has a task_group_id AND that task group exists, add it to the group
-    // Otherwise, treat it as ungrouped (this handles cases where task_group_id exists but group doesn't)
-    if (task.task_group_id && taskGroupIds.has(task.task_group_id)) {
-      const groupTasks = tasksByGroup.get(task.task_group_id) || []
-      groupTasks.push(task)
-      tasksByGroup.set(task.task_group_id, groupTasks)
-    } else {
-      // Task has no task_group_id, OR task_group_id exists but the group doesn't exist
-      ungroupedTasks.push(task)
+  const ungroupedTasks = useMemo(() => {
+    return tasks.filter((task) => !task.task_group_id || !taskGroupIds.has(task.task_group_id))
+  }, [tasks, taskGroupIds])
+
+  // Find the group ID of the selected task
+  const selectedTaskGroupId = useMemo(() => {
+    if (!selectedTaskId) return null
+    const selectedTask = tasks.find((t) => t.id === selectedTaskId || t.uuid === selectedTaskId)
+    if (selectedTask?.task_group_id && taskGroupIds.has(selectedTask.task_group_id)) {
+      return selectedTask.task_group_id
     }
-  })
+    return null
+  }, [selectedTaskId, tasks, taskGroupIds])
+
+  // Controlled accordion state - open the group containing the selected task
+  const [openGroups, setOpenGroups] = useState<string[]>([])
+
+  // Update open groups when selected task changes
+  useEffect(() => {
+    if (selectedTaskGroupId) {
+      setOpenGroups((prev) => {
+        // If the group is not already open, add it
+        if (!prev.includes(selectedTaskGroupId)) {
+          return [...prev, selectedTaskGroupId]
+        }
+        return prev
+      })
+    }
+  }, [selectedTaskGroupId])
 
   return (
     <Box
@@ -59,7 +86,12 @@ export function TaskGroupsList({
       }}
     >
       {taskGroups.length > 0 && (
-        <Accordion.Root type="multiple" style={{ width: '100%' }}>
+        <Accordion.Root
+          type="multiple"
+          value={openGroups}
+          onValueChange={setOpenGroups}
+          style={{ width: '100%' }}
+        >
           {taskGroups.map((group) => (
             <TaskGroupAccordionItem
               key={group.id}
