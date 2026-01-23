@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/yourusername/cron-observer/backend/internal/middleware"
 	"github.com/yourusername/cron-observer/backend/internal/models"
 	"github.com/yourusername/cron-observer/backend/internal/repositories"
 	"github.com/yourusername/cron-observer/backend/internal/utils"
@@ -61,6 +62,12 @@ func (h *ProjectHandler) GetAllProjects(c *gin.Context) {
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /projects [post]
 func (h *ProjectHandler) CreateProject(c *gin.Context) {
+	// Get authenticated user from context
+	user, exists := middleware.GetUserFromContext(c)
+	if exists {
+		log.Printf("User %s (%s) is creating a project", user.Name, user.Email)
+	}
+
 	var req models.CreateProjectRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Printf("JSON binding error: %v", err)

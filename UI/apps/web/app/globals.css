@@ -5,7 +5,8 @@
 @tailwind utilities;
 
 /* Layout constraints for flexbox layout */
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -23,6 +24,24 @@ input[type="button"],
 input[type="reset"],
 label[for],
 [onclick] {
+  cursor: pointer;
+}
+
+/* Radix UI Themes components - ensure pointer cursor */
+[data-radix-button],
+[data-radix-icon-button],
+[data-radix-popover-trigger],
+[data-radix-dropdown-menu-trigger],
+[data-radix-dialog-trigger],
+[data-radix-accordion-trigger],
+[data-radix-tabs-trigger],
+[data-radix-select-trigger] {
+  cursor: pointer !important;
+}
+
+/* Links and navigation */
+a[href],
+Link {
   cursor: pointer;
 }
 

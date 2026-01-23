@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/yourusername/cron-observer/backend/internal/events"
+	"github.com/yourusername/cron-observer/backend/internal/middleware"
 	"github.com/yourusername/cron-observer/backend/internal/models"
 	"github.com/yourusername/cron-observer/backend/internal/repositories"
 	"github.com/yourusername/cron-observer/backend/internal/utils"
@@ -95,6 +96,12 @@ func (h *TaskHandler) GetTasksByProject(c *gin.Context) {
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /projects/{project_id}/tasks [post]
 func (h *TaskHandler) CreateTask(c *gin.Context) {
+	// Get authenticated user from context
+	user, exists := middleware.GetUserFromContext(c)
+	if exists {
+		log.Printf("User %s (%s) is creating a task", user.Name, user.Email)
+	}
+
 	var req models.CreateTaskRequest
 
 	// Bind JSON and validate using Gin's binding

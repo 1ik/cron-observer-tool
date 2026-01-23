@@ -188,7 +188,7 @@ export function ProjectLayout({
       >
         <Flex align="center" justify="between" gap="3">
           <Flex align="center" gap="2">
-            <Link href="/projects" style={{ textDecoration: 'none' }}>
+            <Link href="/projects" style={{ textDecoration: 'none', cursor: 'pointer' }}>
               <Text size="2" color="gray">
                 Projects
               </Text>

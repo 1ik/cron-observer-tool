@@ -1,9 +1,10 @@
+import { ToastProvider } from '@cron-observer/ui'
 import { Box, Flex, Separator, Theme } from '@radix-ui/themes'
 import type { Metadata } from 'next'
 import { ThemeProvider } from 'next-themes'
-import { ToastProvider } from '@cron-observer/ui'
 import { Header } from '../components/Header'
 import { QueryProvider } from '../providers/QueryProvider'
+import { SessionProvider } from '../providers/SessionProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -19,21 +20,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <QueryProvider>
-          <ThemeProvider attribute="class">
-            <Theme accentColor="yellow" grayColor="gray" panelBackground="solid" radius="small" scaling="90%">
-              <ToastProvider>
-                <Flex direction="column" height="100vh" overflow="hidden">
-                  <Header />
-                  <Separator />
-                  <Box style={{ flex: 1, overflowY: 'auto' }}>
-                    {children}
-                  </Box>
-                </Flex>
-              </ToastProvider>
-            </Theme>
-          </ThemeProvider>
-        </QueryProvider>
+        <SessionProvider>
+          <QueryProvider>
+            <ThemeProvider attribute="class">
+              <Theme accentColor="yellow" grayColor="gray" panelBackground="solid" radius="small" scaling="90%">
+                <ToastProvider>
+                  <Flex direction="column" height="100vh" overflow="hidden">
+                    <Header />
+                    <Separator />
+                    <Box style={{ flex: 1, overflowY: 'auto' }}>
+                      {children}
+                    </Box>
+                  </Flex>
+                </ToastProvider>
+              </Theme>
+            </ThemeProvider>
+          </QueryProvider>
+        </SessionProvider>
       </body>
     </html>
   )

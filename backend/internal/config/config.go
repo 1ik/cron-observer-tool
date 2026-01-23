@@ -6,6 +6,7 @@ import "time"
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
+	Auth     AuthConfig
 }
 
 // ServerConfig holds HTTP server configuration
@@ -21,4 +22,10 @@ type DatabaseConfig struct {
 	Name     string        `mapstructure:"name"`
 	Timeout  time.Duration `mapstructure:"timeout"`
 	MaxConns int           `mapstructure:"max_conns"`
+}
+
+// AuthConfig holds authentication configuration
+type AuthConfig struct {
+	JWTSecret   string   `mapstructure:"jwt_secret"`
+	SuperAdmins []string `mapstructure:"super_admins"` // Comma-separated list of super admin emails
 }

@@ -850,6 +850,47 @@ const endpoints = makeApi([
 
 export const api = new Zodios(endpoints);
 
+// Token provider function type
+type TokenProvider = () => Promise<string | null>;
+
+// Global token provider
+let getToken: TokenProvider | null = null;
+
+/**
+ * Set the token provider function that will be used to get the JWT token
+ * for API requests. The token will be added to the Authorization header.
+ */
+export function setTokenProvider(provider: TokenProvider) {
+  getToken = provider;
+}
+
 export function createApiClient(baseUrl: string, options?: ZodiosOptions) {
-  return new Zodios(baseUrl, endpoints, options);
+  const client = new Zodios(baseUrl, endpoints, options);
+  
+  // Add request interceptor using Zodios plugin system
+  // We'll use axios instance directly if available
+  if (client.axios && typeof client.axios.interceptors !== 'undefined') {
+    client.axios.interceptors.request.use(
+      async (config) => {
+        // Get token from provider if available
+        if (getToken) {
+          try {
+            const token = await getToken();
+            if (token) {
+              config.headers = config.headers || {};
+              config.headers['Authorization'] = `Bearer ${token}`;
+            }
+          } catch (error) {
+            console.error('Failed to get token for API request:', error);
+          }
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+  }
+  
+  return client;
 }

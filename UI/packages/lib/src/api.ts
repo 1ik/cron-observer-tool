@@ -184,16 +184,6 @@ export async function createTask(
       days_of_week?: number[];
       exclusions?: number[];
     };
-    trigger_config: {
-      type: 'HTTP';
-      http: {
-        url: string;
-        method: string;
-        headers?: Record<string, string>;
-        body?: unknown;
-        timeout?: number;
-      };
-    };
     metadata?: Record<string, unknown>;
   }
 ) {
@@ -212,11 +202,11 @@ export async function updateTask(
   projectId: string,
   taskUUID: string,
   task: {
-    name?: string;
+    name: string;
     description?: string;
-    schedule_type?: 'RECURRING' | 'ONEOFF';
+    schedule_type: 'RECURRING' | 'ONEOFF';
     status?: 'ACTIVE' | 'DISABLED';
-    schedule_config?: {
+    schedule_config: {
       cron_expression?: string;
       timezone: string;
       time_range?: {
@@ -357,7 +347,7 @@ export async function updateTaskGroup(
   projectId: string,
   groupUuid: string,
   taskGroup: {
-    name?: string;
+    name: string;
     description?: string;
     status?: 'ACTIVE' | 'DISABLED';
     start_time?: string;

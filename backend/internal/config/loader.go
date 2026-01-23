@@ -1,6 +1,8 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/spf13/viper"
 )
 
@@ -25,6 +27,27 @@ func Load() (*Config, error) {
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, err
+	}
+
+	// Parse SUPER_ADMINS from comma-separated string to slice
+	if superAdminsStr := v.GetString("auth.super_admins"); superAdminsStr != "" {
+		admins := strings.Split(superAdminsStr, ",")
+		// Trim whitespace from each email
+		for i, admin := range admins {
+			cfg.Auth.SuperAdmins = append(cfg.Auth.SuperAdmins, strings.TrimSpace(admin))
+			_ = i // Suppress unused variable warning
+		}
+		// Remove duplicates and empty strings
+		seen := make(map[string]bool)
+		var unique []string
+		for _, admin := range cfg.Auth.SuperAdmins {
+			admin = strings.TrimSpace(admin)
+			if admin != "" && !seen[admin] {
+				seen[admin] = true
+				unique = append(unique, admin)
+			}
+		}
+		cfg.Auth.SuperAdmins = unique
 	}
 
 	// Validate required fields
@@ -61,4 +84,8 @@ func bindEnvVars(v *viper.Viper) {
 	// Database environment variables (optional)
 	v.BindEnv("database.timeout", "DATABASE_TIMEOUT")
 	v.BindEnv("database.max_conns", "DATABASE_MAX_CONNS")
+
+	// Auth environment variables
+	v.BindEnv("auth.jwt_secret", "JWT_SECRET")
+	v.BindEnv("auth.super_admins", "SUPER_ADMINS")
 }

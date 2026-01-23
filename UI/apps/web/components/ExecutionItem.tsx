@@ -248,7 +248,7 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
                     lineHeight: '1.5',
                   }}
                 >
-                  <Flex align="flex-start" gap="2" mb="1">
+                  <Flex align="start" gap="2" mb="1">
                     <Text
                       size="1"
                       color="gray"

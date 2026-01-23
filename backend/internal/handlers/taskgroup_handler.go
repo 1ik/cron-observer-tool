@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/yourusername/cron-observer/backend/internal/events"
+	"github.com/yourusername/cron-observer/backend/internal/middleware"
 	"github.com/yourusername/cron-observer/backend/internal/models"
 	"github.com/yourusername/cron-observer/backend/internal/repositories"
 	"github.com/yourusername/cron-observer/backend/internal/scheduler"
@@ -132,6 +133,12 @@ func (h *TaskGroupHandler) GetTaskGroupsByProject(c *gin.Context) {
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /projects/{project_id}/task-groups [post]
 func (h *TaskGroupHandler) CreateTaskGroup(c *gin.Context) {
+	// Get authenticated user from context
+	user, exists := middleware.GetUserFromContext(c)
+	if exists {
+		log.Printf("User %s (%s) is creating a task group", user.Name, user.Email)
+	}
+
 	var req models.CreateTaskGroupRequest
 
 	// Bind JSON and validate

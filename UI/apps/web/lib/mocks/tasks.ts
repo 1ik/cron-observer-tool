@@ -10,6 +10,7 @@ export const mockTasks: Task[] = [
     description: 'Backup database daily at 2 AM',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       cron_expression: '0 2 * * *',
       timezone: 'America/New_York',
@@ -37,6 +38,7 @@ export const mockTasks: Task[] = [
     description: 'Clean up old log files',
     schedule_type: 'RECURRING',
     status: 'DISABLED',
+    state: 'NOT_RUNNING',
     schedule_config: {
       cron_expression: '0 0 * * 0',
       timezone: 'UTC',
@@ -62,6 +64,7 @@ export const mockTasks: Task[] = [
     description: 'Send daily morning report',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       timezone: 'America/New_York',
       time_range: {
@@ -91,6 +94,7 @@ export const mockTasks: Task[] = [
     description: 'Process pending orders every 30 minutes',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       timezone: 'America/New_York',
       time_range: {
@@ -120,6 +124,7 @@ export const mockTasks: Task[] = [
     description: 'Synchronize inventory with external systems',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       timezone: 'America/New_York',
       time_range: {
@@ -149,6 +154,7 @@ export const mockTasks: Task[] = [
     description: 'Update product prices from pricing service',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       cron_expression: '0 10 * * 1-5',
       timezone: 'America/New_York',
@@ -174,6 +180,7 @@ export const mockTasks: Task[] = [
     description: 'Send daily summary report in the evening',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       timezone: 'America/New_York',
       time_range: {
@@ -203,6 +210,7 @@ export const mockTasks: Task[] = [
     description: 'Archive data older than 90 days',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       cron_expression: '0 20 * * 1-5',
       timezone: 'America/New_York',
@@ -227,6 +235,7 @@ export const mockTasks: Task[] = [
     description: 'Process pending refunds',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       timezone: 'America/New_York',
       time_range: {
@@ -257,6 +266,7 @@ export const mockTasks: Task[] = [
     description: 'Optimize database indexes and clean up',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       cron_expression: '0 3 * * *',
       timezone: 'America/New_York',
@@ -281,6 +291,7 @@ export const mockTasks: Task[] = [
     description: 'Clear application cache',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       cron_expression: '0 4 * * *',
       timezone: 'America/New_York',
@@ -305,6 +316,7 @@ export const mockTasks: Task[] = [
     description: 'Generate daily reports for analysis',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       cron_expression: '0 2 * * *',
       timezone: 'America/New_York',
@@ -330,6 +342,7 @@ export const mockTasks: Task[] = [
     description: 'Generate weekly analytics report',
     schedule_type: 'RECURRING',
     status: 'DISABLED',
+    state: 'NOT_RUNNING',
     schedule_config: {
       cron_expression: '0 12 * * 6',
       timezone: 'America/New_York',
@@ -354,6 +367,7 @@ export const mockTasks: Task[] = [
     description: 'Export data for external systems',
     schedule_type: 'RECURRING',
     status: 'DISABLED',
+    state: 'NOT_RUNNING',
     schedule_config: {
       cron_expression: '0 14 * * 0',
       timezone: 'America/New_York',
@@ -379,6 +393,7 @@ export const mockTasks: Task[] = [
     description: 'Check system health status',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       cron_expression: '0 * * * *',
       timezone: 'UTC',
@@ -403,6 +418,7 @@ export const mockTasks: Task[] = [
     description: 'Monitor external API availability',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       cron_expression: '0 * * * *',
       timezone: 'UTC',
@@ -427,6 +443,7 @@ export const mockTasks: Task[] = [
     description: 'Monitor disk space usage',
     schedule_type: 'RECURRING',
     status: 'ACTIVE',
+    state: 'NOT_RUNNING',
     schedule_config: {
       cron_expression: '0 * * * *',
       timezone: 'UTC',

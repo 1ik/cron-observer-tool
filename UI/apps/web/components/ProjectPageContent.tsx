@@ -163,18 +163,18 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
       status: task.status || 'ACTIVE',
       state: task.state || 'NOT_RUNNING', // System-controlled state
       schedule_config: task.schedule_config || { timezone: 'UTC' },
-      trigger_config: task.trigger_config,
+      trigger_config: task.trigger_config && task.trigger_config.http ? {
+        type: 'HTTP' as const,
+        http: task.trigger_config.http,
+      } : undefined,
       metadata: task.metadata,
       created_at: task.created_at || new Date().toISOString(),
       updated_at: task.updated_at || new Date().toISOString(),
     }))
 
   const mappedTaskGroups = taskGroups.map((tg) => {
-    // Handle status: if it's "RUNNING" (which we removed), convert to "ACTIVE"
-    let status = tg.status || 'ACTIVE'
-    if (status === 'RUNNING') {
-      status = 'ACTIVE'
-    }
+    // Handle status: default to 'ACTIVE' if not set
+    const status = tg.status || 'ACTIVE'
     
     return {
       id: tg.id || tg.uuid || '',
@@ -183,7 +183,7 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
       name: tg.name || '',
       description: tg.description,
       status: status as 'ACTIVE' | 'DISABLED',
-      state: (tg.state && tg.state !== '') ? tg.state : 'NOT_RUNNING', // System-controlled state
+      state: tg.state || 'NOT_RUNNING', // System-controlled state
       start_time: tg.start_time,
       end_time: tg.end_time,
       timezone: tg.timezone,

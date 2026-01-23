@@ -45,7 +45,7 @@ export function ProjectCard({ project, onSettingsClick }: ProjectCardProps) {
   }
 
   return (
-    <Link href={`/projects/${project.uuid}`} style={{ textDecoration: 'none' }}>
+    <Link href={`/projects/${project.uuid}`} style={{ textDecoration: 'none', cursor: 'pointer' }}>
       <Card
         size="3"
         style={{
