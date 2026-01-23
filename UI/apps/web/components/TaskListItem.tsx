@@ -16,7 +16,8 @@ interface TaskListItemProps {
 export function TaskListItem({ task, projectUuid, isSelected, onSettingsClick }: TaskListItemProps) {
   const router = useRouter()
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent event from bubbling to accordion trigger
     router.push(`/projects/${projectUuid}/tasks/${task.uuid}`)
   }
 

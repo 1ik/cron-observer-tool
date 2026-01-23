@@ -386,10 +386,11 @@ func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 
 	// Determine if we need to update tasks
 	statusChangedToActive := status == models.TaskGroupStatusActive && existingTaskGroup.Status != models.TaskGroupStatusActive
+	statusChangedToDisabled := status == models.TaskGroupStatusDisabled && existingTaskGroup.Status != models.TaskGroupStatusDisabled
 	stateChanged := state != existingTaskGroup.State
 
 	// Only fetch tasks if we need to update them
-	if statusChangedToActive || stateChanged {
+	if statusChangedToActive || statusChangedToDisabled || stateChanged {
 		tasks, err := h.repo.GetTasksByGroupID(c.Request.Context(), taskGroup.ID)
 		if err != nil {
 			log.Printf("Failed to get tasks for group %s: %v", taskGroup.UUID, err)
@@ -413,13 +414,37 @@ func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 					}
 				}
 
-				// Update state if group state changed
-				if stateChanged && task.State != taskState {
+				// Update status to DISABLED if group became disabled
+				if statusChangedToDisabled && task.Status != models.TaskStatusDisabled {
+					if err := h.repo.UpdateTaskStatus(c.Request.Context(), task.UUID, models.TaskStatusDisabled); err != nil {
+						log.Printf("Failed to update task %s status to DISABLED: %v", task.UUID, err)
+					} else {
+						statusUpdatedCount++
+					}
+				}
+
+				// Update state if group state changed or group became disabled
+				if statusChangedToDisabled {
+					// When group becomes disabled, always set state to NOT_RUNNING
+					if task.State != models.TaskStateNotRunning {
+						if err := h.repo.UpdateTaskState(c.Request.Context(), task.UUID, models.TaskStateNotRunning); err != nil {
+							log.Printf("Failed to update task %s state to NOT_RUNNING: %v", task.UUID, err)
+						} else {
+							stateUpdatedCount++
+						}
+					}
+				} else if stateChanged && task.State != taskState {
+					// Normal state change based on group state
 					if err := h.repo.UpdateTaskState(c.Request.Context(), task.UUID, taskState); err != nil {
 						log.Printf("Failed to update task %s state to %s: %v", task.UUID, taskState, err)
 					} else {
 						stateUpdatedCount++
 					}
+				}
+
+				// Unregister cron job if group became disabled
+				if statusChangedToDisabled {
+					h.scheduler.UnregisterTask(task.UUID)
 				}
 			}
 
@@ -427,7 +452,10 @@ func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 			if statusChangedToActive && statusUpdatedCount > 0 {
 				log.Printf("[GROUP] Updated %d tasks' status to ACTIVE for group %s", statusUpdatedCount, taskGroup.UUID)
 			}
-			if stateChanged && stateUpdatedCount > 0 {
+			if statusChangedToDisabled {
+				log.Printf("[GROUP] Updated %d tasks' status to DISABLED, %d tasks' state to NOT_RUNNING, and unregistered all cron jobs for group %s", statusUpdatedCount, stateUpdatedCount, taskGroup.UUID)
+			}
+			if stateChanged && stateUpdatedCount > 0 && !statusChangedToDisabled {
 				log.Printf("[GROUP] Updated %d tasks' state to %s for group %s", stateUpdatedCount, taskState, taskGroup.UUID)
 			}
 		}
