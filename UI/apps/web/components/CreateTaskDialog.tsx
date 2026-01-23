@@ -235,9 +235,6 @@ export function CreateTaskDialog({
                     {cronDescription}
                   </Text>
                 )}
-                <Text size="1" color="gray">
-                  If provided, TimeRange and DaysOfWeek are ignored
-                </Text>
                 {errors.schedule_config?.cron_expression && (
                   <Text size="2" color="red">
                     {errors.schedule_config.cron_expression.message}

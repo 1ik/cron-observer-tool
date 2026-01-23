@@ -61,5 +61,31 @@ export class TaskHandlersService {
       throw error;
     }
   }
+
+  @CronTask('Valid Task')
+  async handleValidTask(ctx: ExecutionContext) {
+    await this.cronObserver.log(ctx.executionId, 'Starting Valid Task execution...', 'info');
+    
+    try {
+      // Simulate 2 seconds of execution
+      await this.cronObserver.log(ctx.executionId, 'Processing Valid Task...', 'info');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      await this.cronObserver.log(ctx.executionId, 'Valid Task completed successfully', 'info');
+      
+      // Acknowledge successful completion
+      await this.cronObserver.success(ctx.executionId);
+      
+      return {
+        success: true,
+        message: 'Valid Task executed successfully',
+        executionId: ctx.executionId,
+      };
+    } catch (error) {
+      await this.cronObserver.log(ctx.executionId, `Error: ${error.message}`, 'error');
+      await this.cronObserver.fail(ctx.executionId, error instanceof Error ? error.message : 'Unknown error');
+      throw error;
+    }
+  }
 }
 
