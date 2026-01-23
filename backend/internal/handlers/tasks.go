@@ -21,12 +21,14 @@ type TaskHandler struct {
 	scheduler interface {
 		RegisterTask(ctx context.Context, task *models.Task) error
 		UnregisterTask(taskUUID string)
+		IsWithinGroupWindow(ctx context.Context, taskGroup *models.TaskGroup) bool
 	}
 }
 
 func NewTaskHandler(repo repositories.Repository, eventBus *events.EventBus, scheduler interface {
 	RegisterTask(ctx context.Context, task *models.Task) error
 	UnregisterTask(taskUUID string)
+	IsWithinGroupWindow(ctx context.Context, taskGroup *models.TaskGroup) bool
 }) *TaskHandler {
 	return &TaskHandler{
 		repo:      repo,
@@ -287,12 +289,42 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 		status = existingTask.Status
 	}
 
+	// Handle TaskGroupID - preserve existing if not provided in request
+	var taskGroupID *primitive.ObjectID
+	if req.TaskGroupID != "" {
+		groupID, err := primitive.ObjectIDFromHex(req.TaskGroupID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid task_group_id format",
+			})
+			return
+		}
+		taskGroupID = &groupID
+	} else {
+		// Preserve existing TaskGroupID if not provided
+		taskGroupID = existingTask.TaskGroupID
+	}
+
 	// Determine task state
 	// If status is being set to DISABLED, set state to NOT_RUNNING
+	// If status is being set to ACTIVE and task belongs to an ACTIVE group within window, set state to RUNNING
 	// Otherwise, preserve existing state (it's system-controlled)
 	state := existingTask.State
 	if status == models.TaskStatusDisabled {
 		state = models.TaskStateNotRunning
+	} else if status == models.TaskStatusActive && existingTask.Status != models.TaskStatusActive {
+		// Status changed to ACTIVE - check if task belongs to an active group within window
+		if taskGroupID != nil && h.scheduler != nil {
+			taskGroup, err := h.repo.GetTaskGroupByID(c.Request.Context(), *taskGroupID)
+			if err == nil && taskGroup != nil {
+				if taskGroup.Status == models.TaskGroupStatusActive {
+					// Check if group is within time window
+					if h.scheduler.IsWithinGroupWindow(c.Request.Context(), taskGroup) {
+						state = models.TaskStateRunning
+					}
+				}
+			}
+		}
 	}
 
 	// Update task fields
@@ -300,6 +332,7 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 		ID:           existingTask.ID,
 		UUID:         existingTask.UUID, // UUID cannot be changed
 		ProjectID:    projectID,
+		TaskGroupID:  taskGroupID,
 		Name:         req.Name,
 		Description:  req.Description,
 		ScheduleType: req.ScheduleType,
@@ -352,6 +385,40 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 		if h.scheduler != nil {
 			h.scheduler.UnregisterTask(taskUUIDParam)
 			log.Printf("Unregistered cron job for task %s (status set to DISABLED)", taskUUIDParam)
+		}
+	}
+
+	// If status changed to ACTIVE, check if we need to register cron job and update state
+	if status == models.TaskStatusActive && existingTask.Status != models.TaskStatusActive {
+		// Check if task belongs to an active group within window
+		if task.TaskGroupID != nil && h.scheduler != nil {
+			taskGroup, err := h.repo.GetTaskGroupByID(c.Request.Context(), *task.TaskGroupID)
+			if err == nil && taskGroup != nil {
+				if taskGroup.Status == models.TaskGroupStatusActive {
+					// Check if group is within time window
+					if h.scheduler.IsWithinGroupWindow(c.Request.Context(), taskGroup) {
+						// Update state to RUNNING
+						if err := h.repo.UpdateTaskState(c.Request.Context(), taskUUIDParam, models.TaskStateRunning); err != nil {
+							log.Printf("Failed to update task %s state to RUNNING: %v", taskUUIDParam, err)
+						}
+						// Register cron job
+						if err := h.scheduler.RegisterTask(c.Request.Context(), task); err != nil {
+							log.Printf("Failed to register task %s: %v", taskUUIDParam, err)
+						} else {
+							log.Printf("Registered cron job for task %s (status set to ACTIVE, group within window)", taskUUIDParam)
+						}
+					}
+				}
+			}
+		} else if task.TaskGroupID == nil && h.scheduler != nil {
+			// Task doesn't belong to a group - register directly if it has a cron expression
+			if task.ScheduleConfig.CronExpression != "" {
+				if err := h.scheduler.RegisterTask(c.Request.Context(), task); err != nil {
+					log.Printf("Failed to register task %s in scheduler: %v", taskUUIDParam, err)
+				} else {
+					log.Printf("Registered cron job for task %s (status set to ACTIVE, no group)", taskUUIDParam)
+				}
+			}
 		}
 	}
 
@@ -480,9 +547,32 @@ func (h *TaskHandler) UpdateTaskStatus(c *gin.Context) {
 		return
 	}
 
+	// Determine task state based on status change
+	// If status is being set to DISABLED, set state to NOT_RUNNING
+	// If status is being set to ACTIVE and task belongs to an ACTIVE group within window, set state to RUNNING
+	// Otherwise, preserve existing state (it's system-controlled)
+	state := existingTask.State
+	if req.Status == models.TaskStatusDisabled {
+		state = models.TaskStateNotRunning
+	} else if req.Status == models.TaskStatusActive && existingTask.Status != models.TaskStatusActive {
+		// Status changed to ACTIVE - check if task belongs to an active group within window
+		if existingTask.TaskGroupID != nil && h.scheduler != nil {
+			taskGroup, err := h.repo.GetTaskGroupByID(c.Request.Context(), *existingTask.TaskGroupID)
+			if err == nil && taskGroup != nil {
+				if taskGroup.Status == models.TaskGroupStatusActive {
+					// Check if group is within time window
+					if h.scheduler.IsWithinGroupWindow(c.Request.Context(), taskGroup) {
+						state = models.TaskStateRunning
+					}
+				}
+			}
+		}
+	}
+
 	// Update task status
 	updatedTask := *existingTask
 	updatedTask.Status = req.Status
+	updatedTask.State = state
 	updatedTask.UpdatedAt = time.Now()
 
 	// Update in database
@@ -494,17 +584,46 @@ func (h *TaskHandler) UpdateTaskStatus(c *gin.Context) {
 		return
 	}
 
-	// Update scheduler if available
-	if h.scheduler != nil {
-		if req.Status == models.TaskStatusActive {
-			// Register task in scheduler
-			if err := h.scheduler.RegisterTask(c.Request.Context(), &updatedTask); err != nil {
-				log.Printf("Failed to register task %s in scheduler: %v", taskUUIDParam, err)
-				// Don't fail the request, just log the error
-			}
-		} else if req.Status == models.TaskStatusDisabled {
-			// Unregister task from scheduler
+	// Handle immediate actions based on status change
+	if req.Status == models.TaskStatusDisabled && existingTask.Status != models.TaskStatusDisabled {
+		// Status changed to DISABLED - update state and unregister cron job immediately
+		if err := h.repo.UpdateTaskState(c.Request.Context(), taskUUIDParam, models.TaskStateNotRunning); err != nil {
+			log.Printf("Failed to update task %s state to NOT_RUNNING: %v", taskUUIDParam, err)
+		}
+
+		// Unregister task from scheduler immediately
+		if h.scheduler != nil {
 			h.scheduler.UnregisterTask(taskUUIDParam)
+			log.Printf("Unregistered cron job for task %s (status set to DISABLED)", taskUUIDParam)
+		}
+	} else if req.Status == models.TaskStatusActive && existingTask.Status != models.TaskStatusActive {
+		// Status changed to ACTIVE - check if we need to register cron job and update state
+		if updatedTask.TaskGroupID != nil && h.scheduler != nil {
+			taskGroup, err := h.repo.GetTaskGroupByID(c.Request.Context(), *updatedTask.TaskGroupID)
+			if err == nil && taskGroup != nil {
+				if taskGroup.Status == models.TaskGroupStatusActive {
+					// Check if group is within time window
+					if h.scheduler.IsWithinGroupWindow(c.Request.Context(), taskGroup) {
+						// Update state to RUNNING
+						if err := h.repo.UpdateTaskState(c.Request.Context(), taskUUIDParam, models.TaskStateRunning); err != nil {
+							log.Printf("Failed to update task %s state to RUNNING: %v", taskUUIDParam, err)
+						}
+						// Register cron job
+						if err := h.scheduler.RegisterTask(c.Request.Context(), &updatedTask); err != nil {
+							log.Printf("Failed to register task %s: %v", taskUUIDParam, err)
+						} else {
+							log.Printf("Registered cron job for task %s (status set to ACTIVE, group within window)", taskUUIDParam)
+						}
+					}
+				}
+			}
+		} else {
+			// Task doesn't belong to a group - register directly if it has a cron expression
+			if updatedTask.ScheduleConfig.CronExpression != "" && h.scheduler != nil {
+				if err := h.scheduler.RegisterTask(c.Request.Context(), &updatedTask); err != nil {
+					log.Printf("Failed to register task %s in scheduler: %v", taskUUIDParam, err)
+				}
+			}
 		}
 	}
 
