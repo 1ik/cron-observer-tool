@@ -5,7 +5,6 @@ import { ChevronDownIcon, GearIcon, PlusIcon } from '@radix-ui/react-icons'
 import { Box, Flex, IconButton, Text } from '@radix-ui/themes'
 import { Task } from '../lib/types/task'
 import { TaskGroup } from '../lib/types/taskgroup'
-import { TaskRuntimeStatus } from '../lib/utils/task-status'
 import { StatusAndStateDots } from './StatusAndStateDots'
 import { TaskListItem } from './TaskListItem'
 
@@ -28,18 +27,6 @@ export function TaskGroupAccordionItem({
   onTaskSettingsClick,
   onCreateTaskClick,
 }: TaskGroupAccordionItemProps) {
-  // Map TaskGroup status to TaskRuntimeStatus for consistency
-  const getTaskGroupRuntimeStatus = (status: string): TaskRuntimeStatus => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'success' // Task groups are either active (success) or disabled
-      default:
-        return 'not-running'
-    }
-  }
-
-  const runtimeStatus = getTaskGroupRuntimeStatus(taskGroup.status)
-
   const handleSettingsClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     onSettingsClick(taskGroup)
@@ -93,14 +80,9 @@ export function TaskGroupAccordionItem({
               )}
             </Flex>
             <StatusAndStateDots
-              status={runtimeStatus}
+              status={taskGroup.status}
               state={taskGroup.state}
               size={8}
-              tooltip={
-                taskGroup.status === 'ACTIVE'
-                  ? 'Task group is active'
-                  : 'Task group is disabled'
-              }
             />
           </Accordion.Trigger>
           {onCreateTaskClick && (

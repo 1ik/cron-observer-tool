@@ -4,9 +4,7 @@ import { GearIcon } from '@radix-ui/react-icons'
 import { Box, Flex, IconButton, Text } from '@radix-ui/themes'
 import { useRouter } from 'next/navigation'
 import { Task } from '../lib/types/task'
-import { getTaskRuntimeStatus } from '../lib/utils/task-status'
-import { StateDot } from './StateDot'
-import { StatusDot } from './StatusDot'
+import { StatusAndStateDots } from './StatusAndStateDots'
 
 interface TaskListItemProps {
   task: Task
@@ -73,13 +71,12 @@ export function TaskListItem({ task, projectUuid, isSelected, onSettingsClick }:
               <GearIcon width="14" height="14" />
             </IconButton>
           )}
-          {task.task_group_id ? (
-            // Task belongs to a group: show only state dot (inherits from group)
-            <StateDot state={task.state} size={6} />
-          ) : (
-            // Task has no group: show status dot (user-controlled status)
-            <StatusDot status={getTaskRuntimeStatus(task)} size={6} />
-          )}
+          {/* Show status dot (green/grey) and state dot (blue, only when RUNNING) */}
+          <StatusAndStateDots
+            status={task.status}
+            state={task.state}
+            size={6}
+          />
         </Flex>
       </Flex>
       {task.description && (

@@ -3,45 +3,46 @@
 import { Box, Flex, Tooltip } from '@radix-ui/themes'
 import { TaskState } from '../lib/types/task'
 import { TaskGroupState } from '../lib/types/taskgroup'
-import { TaskRuntimeStatus, getStatusDotColor, getStatusTooltip } from '../lib/utils/task-status'
+import { TaskStatus } from '../lib/types/task'
+import { TaskGroupStatus } from '../lib/types/taskgroup'
 
 interface StatusAndStateDotsProps {
-  status: TaskRuntimeStatus
+  status: TaskStatus | TaskGroupStatus
   state?: TaskState | TaskGroupState
   size?: number
   tooltip?: string
 }
 
 /**
- * Component that displays both status dot (green/yellow/gray) and state dot (blue/gray)
- * Status dot shows user-controlled status (ACTIVE/DISABLED)
- * State dot shows system-controlled state (RUNNING/NOT_RUNNING)
+ * Component that displays status dot (green/gray) and optionally state dot (blue)
+ * Status dot shows user-controlled status: Green = ACTIVE, Grey = DISABLED
+ * State dot shows system-controlled state: Blue = RUNNING (only shown when RUNNING)
  */
 export function StatusAndStateDots({ status, state, size = 6, tooltip }: StatusAndStateDotsProps) {
-  const statusColor = getStatusDotColor(status)
-  const statusTooltipText = tooltip || getStatusTooltip(status)
-
-  // State dot colors
-  const getStateDotColor = (state?: TaskState | TaskGroupState): string => {
-    if (state === 'RUNNING') {
-      return 'var(--blue-9)'
+  // Status dot: Green for ACTIVE, Grey for DISABLED
+  const getStatusColor = (status: TaskStatus | TaskGroupStatus): string => {
+    if (status === 'ACTIVE') {
+      return 'var(--green-9)'
     }
     return 'var(--gray-9)'
   }
 
-  const getStateTooltip = (state?: TaskState | TaskGroupState): string => {
-    if (state === 'RUNNING') {
-      return 'Running (within time window)'
+  const getStatusTooltip = (status: TaskStatus | TaskGroupStatus): string => {
+    if (status === 'ACTIVE') {
+      return 'Active'
     }
-    return 'Not running (outside time window)'
+    return 'Disabled'
   }
 
-  const stateColor = getStateDotColor(state)
-  const stateTooltipText = getStateTooltip(state)
+  const statusColor = getStatusColor(status)
+  const statusTooltipText = tooltip || getStatusTooltip(status)
+
+  // State dot: Only show when RUNNING (blue)
+  const shouldShowStateDot = state === 'RUNNING'
 
   return (
     <Flex align="center" gap="1">
-      {/* Status dot (green/yellow/gray) */}
+      {/* Status dot (green/gray) */}
       <Tooltip content={statusTooltipText}>
         <Box
           style={{
@@ -54,15 +55,15 @@ export function StatusAndStateDots({ status, state, size = 6, tooltip }: StatusA
           }}
         />
       </Tooltip>
-      {/* State dot (blue/gray) - only show if state is provided */}
-      {state !== undefined && (
-        <Tooltip content={stateTooltipText}>
+      {/* State dot (blue) - only show when RUNNING */}
+      {shouldShowStateDot && (
+        <Tooltip content="Running (within time window)">
           <Box
             style={{
               width: `${size}px`,
               height: `${size}px`,
               borderRadius: '50%',
-              backgroundColor: stateColor,
+              backgroundColor: 'var(--blue-9)',
               flexShrink: 0,
               cursor: 'help',
             }}
