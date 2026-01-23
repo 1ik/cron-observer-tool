@@ -230,6 +230,24 @@ The API is documented using OpenAPI v3 specification. The specification is auto-
 
 ### Generate OpenAPI Specification
 
+#### Quick Start (Recommended)
+
+Use the unified script to generate both backend docs and frontend client:
+
+```bash
+# From project root
+./scripts/generate-openapi.sh
+```
+
+This will:
+1. Generate backend Swagger/OpenAPI documentation from Go code annotations
+2. Convert Swagger 2.0 to OpenAPI 3.0 format
+3. Generate TypeScript API client for the frontend
+
+#### Manual Generation
+
+**Backend only:**
+
 ```bash
 # Install swag tool (if not already installed)
 go install github.com/swaggo/swag/cmd/swag@latest
@@ -239,10 +257,20 @@ export PATH=$PATH:$(go env GOPATH)/bin
 swag init -g ./cmd/server/main.go -o api-docs
 ```
 
+**Frontend only:**
+
+```bash
+# From UI directory
+cd ../UI
+pnpm gen:api
+```
+
 This generates:
-- `api-docs/swagger.json` - OpenAPI specification in JSON format
-- `api-docs/swagger.yaml` - OpenAPI specification in YAML format
+- `api-docs/swagger.json` - OpenAPI specification in JSON format (Swagger 2.0)
+- `api-docs/swagger.yaml` - OpenAPI specification in YAML format (Swagger 2.0)
+- `api-docs/openapi.json` - OpenAPI 3.0 specification (for frontend client)
 - `api-docs/docs.go` - Generated Go code (can be ignored)
+- `UI/packages/lib/src/api-client.ts` - TypeScript API client
 
 The specification documents all endpoints, request/response schemas, and error responses.
 

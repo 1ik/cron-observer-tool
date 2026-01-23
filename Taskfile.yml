@@ -56,6 +56,12 @@ tasks:
       - echo "🚀 Starting UI..."
       - pnpm dev
 
+  # Generate OpenAPI documentation and API client
+  gen:openapi:
+    desc: Generate OpenAPI documentation (backend) and TypeScript API client (frontend)
+    cmds:
+      - ./scripts/generate-openapi.sh
+
   # Cleanup: Kill all services and free ports
   cleanup:
     desc: Clean up all services and free ports

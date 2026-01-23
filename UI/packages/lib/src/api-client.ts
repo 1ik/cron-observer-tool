@@ -5,6 +5,10 @@ const models_ErrorResponse = z
   .object({ details: z.array(z.string()), error: z.string() })
   .partial()
   .passthrough();
+const models_ProjectUserRole = z.enum(["admin", "readonly"]);
+const models_ProjectUser = z
+  .object({ email: z.string(), role: models_ProjectUserRole })
+  .passthrough();
 const models_Project = z
   .object({
     alert_emails: z.string(),
@@ -14,6 +18,7 @@ const models_Project = z
     execution_endpoint: z.string(),
     id: z.string(),
     name: z.string(),
+    project_users: z.array(models_ProjectUser),
     updated_at: z.string(),
     uuid: z.string(),
   })
@@ -179,6 +184,8 @@ const models_Execution = z
 
 export const schemas = {
   models_ErrorResponse,
+  models_ProjectUserRole,
+  models_ProjectUser,
   models_Project,
   models_CreateProjectRequest,
   models_UpdateProjectRequest,
@@ -850,47 +857,6 @@ const endpoints = makeApi([
 
 export const api = new Zodios(endpoints);
 
-// Token provider function type
-type TokenProvider = () => Promise<string | null>;
-
-// Global token provider
-let getToken: TokenProvider | null = null;
-
-/**
- * Set the token provider function that will be used to get the JWT token
- * for API requests. The token will be added to the Authorization header.
- */
-export function setTokenProvider(provider: TokenProvider) {
-  getToken = provider;
-}
-
 export function createApiClient(baseUrl: string, options?: ZodiosOptions) {
-  const client = new Zodios(baseUrl, endpoints, options);
-  
-  // Add request interceptor using Zodios plugin system
-  // We'll use axios instance directly if available
-  if (client.axios && typeof client.axios.interceptors !== 'undefined') {
-    client.axios.interceptors.request.use(
-      async (config) => {
-        // Get token from provider if available
-        if (getToken) {
-          try {
-            const token = await getToken();
-            if (token) {
-              config.headers = config.headers || {};
-              config.headers['Authorization'] = `Bearer ${token}`;
-            }
-          } catch (error) {
-            console.error('Failed to get token for API request:', error);
-          }
-        }
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
-    );
-  }
-  
-  return client;
+  return new Zodios(baseUrl, endpoints, options);
 }

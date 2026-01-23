@@ -34,6 +34,21 @@ See [backend/README.md](backend/README.md) for development setup and API documen
 - **UUID-Based**: Tasks and executions use UUIDs for external reference
 - **OpenAPI Specification**: Auto-generated API documentation (swagger.json/yaml)
 
+## Generating OpenAPI Documentation
+
+To generate both backend OpenAPI docs and frontend TypeScript API client:
+
+```bash
+./scripts/generate-openapi.sh
+```
+
+This script:
+1. Generates backend Swagger/OpenAPI documentation from Go code annotations
+2. Converts Swagger 2.0 to OpenAPI 3.0 format
+3. Generates TypeScript API client for the frontend
+
+See [backend/README.md](backend/README.md) for more details.
+
 ## Architecture
 
 ```

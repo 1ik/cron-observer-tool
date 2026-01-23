@@ -16,6 +16,7 @@ type Project struct {
 	APIKey            string             `json:"api_key" bson:"api_key" example:"sk_live_abc123..."`
 	ExecutionEndpoint string             `json:"execution_endpoint" bson:"execution_endpoint" binding:"omitempty,url" example:"https://api.example.com/execute"`
 	AlertEmails       string             `json:"alert_emails,omitempty" bson:"alert_emails,omitempty" example:"admin@example.com,ops@example.com"`
+	ProjectUsers      []ProjectUser      `json:"project_users,omitempty" bson:"project_users,omitempty"`
 	CreatedAt         time.Time          `json:"created_at" bson:"created_at" example:"2025-01-15T10:00:00Z"`
 	UpdatedAt         time.Time          `json:"updated_at" bson:"updated_at" example:"2025-01-15T10:00:00Z"`
 }
@@ -42,3 +43,18 @@ const (
 	ProjectStatusActive   ProjectStatus = "ACTIVE"
 	ProjectStatusInactive ProjectStatus = "INACTIVE"
 )
+
+// ProjectUserRole represents the role of a user in a project
+type ProjectUserRole string
+
+const (
+	ProjectUserRoleAdmin    ProjectUserRole = "admin"
+	ProjectUserRoleReadonly ProjectUserRole = "readonly"
+)
+
+// ProjectUser represents a user associated with a project
+// @Description ProjectUser represents a user associated with a project
+type ProjectUser struct {
+	Email string          `json:"email" bson:"email" binding:"required,email" example:"user@example.com"`
+	Role  ProjectUserRole `json:"role" bson:"role" binding:"required,oneof=admin readonly" example:"admin"`
+}

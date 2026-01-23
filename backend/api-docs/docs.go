@@ -1369,6 +1369,12 @@ const docTemplate = `{
                     "type": "string",
                     "example": "My Project"
                 },
+                "project_users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ProjectUser"
+                    }
+                },
                 "updated_at": {
                     "type": "string",
                     "example": "2025-01-15T10:00:00Z"
@@ -1378,6 +1384,43 @@ const docTemplate = `{
                     "example": "550e8400-e29b-41d4-a716-446655440000"
                 }
             }
+        },
+        "models.ProjectUser": {
+            "description": "ProjectUser represents a user associated with a project",
+            "type": "object",
+            "required": [
+                "email",
+                "role"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "role": {
+                    "enum": [
+                        "admin",
+                        "readonly"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.ProjectUserRole"
+                        }
+                    ],
+                    "example": "admin"
+                }
+            }
+        },
+        "models.ProjectUserRole": {
+            "type": "string",
+            "enum": [
+                "admin",
+                "readonly"
+            ],
+            "x-enum-varnames": [
+                "ProjectUserRoleAdmin",
+                "ProjectUserRoleReadonly"
+            ]
         },
         "models.ScheduleConfig": {
             "type": "object",

@@ -230,6 +230,10 @@ definitions:
       name:
         example: My Project
         type: string
+      project_users:
+        items:
+          $ref: '#/definitions/models.ProjectUser'
+        type: array
       updated_at:
         example: "2025-01-15T10:00:00Z"
         type: string
@@ -237,6 +241,31 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
     type: object
+  models.ProjectUser:
+    description: ProjectUser represents a user associated with a project
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/models.ProjectUserRole'
+        enum:
+        - admin
+        - readonly
+        example: admin
+    required:
+    - email
+    - role
+    type: object
+  models.ProjectUserRole:
+    enum:
+    - admin
+    - readonly
+    type: string
+    x-enum-varnames:
+    - ProjectUserRoleAdmin
+    - ProjectUserRoleReadonly
   models.ScheduleConfig:
     properties:
       cron_expression:
