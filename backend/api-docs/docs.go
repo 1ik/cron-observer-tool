@@ -974,7 +974,7 @@ const docTemplate = `{
         },
         "/projects/{project_id}/tasks/{task_uuid}/status": {
             "patch": {
-                "description": "Update a task's status (ACTIVE or PAUSED) and update scheduler accordingly",
+                "description": "Update a task's status (ACTIVE or DISABLED) and update scheduler accordingly",
                 "consumes": [
                     "application/json"
                 ],
@@ -1090,7 +1090,6 @@ const docTemplate = `{
                 "status": {
                     "enum": [
                         "ACTIVE",
-                        "PAUSED",
                         "DISABLED"
                     ],
                     "allOf": [
@@ -1147,7 +1146,6 @@ const docTemplate = `{
                     "enum": [
                         "ACTIVE",
                         "RUNNING",
-                        "PAUSED",
                         "DISABLED"
                     ],
                     "allOf": [
@@ -1488,7 +1486,6 @@ const docTemplate = `{
                     "enum": [
                         "ACTIVE",
                         "RUNNING",
-                        "PAUSED",
                         "DISABLED"
                     ],
                     "allOf": [
@@ -1571,7 +1568,6 @@ const docTemplate = `{
                 "status": {
                     "enum": [
                         "ACTIVE",
-                        "PAUSED",
                         "DISABLED"
                     ],
                     "allOf": [
@@ -1611,12 +1607,10 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "ACTIVE",
-                "PAUSED",
                 "DISABLED"
             ],
             "x-enum-varnames": [
                 "TaskGroupStatusActive",
-                "TaskGroupStatusPaused",
                 "TaskGroupStatusDisabled"
             ]
         },
@@ -1635,12 +1629,10 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "ACTIVE",
-                "PAUSED",
                 "DISABLED"
             ],
             "x-enum-varnames": [
                 "TaskStatusActive",
-                "TaskStatusPaused",
                 "TaskStatusDisabled"
             ]
         },
@@ -1743,7 +1735,6 @@ const docTemplate = `{
                 "status": {
                     "enum": [
                         "ACTIVE",
-                        "PAUSED",
                         "DISABLED"
                     ],
                     "allOf": [
@@ -1796,7 +1787,6 @@ const docTemplate = `{
                     "enum": [
                         "ACTIVE",
                         "RUNNING",
-                        "PAUSED",
                         "DISABLED"
                     ],
                     "allOf": [

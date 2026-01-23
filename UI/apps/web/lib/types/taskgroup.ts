@@ -1,4 +1,4 @@
-export type TaskGroupStatus = 'ACTIVE' | 'PAUSED' | 'DISABLED'
+export type TaskGroupStatus = 'ACTIVE' | 'DISABLED'
 export type TaskGroupState = 'RUNNING' | 'NOT_RUNNING' // System-controlled: based on time window
 
 export interface TaskGroup {

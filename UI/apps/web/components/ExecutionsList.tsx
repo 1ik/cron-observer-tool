@@ -31,7 +31,7 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
     : null
   const selectedTaskUUID = selectedTask?.uuid || selectedTask?.id || null
   const currentTaskStatus = selectedTask?.status || 'ACTIVE'
-  const isTaskPaused = currentTaskStatus === 'PAUSED'
+  const isTaskDisabled = currentTaskStatus === 'DISABLED'
   
   // Toast hook for imperative API
   const toast = useToast()
@@ -98,12 +98,12 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
       return
     }
     
-    const newStatus = isTaskPaused ? 'ACTIVE' : 'PAUSED'
+    const newStatus = isTaskDisabled ? 'ACTIVE' : 'DISABLED'
     
     try {
       await updateStatusMutation.mutateAsync(newStatus)
       toast.success(
-        newStatus === 'PAUSED' ? 'Task paused successfully' : 'Task resumed successfully'
+        newStatus === 'DISABLED' ? 'Task disabled successfully' : 'Task enabled successfully'
       )
     } catch (error) {
       toast.error(
@@ -244,7 +244,7 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
             </Popover.Root>
           </Flex>
           {selectedTaskUUID && projectId && (
-            <Tooltip content={isTaskPaused ? "Resume task" : "Pause task"}>
+            <Tooltip content={isTaskDisabled ? "Enable task" : "Disable task"}>
               <IconButton
                 variant="outline"
                 size="2"
@@ -254,7 +254,7 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
               >
                 {isLoadingStatus ? (
                   <Spinner size="2" />
-                ) : isTaskPaused ? (
+                ) : isTaskDisabled ? (
                   <PlayIcon width="16" height="16" />
                 ) : (
                   <PauseIcon width="16" height="16" />

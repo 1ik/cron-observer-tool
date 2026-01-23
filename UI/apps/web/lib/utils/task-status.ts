@@ -1,6 +1,6 @@
 import { Task } from '../types/task'
 
-export type TaskRuntimeStatus = 'running' | 'success' | 'not-running' | 'paused' | 'disabled'
+export type TaskRuntimeStatus = 'running' | 'success' | 'not-running' | 'disabled'
 
 /**
  * Checks if a task is currently within its schedule window
@@ -59,10 +59,6 @@ export function isTaskWithinWindow(task: Task): boolean {
  * Determines the runtime status of a task
  */
 export function getTaskRuntimeStatus(task: Task): TaskRuntimeStatus {
-  if (task.status === 'PAUSED') {
-    return 'paused'
-  }
-
   if (task.status === 'DISABLED') {
     return 'disabled'
   }
@@ -94,8 +90,6 @@ export function getStatusDotColor(status: TaskRuntimeStatus): string {
       return 'var(--green-9)'
     case 'not-running':
       return 'var(--gray-9)'
-    case 'paused':
-      return 'var(--yellow-9)'
     case 'disabled':
       return 'var(--gray-9)'
     default:
@@ -114,8 +108,6 @@ export function getStatusTooltip(status: TaskRuntimeStatus): string {
       return 'Task is enabled'
     case 'not-running':
       return 'Task is not running'
-    case 'paused':
-      return 'Task is paused'
     case 'disabled':
       return 'Task is disabled'
     default:

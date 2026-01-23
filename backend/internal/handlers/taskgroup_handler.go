@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"time"
@@ -27,6 +28,50 @@ func NewTaskGroupHandler(repo repositories.Repository, eventBus *events.EventBus
 		eventBus:  eventBus,
 		scheduler: sched,
 	}
+}
+
+// calculateTaskGroupState calculates the state of a task group based on its time window
+func (h *TaskGroupHandler) calculateTaskGroupState(ctx context.Context, existingState models.TaskGroupState, reqStatus models.TaskGroupStatus, existingStatus models.TaskGroupStatus, reqStartTime, reqEndTime, reqTimezone, existingStartTime, existingEndTime, existingTimezone string) models.TaskGroupState {
+	// If status is being changed to ACTIVE, recalculate state based on current time window
+	if reqStatus == models.TaskGroupStatusActive && existingStatus != models.TaskGroupStatusActive {
+		if reqStartTime != "" && reqEndTime != "" {
+			tempTaskGroup := &models.TaskGroup{
+				StartTime: reqStartTime,
+				EndTime:   reqEndTime,
+				Timezone:  reqTimezone,
+			}
+			if h.scheduler.IsWithinGroupWindow(ctx, tempTaskGroup) {
+				return models.TaskGroupStateRunning
+			}
+			return models.TaskGroupStateNotRunning
+		}
+		return models.TaskGroupStateNotRunning
+	}
+
+	// Check if time window changed
+	if reqStartTime != "" && reqEndTime != "" {
+		if reqStartTime != existingStartTime || reqEndTime != existingEndTime || reqTimezone != existingTimezone {
+			tempTaskGroup := &models.TaskGroup{
+				StartTime: reqStartTime,
+				EndTime:   reqEndTime,
+				Timezone:  reqTimezone,
+			}
+			if h.scheduler.IsWithinGroupWindow(ctx, tempTaskGroup) {
+				return models.TaskGroupStateRunning
+			}
+			return models.TaskGroupStateNotRunning
+		}
+		// Window unchanged, preserve existing state
+		return existingState
+	}
+
+	// Window removed or not provided, set to NOT_RUNNING
+	if reqStartTime == "" || reqEndTime == "" {
+		return models.TaskGroupStateNotRunning
+	}
+
+	// No changes, preserve existing state
+	return existingState
 }
 
 // GetTaskGroupsByProject retrieves all task groups for a project
@@ -296,42 +341,18 @@ func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 	}
 
 	// Calculate state based on time window
-	state := existingTaskGroup.State // Preserve existing state by default
-
-	// If status is being changed to ACTIVE, recalculate state based on current time window
-	if req.Status == models.TaskGroupStatusActive && existingTaskGroup.Status != models.TaskGroupStatusActive {
-		// Status changed to ACTIVE, recalculate state based on current window
-		if req.StartTime != "" && req.EndTime != "" {
-			tempTaskGroup := &models.TaskGroup{
-				StartTime: req.StartTime,
-				EndTime:   req.EndTime,
-				Timezone:  timezone,
-			}
-			if h.scheduler.IsWithinGroupWindow(c.Request.Context(), tempTaskGroup) {
-				state = models.TaskGroupStateRunning
-			} else {
-				state = models.TaskGroupStateNotRunning
-			}
-		}
-	} else if req.StartTime != "" && req.EndTime != "" {
-		// Check if start_time or end_time changed
-		if req.StartTime != existingTaskGroup.StartTime || req.EndTime != existingTaskGroup.EndTime || req.Timezone != existingTaskGroup.Timezone {
-			// Calculate new state based on updated window
-			tempTaskGroup := &models.TaskGroup{
-				StartTime: req.StartTime,
-				EndTime:   req.EndTime,
-				Timezone:  timezone,
-			}
-			if h.scheduler.IsWithinGroupWindow(c.Request.Context(), tempTaskGroup) {
-				state = models.TaskGroupStateRunning
-			} else {
-				state = models.TaskGroupStateNotRunning
-			}
-		}
-	} else if req.StartTime == "" || req.EndTime == "" {
-		// Window removed, set to NOT_RUNNING
-		state = models.TaskGroupStateNotRunning
-	}
+	state := h.calculateTaskGroupState(
+		c.Request.Context(),
+		existingTaskGroup.State,
+		status,
+		existingTaskGroup.Status,
+		req.StartTime,
+		req.EndTime,
+		timezone,
+		existingTaskGroup.StartTime,
+		existingTaskGroup.EndTime,
+		existingTaskGroup.Timezone,
+	)
 
 	// Update task group fields
 	taskGroup := &models.TaskGroup{
@@ -363,27 +384,53 @@ func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 		log.Printf("Failed to update task group state: %v", err)
 	}
 
-	// Update ALL tasks' states in this group BEFORE returning the response
-	// This ensures the frontend gets the updated task states when it refetches
-	tasks, err := h.repo.GetTasksByGroupID(c.Request.Context(), taskGroup.ID)
-	if err != nil {
-		log.Printf("Failed to get tasks for group %s: %v", taskGroup.UUID, err)
-	} else {
-		// Determine task state based on group state
-		var taskState models.TaskState
-		if state == models.TaskGroupStateRunning {
-			taskState = models.TaskStateRunning
-		} else {
-			taskState = models.TaskStateNotRunning
-		}
+	// Determine if we need to update tasks
+	statusChangedToActive := status == models.TaskGroupStatusActive && existingTaskGroup.Status != models.TaskGroupStatusActive
+	stateChanged := state != existingTaskGroup.State
 
-		// Update all tasks' states
-		for _, task := range tasks {
-			if err := h.repo.UpdateTaskState(c.Request.Context(), task.UUID, taskState); err != nil {
-				log.Printf("Failed to update task %s state to %s: %v", task.UUID, taskState, err)
+	// Only fetch tasks if we need to update them
+	if statusChangedToActive || stateChanged {
+		tasks, err := h.repo.GetTasksByGroupID(c.Request.Context(), taskGroup.ID)
+		if err != nil {
+			log.Printf("Failed to get tasks for group %s: %v", taskGroup.UUID, err)
+		} else if len(tasks) > 0 {
+			// Calculate task state based on group state
+			taskState := models.TaskStateNotRunning
+			if state == models.TaskGroupStateRunning {
+				taskState = models.TaskStateRunning
+			}
+
+			// Update all tasks in a single pass
+			statusUpdatedCount := 0
+			stateUpdatedCount := 0
+			for _, task := range tasks {
+				// Update status to ACTIVE if group became active
+				if statusChangedToActive && task.Status != models.TaskStatusActive {
+					if err := h.repo.UpdateTaskStatus(c.Request.Context(), task.UUID, models.TaskStatusActive); err != nil {
+						log.Printf("Failed to update task %s status to ACTIVE: %v", task.UUID, err)
+					} else {
+						statusUpdatedCount++
+					}
+				}
+
+				// Update state if group state changed
+				if stateChanged && task.State != taskState {
+					if err := h.repo.UpdateTaskState(c.Request.Context(), task.UUID, taskState); err != nil {
+						log.Printf("Failed to update task %s state to %s: %v", task.UUID, taskState, err)
+					} else {
+						stateUpdatedCount++
+					}
+				}
+			}
+
+			// Log updates
+			if statusChangedToActive && statusUpdatedCount > 0 {
+				log.Printf("[GROUP] Updated %d tasks' status to ACTIVE for group %s", statusUpdatedCount, taskGroup.UUID)
+			}
+			if stateChanged && stateUpdatedCount > 0 {
+				log.Printf("[GROUP] Updated %d tasks' state to %s for group %s", stateUpdatedCount, taskState, taskGroup.UUID)
 			}
 		}
-		log.Printf("[GROUP] Updated %d tasks' state to %s for group %s", len(tasks), taskState, taskGroup.UUID)
 	}
 
 	// Publish TaskGroupUpdated event (for scheduler to register/unregister cron jobs)

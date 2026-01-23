@@ -7,8 +7,8 @@ import { Box, Button, Flex, Heading, Select, Text, TextArea, TextField } from '@
 import { useEffect } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { TIMEZONES } from '../lib/constants/timezones'
-import { Task, TaskStatus, UpdateTaskRequest } from '../lib/types/task'
 import { useCronDescription } from '../lib/hooks/use-cron-description'
+import { Task, TaskStatus, UpdateTaskRequest } from '../lib/types/task'
 import { UpdateTaskFormData, updateTaskSchema } from '../lib/validations/task'
 import { StyledDialogContent } from './StyledDialogContent'
 
@@ -92,8 +92,6 @@ export function TaskSettingsDialog({
     switch (s) {
       case 'ACTIVE':
         return 'var(--green-9)'
-      case 'PAUSED':
-        return 'var(--yellow-9)'
       case 'DISABLED':
         return 'var(--gray-9)'
       default:
@@ -222,19 +220,6 @@ export function TaskSettingsDialog({
                             }}
                           />
                           <Text>ACTIVE</Text>
-                        </Flex>
-                      </Select.Item>
-                      <Select.Item value="PAUSED">
-                        <Flex align="center" gap="2">
-                          <Box
-                            style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: getStatusDotColor('PAUSED'),
-                            }}
-                          />
-                          <Text>PAUSED</Text>
                         </Flex>
                       </Select.Item>
                       <Select.Item value="DISABLED">

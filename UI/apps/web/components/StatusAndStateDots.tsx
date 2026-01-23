@@ -14,7 +14,7 @@ interface StatusAndStateDotsProps {
 
 /**
  * Component that displays both status dot (green/yellow/gray) and state dot (blue/gray)
- * Status dot shows user-controlled status (ACTIVE/PAUSED/DISABLED)
+ * Status dot shows user-controlled status (ACTIVE/DISABLED)
  * State dot shows system-controlled state (RUNNING/NOT_RUNNING)
  */
 export function StatusAndStateDots({ status, state, size = 6, tooltip }: StatusAndStateDotsProps) {

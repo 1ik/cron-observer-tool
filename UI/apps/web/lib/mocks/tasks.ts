@@ -36,7 +36,7 @@ export const mockTasks: Task[] = [
     name: 'Cleanup Logs',
     description: 'Clean up old log files',
     schedule_type: 'RECURRING',
-    status: 'PAUSED',
+    status: 'DISABLED',
     schedule_config: {
       cron_expression: '0 0 * * 0',
       timezone: 'UTC',
@@ -329,7 +329,7 @@ export const mockTasks: Task[] = [
     name: 'Weekly Analytics',
     description: 'Generate weekly analytics report',
     schedule_type: 'RECURRING',
-    status: 'PAUSED',
+    status: 'DISABLED',
     schedule_config: {
       cron_expression: '0 12 * * 6',
       timezone: 'America/New_York',
@@ -353,7 +353,7 @@ export const mockTasks: Task[] = [
     name: 'Data Export',
     description: 'Export data for external systems',
     schedule_type: 'RECURRING',
-    status: 'PAUSED',
+    status: 'DISABLED',
     schedule_config: {
       cron_expression: '0 14 * * 0',
       timezone: 'America/New_York',

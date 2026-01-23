@@ -324,8 +324,8 @@ func (s *Scheduler) handleTaskGroupUpdated(event events.Event) {
 		// Don't register cron jobs for disabled groups
 		return
 
-	case models.TaskGroupStatusActive, models.TaskGroupStatusPaused:
-		// ACTIVE or PAUSED: Process based on time window
+	case models.TaskGroupStatusActive:
+		// ACTIVE: Process based on time window
 		if taskGroup.StartTime == "" || taskGroup.EndTime == "" {
 			// No window defined: Unregister all tasks
 			log.Printf("[GROUP] Group %s has no time window, unregistering all %d tasks", taskGroup.UUID, len(tasks))
@@ -340,7 +340,7 @@ func (s *Scheduler) handleTaskGroupUpdated(event events.Event) {
 		isWithinWindow := s.isWithinGroupWindow(ctx, taskGroup)
 
 		if isWithinWindow {
-			// Within window: Register ACTIVE/PAUSED tasks
+			// Within window: Register ACTIVE tasks
 			log.Printf("[GROUP] Group %s updated: within window (start: %s, end: %s), registering tasks",
 				taskGroup.UUID, taskGroup.StartTime, taskGroup.EndTime)
 
@@ -351,8 +351,8 @@ func (s *Scheduler) handleTaskGroupUpdated(event events.Event) {
 
 			registeredCount := 0
 			for _, task := range tasks {
-				// Only register ACTIVE or PAUSED tasks (skip DISABLED tasks)
-				if task.Status == models.TaskStatusActive || task.Status == models.TaskStatusPaused {
+				// Only register ACTIVE tasks (skip DISABLED tasks)
+				if task.Status == models.TaskStatusActive {
 					// Update task state to RUNNING
 					if err := s.repo.UpdateTaskState(ctx, task.UUID, models.TaskStateRunning); err != nil {
 						log.Printf("[GROUP] Failed to update task %s state to RUNNING: %v", task.UUID, err)
@@ -379,7 +379,7 @@ func (s *Scheduler) handleTaskGroupUpdated(event events.Event) {
 			}
 		}
 
-		// Register new window cron jobs (only for ACTIVE/PAUSED groups with windows)
+		// Register new window cron jobs (only for ACTIVE groups with windows)
 		if err := s.registerGroupWindowJobs(taskGroup); err != nil {
 			log.Printf("[GROUP] Failed to register window jobs for group %s: %v", taskGroup.UUID, err)
 		}

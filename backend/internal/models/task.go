@@ -16,7 +16,7 @@ type Task struct {
 	Name           string                 `json:"name" bson:"name" example:"Daily Backup"`
 	Description    string                 `json:"description,omitempty" bson:"description,omitempty" example:"Backup database daily"`
 	ScheduleType   ScheduleType           `json:"schedule_type" bson:"schedule_type" enums:"RECURRING,ONEOFF" example:"RECURRING"`
-	Status         TaskStatus             `json:"status" bson:"status" enums:"ACTIVE,RUNNING,PAUSED,DISABLED" example:"ACTIVE"`
+	Status         TaskStatus             `json:"status" bson:"status" enums:"ACTIVE,RUNNING,DISABLED" example:"ACTIVE"`
 	State          TaskState              `json:"state" bson:"state" enums:"RUNNING,NOT_RUNNING" example:"NOT_RUNNING"` // System-controlled: based on time window
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" bson:"schedule_config"`
 	TriggerConfig  TriggerConfig          `json:"trigger_config,omitempty" bson:"trigger_config,omitempty"` // Deprecated: Tasks now use project's execution_endpoint
@@ -39,7 +39,6 @@ type TaskStatus string
 
 const (
 	TaskStatusActive   TaskStatus = "ACTIVE"
-	TaskStatusPaused   TaskStatus = "PAUSED"
 	TaskStatusDisabled TaskStatus = "DISABLED"
 )
 
@@ -92,7 +91,7 @@ type CreateTaskRequest struct {
 	Name           string                 `json:"name" binding:"required,min=1,max=255"`
 	Description    string                 `json:"description,omitempty" binding:"omitempty,max=1000"`
 	ScheduleType   ScheduleType           `json:"schedule_type" binding:"required,oneof=RECURRING ONEOFF"`
-	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE RUNNING PAUSED DISABLED"`
+	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE RUNNING DISABLED"`
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" binding:"required"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 }
@@ -104,7 +103,7 @@ type UpdateTaskRequest struct {
 	Name           string                 `json:"name" binding:"required,min=1,max=255"`
 	Description    string                 `json:"description,omitempty" binding:"omitempty,max=1000"`
 	ScheduleType   ScheduleType           `json:"schedule_type" binding:"required,oneof=RECURRING ONEOFF"`
-	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE RUNNING PAUSED DISABLED"`
+	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE RUNNING DISABLED"`
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" binding:"required"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 }

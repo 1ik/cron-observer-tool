@@ -36,7 +36,7 @@ const models_UpdateProjectRequest = z
   .partial()
   .passthrough();
 const models_TaskGroupState = z.enum(["RUNNING", "NOT_RUNNING"]);
-const models_TaskGroupStatus = z.enum(["ACTIVE", "PAUSED", "DISABLED"]);
+const models_TaskGroupStatus = z.enum(["ACTIVE", "DISABLED"]);
 const models_TaskGroup = z
   .object({
     created_at: z.string(),
@@ -93,7 +93,7 @@ const models_ScheduleConfig = z
   .passthrough();
 const models_ScheduleType = z.enum(["RECURRING", "ONEOFF"]);
 const models_TaskState = z.enum(["RUNNING", "NOT_RUNNING"]);
-const models_TaskStatus = z.enum(["ACTIVE", "PAUSED", "DISABLED"]);
+const models_TaskStatus = z.enum(["ACTIVE", "DISABLED"]);
 const models_HTTPTriggerConfig = z
   .object({
     body: z.unknown().optional(),
@@ -807,7 +807,7 @@ const endpoints = makeApi([
     method: "patch",
     path: "/projects/:project_id/tasks/:task_uuid/status",
     alias: "patchProjectsProject_idtasksTask_uuidstatus",
-    description: `Update a task&#x27;s status (ACTIVE or PAUSED) and update scheduler accordingly`,
+    description: `Update a task&#x27;s status (ACTIVE or DISABLED) and update scheduler accordingly`,
     requestFormat: "json",
     parameters: [
       {

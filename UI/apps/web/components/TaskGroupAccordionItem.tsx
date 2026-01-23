@@ -32,9 +32,7 @@ export function TaskGroupAccordionItem({
   const getTaskGroupRuntimeStatus = (status: string): TaskRuntimeStatus => {
     switch (status) {
       case 'ACTIVE':
-        return 'success' // Task groups are either active (success) or paused
-      case 'PAUSED':
-        return 'paused'
+        return 'success' // Task groups are either active (success) or disabled
       default:
         return 'not-running'
     }
@@ -101,9 +99,7 @@ export function TaskGroupAccordionItem({
               tooltip={
                 taskGroup.status === 'ACTIVE'
                   ? 'Task group is active'
-                  : taskGroup.status === 'PAUSED'
-                    ? 'Task group is paused'
-                    : 'Task group is disabled'
+                  : 'Task group is disabled'
               }
             />
           </Accordion.Trigger>

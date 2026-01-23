@@ -14,8 +14,8 @@ type TaskGroup struct {
 	ProjectID   primitive.ObjectID `json:"project_id" bson:"project_id" example:"507f1f77bcf86cd799439011"`
 	Name        string             `json:"name" bson:"name" example:"Morning Tasks"`
 	Description string             `json:"description,omitempty" bson:"description,omitempty" example:"Tasks that run in the morning"`
-	Status      TaskGroupStatus    `json:"status" bson:"status" enums:"ACTIVE,PAUSED,DISABLED" example:"ACTIVE"`
-	State       TaskGroupState     `json:"state" bson:"state" enums:"RUNNING,NOT_RUNNING" example:"NOT_RUNNING"` // System-controlled: based on time window
+	Status      TaskGroupStatus    `json:"status" bson:"status" enums:"ACTIVE,DISABLED" example:"ACTIVE"`
+	State       TaskGroupState     `json:"state" bson:"state" enums:"RUNNING,NOT_RUNNING" example:"NOT_RUNNING"`    // System-controlled: based on time window
 	StartTime   string             `json:"start_time,omitempty" bson:"start_time,omitempty" example:"09:00"`        // Format: "HH:MM"
 	EndTime     string             `json:"end_time,omitempty" bson:"end_time,omitempty" example:"17:00"`            // Format: "HH:MM"
 	Timezone    string             `json:"timezone,omitempty" bson:"timezone,omitempty" example:"America/New_York"` // IANA timezone (e.g., "America/New_York")
@@ -28,7 +28,6 @@ type TaskGroupStatus string
 
 const (
 	TaskGroupStatusActive   TaskGroupStatus = "ACTIVE"
-	TaskGroupStatusPaused   TaskGroupStatus = "PAUSED"
 	TaskGroupStatusDisabled TaskGroupStatus = "DISABLED"
 )
 
@@ -45,7 +44,7 @@ type CreateTaskGroupRequest struct {
 	ProjectID   string          `json:"project_id" binding:"required,objectid"`
 	Name        string          `json:"name" binding:"required,min=1,max=255"`
 	Description string          `json:"description,omitempty" binding:"omitempty,max=1000"`
-	Status      TaskGroupStatus `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE PAUSED DISABLED"`
+	Status      TaskGroupStatus `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE DISABLED"`
 	StartTime   string          `json:"start_time,omitempty" binding:"omitempty,time_format"` // Format: "HH:MM"
 	EndTime     string          `json:"end_time,omitempty" binding:"omitempty,time_format"`   // Format: "HH:MM"
 	Timezone    string          `json:"timezone,omitempty" binding:"omitempty,timezone"`
@@ -55,7 +54,7 @@ type CreateTaskGroupRequest struct {
 type UpdateTaskGroupRequest struct {
 	Name        string          `json:"name" binding:"required,min=1,max=255"`
 	Description string          `json:"description,omitempty" binding:"omitempty,max=1000"`
-	Status      TaskGroupStatus `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE PAUSED DISABLED"`
+	Status      TaskGroupStatus `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE DISABLED"`
 	StartTime   string          `json:"start_time,omitempty" binding:"omitempty,time_format"` // Format: "HH:MM"
 	EndTime     string          `json:"end_time,omitempty" binding:"omitempty,time_format"`   // Format: "HH:MM"
 	Timezone    string          `json:"timezone,omitempty" binding:"omitempty,timezone"`

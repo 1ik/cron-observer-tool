@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const taskGroupStatusSchema = z.enum(['ACTIVE', 'PAUSED', 'DISABLED'])
+export const taskGroupStatusSchema = z.enum(['ACTIVE', 'DISABLED'])
 
 export const updateTaskGroupSchema = z.object({
   name: z

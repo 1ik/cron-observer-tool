@@ -1,8 +1,8 @@
 'use client'
 
-import { Box, Card, Flex, Text, Heading, Badge } from '@radix-ui/themes'
-import { TaskGroup } from '../lib/types/taskgroup'
+import { Badge, Box, Card, Flex, Heading, Text } from '@radix-ui/themes'
 import { Task } from '../lib/types/task'
+import { TaskGroup } from '../lib/types/taskgroup'
 import { TaskItem } from './TaskItem'
 
 interface TaskGroupItemProps {
@@ -15,8 +15,6 @@ export function TaskGroupItem({ taskGroup, tasks }: TaskGroupItemProps) {
     switch (status) {
       case 'ACTIVE':
         return 'green'
-      case 'PAUSED':
-        return 'yellow'
       case 'DISABLED':
         return 'gray'
       default:

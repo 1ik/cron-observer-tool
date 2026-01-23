@@ -36,7 +36,6 @@ definitions:
         - $ref: '#/definitions/models.TaskGroupStatus'
         enum:
         - ACTIVE
-        - PAUSED
         - DISABLED
       timezone:
         type: string
@@ -72,7 +71,6 @@ definitions:
         enum:
         - ACTIVE
         - RUNNING
-        - PAUSED
         - DISABLED
       task_group_id:
         description: Optional task group ID
@@ -314,7 +312,6 @@ definitions:
         enum:
         - ACTIVE
         - RUNNING
-        - PAUSED
         - DISABLED
         example: ACTIVE
       task_group_id:
@@ -371,7 +368,6 @@ definitions:
         - $ref: '#/definitions/models.TaskGroupStatus'
         enum:
         - ACTIVE
-        - PAUSED
         - DISABLED
         example: ACTIVE
       timezone:
@@ -396,12 +392,10 @@ definitions:
   models.TaskGroupStatus:
     enum:
     - ACTIVE
-    - PAUSED
     - DISABLED
     type: string
     x-enum-varnames:
     - TaskGroupStatusActive
-    - TaskGroupStatusPaused
     - TaskGroupStatusDisabled
   models.TaskState:
     enum:
@@ -414,12 +408,10 @@ definitions:
   models.TaskStatus:
     enum:
     - ACTIVE
-    - PAUSED
     - DISABLED
     type: string
     x-enum-varnames:
     - TaskStatusActive
-    - TaskStatusPaused
     - TaskStatusDisabled
   models.TimeRange:
     properties:
@@ -488,7 +480,6 @@ definitions:
         - $ref: '#/definitions/models.TaskGroupStatus'
         enum:
         - ACTIVE
-        - PAUSED
         - DISABLED
       timezone:
         type: string
@@ -521,7 +512,6 @@ definitions:
         enum:
         - ACTIVE
         - RUNNING
-        - PAUSED
         - DISABLED
       task_group_id:
         description: Optional task group ID
@@ -1180,7 +1170,7 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Update a task's status (ACTIVE or PAUSED) and update scheduler
+      description: Update a task's status (ACTIVE or DISABLED) and update scheduler
         accordingly
       parameters:
       - description: Project ID

@@ -1,4 +1,4 @@
-export type TaskStatus = 'ACTIVE' | 'PAUSED' | 'DISABLED'
+export type TaskStatus = 'ACTIVE' | 'DISABLED'
 export type TaskState = 'RUNNING' | 'NOT_RUNNING' // System-controlled: based on time window
 export type ScheduleType = 'RECURRING' | 'ONEOFF'
 export type FrequencyUnit = 's' | 'm' | 'h'

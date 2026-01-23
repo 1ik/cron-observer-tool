@@ -172,7 +172,7 @@ export async function createTask(
     name: string;
     description?: string;
     schedule_type: 'RECURRING' | 'ONEOFF';
-    status?: 'ACTIVE' | 'PAUSED' | 'DISABLED';
+    status?: 'ACTIVE' | 'DISABLED';
     schedule_config: {
       cron_expression?: string;
       timezone: string;
@@ -215,7 +215,7 @@ export async function updateTask(
     name?: string;
     description?: string;
     schedule_type?: 'RECURRING' | 'ONEOFF';
-    status?: 'ACTIVE' | 'PAUSED' | 'DISABLED';
+    status?: 'ACTIVE' | 'DISABLED';
     schedule_config?: {
       cron_expression?: string;
       timezone: string;
@@ -241,21 +241,21 @@ export async function updateTask(
 }
 
 /**
- * Update task status (pause/play)
+ * Update task status
  * @param projectId - Project ID (MongoDB ObjectID)
  * @param taskUUID - Task UUID
- * @param status - New status (ACTIVE or PAUSED)
+ * @param status - New status (ACTIVE or DISABLED)
  * @returns Promise resolving to the updated task
  */
-export async function updateTaskStatus(projectId: string, taskUUID: string, status: 'ACTIVE' | 'PAUSED') {
+export async function updateTaskStatus(projectId: string, taskUUID: string, status: 'ACTIVE' | 'DISABLED') {
   const client = getApiClient();
   
   if (!projectId || !taskUUID || !status) {
     throw new Error('Missing required parameters: projectId, taskUUID, and status are required');
   }
   
-  if (status !== 'ACTIVE' && status !== 'PAUSED') {
-    throw new Error('Status must be either ACTIVE or PAUSED');
+  if (status !== 'ACTIVE' && status !== 'DISABLED') {
+    throw new Error('Status must be either ACTIVE or DISABLED');
   }
   
   // Use fetch directly since the endpoint might not be in the generated client yet
@@ -343,7 +343,7 @@ export async function createTaskGroup(
     name: string;
     project_id: string;
     description?: string;
-    status?: 'ACTIVE' | 'PAUSED' | 'DISABLED';
+    status?: 'ACTIVE' | 'DISABLED';
     start_time?: string;
     end_time?: string;
     timezone?: string;
@@ -359,7 +359,7 @@ export async function updateTaskGroup(
   taskGroup: {
     name?: string;
     description?: string;
-    status?: 'ACTIVE' | 'PAUSED' | 'DISABLED';
+    status?: 'ACTIVE' | 'DISABLED';
     start_time?: string;
     end_time?: string;
     timezone?: string;

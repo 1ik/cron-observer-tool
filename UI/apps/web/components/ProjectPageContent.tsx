@@ -178,7 +178,7 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
       project_id: tg.project_id || projectId,
       name: tg.name || '',
       description: tg.description,
-      status: status as 'ACTIVE' | 'PAUSED' | 'DISABLED',
+      status: status as 'ACTIVE' | 'DISABLED',
       state: (tg.state && tg.state !== '') ? tg.state : 'NOT_RUNNING', // System-controlled state
       start_time: tg.start_time,
       end_time: tg.end_time,

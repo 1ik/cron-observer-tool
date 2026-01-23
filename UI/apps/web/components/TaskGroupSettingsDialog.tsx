@@ -78,8 +78,6 @@ export function TaskGroupSettingsDialog({
     switch (s) {
       case 'ACTIVE':
         return 'var(--green-9)'
-      case 'PAUSED':
-        return 'var(--yellow-9)'
       case 'DISABLED':
         return 'var(--gray-9)'
       default:
@@ -208,19 +206,6 @@ export function TaskGroupSettingsDialog({
                             }}
                           />
                           <Text>ACTIVE</Text>
-                        </Flex>
-                      </Select.Item>
-                      <Select.Item value="PAUSED">
-                        <Flex align="center" gap="2">
-                          <Box
-                            style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: getStatusDotColor('PAUSED'),
-                            }}
-                          />
-                          <Text>PAUSED</Text>
                         </Flex>
                       </Select.Item>
                       <Select.Item value="DISABLED">

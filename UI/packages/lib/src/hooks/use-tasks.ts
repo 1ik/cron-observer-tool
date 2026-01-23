@@ -87,7 +87,7 @@ export function useUpdateTaskStatus(projectId: string, taskUUID: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (status: 'ACTIVE' | 'PAUSED') => {
+    mutationFn: async (status: 'ACTIVE' | 'DISABLED') => {
       return updateTaskStatus(projectId, taskUUID, status);
     },
     onSuccess: () => {

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const taskStatusSchema = z.enum(['ACTIVE', 'PAUSED', 'DISABLED'])
+export const taskStatusSchema = z.enum(['ACTIVE', 'DISABLED'])
 export const scheduleTypeSchema = z.enum(['RECURRING', 'ONEOFF'])
 export const frequencyUnitSchema = z.enum(['s', 'm', 'h'])
 

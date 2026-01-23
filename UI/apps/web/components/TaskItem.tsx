@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Text, Badge } from '@radix-ui/themes'
+import { Badge, Box, Flex, Text } from '@radix-ui/themes'
 import { Task } from '../lib/types/task'
 
 interface TaskItemProps {
@@ -13,8 +13,6 @@ export function TaskItem({ task, compact = false }: TaskItemProps) {
     switch (status) {
       case 'ACTIVE':
         return 'green'
-      case 'PAUSED':
-        return 'yellow'
       case 'DISABLED':
         return 'gray'
       default:

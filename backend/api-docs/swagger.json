@@ -968,7 +968,7 @@
         },
         "/projects/{project_id}/tasks/{task_uuid}/status": {
             "patch": {
-                "description": "Update a task's status (ACTIVE or PAUSED) and update scheduler accordingly",
+                "description": "Update a task's status (ACTIVE or DISABLED) and update scheduler accordingly",
                 "consumes": [
                     "application/json"
                 ],
@@ -1084,7 +1084,6 @@
                 "status": {
                     "enum": [
                         "ACTIVE",
-                        "PAUSED",
                         "DISABLED"
                     ],
                     "allOf": [
@@ -1141,7 +1140,6 @@
                     "enum": [
                         "ACTIVE",
                         "RUNNING",
-                        "PAUSED",
                         "DISABLED"
                     ],
                     "allOf": [
@@ -1482,7 +1480,6 @@
                     "enum": [
                         "ACTIVE",
                         "RUNNING",
-                        "PAUSED",
                         "DISABLED"
                     ],
                     "allOf": [
@@ -1565,7 +1562,6 @@
                 "status": {
                     "enum": [
                         "ACTIVE",
-                        "PAUSED",
                         "DISABLED"
                     ],
                     "allOf": [
@@ -1605,12 +1601,10 @@
             "type": "string",
             "enum": [
                 "ACTIVE",
-                "PAUSED",
                 "DISABLED"
             ],
             "x-enum-varnames": [
                 "TaskGroupStatusActive",
-                "TaskGroupStatusPaused",
                 "TaskGroupStatusDisabled"
             ]
         },
@@ -1629,12 +1623,10 @@
             "type": "string",
             "enum": [
                 "ACTIVE",
-                "PAUSED",
                 "DISABLED"
             ],
             "x-enum-varnames": [
                 "TaskStatusActive",
-                "TaskStatusPaused",
                 "TaskStatusDisabled"
             ]
         },
@@ -1737,7 +1729,6 @@
                 "status": {
                     "enum": [
                         "ACTIVE",
-                        "PAUSED",
                         "DISABLED"
                     ],
                     "allOf": [
@@ -1790,7 +1781,6 @@
                     "enum": [
                         "ACTIVE",
                         "RUNNING",
-                        "PAUSED",
                         "DISABLED"
                     ],
                     "allOf": [

@@ -46,7 +46,7 @@ export const mockTaskGroups: TaskGroup[] = [
     project_id: '507f1f77bcf86cd799439011',
     name: 'Weekend Processing',
     description: 'Special tasks that run only on weekends',
-    status: 'PAUSED',
+    status: 'DISABLED',
     start_time: '10:00',
     end_time: '16:00',
     timezone: 'America/New_York',

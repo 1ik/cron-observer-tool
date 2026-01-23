@@ -383,15 +383,15 @@ func (h *TaskHandler) DeleteTask(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// UpdateTaskStatus updates a task's status (pause/play)
+// UpdateTaskStatus updates a task's status
 // @Summary      Update task status
-// @Description  Update a task's status (ACTIVE or PAUSED) and update scheduler accordingly
+// @Description  Update a task's status (ACTIVE or DISABLED) and update scheduler accordingly
 // @Tags         tasks
 // @Accept       json
 // @Produce      json
 // @Param        project_id path string true "Project ID"
 // @Param        task_uuid path string true "Task UUID"
-// @Param        request body object true "Status update request" example({"status": "PAUSED"})
+// @Param        request body object true "Status update request" example({"status": "DISABLED"})
 // @Success      200  {object}  models.Task
 // @Failure      400  {object}  models.ErrorResponse
 // @Failure      404  {object}  models.ErrorResponse
@@ -427,7 +427,7 @@ func (h *TaskHandler) UpdateTaskStatus(c *gin.Context) {
 
 	// Parse request body
 	var req struct {
-		Status models.TaskStatus `json:"status" binding:"required,oneof=ACTIVE PAUSED"`
+		Status models.TaskStatus `json:"status" binding:"required,oneof=ACTIVE DISABLED"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -480,7 +480,7 @@ func (h *TaskHandler) UpdateTaskStatus(c *gin.Context) {
 				log.Printf("Failed to register task %s in scheduler: %v", taskUUIDParam, err)
 				// Don't fail the request, just log the error
 			}
-		} else if req.Status == models.TaskStatusPaused {
+		} else if req.Status == models.TaskStatusDisabled {
 			// Unregister task from scheduler
 			h.scheduler.UnregisterTask(taskUUIDParam)
 		}
