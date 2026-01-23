@@ -1,10 +1,8 @@
 'use client'
 
 import { Box, Flex, Tooltip } from '@radix-ui/themes'
-import { TaskState } from '../lib/types/task'
-import { TaskGroupState } from '../lib/types/taskgroup'
-import { TaskStatus } from '../lib/types/task'
-import { TaskGroupStatus } from '../lib/types/taskgroup'
+import { TaskState, TaskStatus } from '../lib/types/task'
+import { TaskGroupState, TaskGroupStatus } from '../lib/types/taskgroup'
 
 interface StatusAndStateDotsProps {
   status: TaskStatus | TaskGroupStatus

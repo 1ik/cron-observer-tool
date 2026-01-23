@@ -284,7 +284,15 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	// Set default status if not provided
 	status := req.Status
 	if status == "" {
-		status = models.TaskStatusActive
+		status = existingTask.Status
+	}
+
+	// Determine task state
+	// If status is being set to DISABLED, set state to NOT_RUNNING
+	// Otherwise, preserve existing state (it's system-controlled)
+	state := existingTask.State
+	if status == models.TaskStatusDisabled {
+		state = models.TaskStateNotRunning
 	}
 
 	// Update task fields
@@ -296,7 +304,7 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 		Description:  req.Description,
 		ScheduleType: req.ScheduleType,
 		Status:       status,
-		State:        existingTask.State, // Preserve state - it's system-controlled
+		State:        state,
 		ScheduleConfig: models.ScheduleConfig{
 			CronExpression: req.ScheduleConfig.CronExpression,
 			Timezone:       req.ScheduleConfig.Timezone,
@@ -331,6 +339,20 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 			"error": "Failed to update task",
 		})
 		return
+	}
+
+	// If status changed to DISABLED, update state and unregister cron job immediately
+	if status == models.TaskStatusDisabled && existingTask.Status != models.TaskStatusDisabled {
+		// Update state to NOT_RUNNING
+		if err := h.repo.UpdateTaskState(c.Request.Context(), taskUUIDParam, models.TaskStateNotRunning); err != nil {
+			log.Printf("Failed to update task %s state to NOT_RUNNING: %v", taskUUIDParam, err)
+		}
+
+		// Unregister task from scheduler immediately
+		if h.scheduler != nil {
+			h.scheduler.UnregisterTask(taskUUIDParam)
+			log.Printf("Unregistered cron job for task %s (status set to DISABLED)", taskUUIDParam)
+		}
 	}
 
 	// Publish TaskUpdated event
