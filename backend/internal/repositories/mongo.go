@@ -43,6 +43,36 @@ func (r *MongoRepository) GetProjectByID(ctx context.Context, projectID primitiv
 	return &project, nil
 }
 
+func (r *MongoRepository) GetUserProjects(ctx context.Context, email string) ([]*models.Project, error) {
+	collection := r.db.Collection(database.CollectionProjects)
+
+	// Find projects where the user's email exists in the project_users array
+	filter := bson.M{
+		"project_users.email": email,
+	}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var projects []*models.Project
+	err = cursor.All(ctx, &projects)
+	if err != nil {
+		return nil, err
+	}
+
+	// Ensure project_users is always initialized (not nil) for JSON serialization
+	for _, project := range projects {
+		if project.ProjectUsers == nil {
+			project.ProjectUsers = []models.ProjectUser{}
+		}
+	}
+
+	return projects, nil
+}
+
 func (r *MongoRepository) CreateProject(ctx context.Context, project *models.Project) error {
 	collection := r.db.Collection(database.CollectionProjects)
 	_, err := collection.InsertOne(ctx, project)
@@ -405,7 +435,7 @@ func (r *MongoRepository) UpdateExecutionStatus(ctx context.Context, executionUU
 
 	filter := bson.M{"uuid": executionUUID}
 	now := time.Now()
-	
+
 	update := bson.M{
 		"$set": bson.M{
 			"status":     status,

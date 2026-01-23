@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,18 +16,35 @@ import (
 )
 
 type ProjectHandler struct {
-	repo repositories.Repository
+	repo          repositories.Repository
+	superAdminMap map[string]bool
 }
 
-func NewProjectHandler(repo repositories.Repository) *ProjectHandler {
-	return &ProjectHandler{
-		repo: repo,
+func NewProjectHandler(repo repositories.Repository, superAdmins []string) *ProjectHandler {
+	// Create a map for O(1) lookup
+	superAdminMap := make(map[string]bool)
+	for _, admin := range superAdmins {
+		normalizedAdmin := strings.ToLower(strings.TrimSpace(admin))
+		if normalizedAdmin != "" {
+			superAdminMap[normalizedAdmin] = true
+		}
 	}
+
+	return &ProjectHandler{
+		repo:          repo,
+		superAdminMap: superAdminMap,
+	}
+}
+
+// isSuperAdmin checks if the given email is a super admin
+func (h *ProjectHandler) isSuperAdmin(email string) bool {
+	normalizedEmail := strings.ToLower(strings.TrimSpace(email))
+	return h.superAdminMap[normalizedEmail]
 }
 
 // GetAllProjects retrieves all projects
 // @Summary      Get all projects
-// @Description  Retrieve a list of all projects
+// @Description  Retrieve a list of all projects. Super admins get all projects, regular users get only projects they are members of.
 // @Tags         projects
 // @Accept       json
 // @Produce      json
@@ -34,8 +52,29 @@ func NewProjectHandler(repo repositories.Repository) *ProjectHandler {
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /projects [get]
 func (h *ProjectHandler) GetAllProjects(c *gin.Context) {
+	// Get authenticated user from context
+	user, exists := middleware.GetUserFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "User not authenticated",
+		})
+		return
+	}
 
-	projects, err := h.repo.GetAllProjects(c.Request.Context())
+	var projects []*models.Project
+	var err error
+
+	// Check if user is a super admin
+	if h.isSuperAdmin(user.Email) {
+		// Super admin - return all projects
+		log.Printf("Super admin %s requesting all projects", user.Email)
+		projects, err = h.repo.GetAllProjects(c.Request.Context())
+	} else {
+		// Regular user - return only projects they are members of
+		log.Printf("User %s requesting their projects", user.Email)
+		projects, err = h.repo.GetUserProjects(c.Request.Context(), user.Email)
+	}
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to fetch projects",
