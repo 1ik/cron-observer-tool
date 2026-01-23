@@ -1,0 +1,79 @@
+version: "3"
+
+vars:
+  BACKEND_DIR: backend
+  EXAMPLE_CLIENT_DIR: example-client-nestjs
+  UI_DIR: UI
+
+tasks:
+  # Start MongoDB and run migrations, then start the backend server
+  backend:
+    desc: Start the backend server (MongoDB + migrations + server)
+    dir: "{{.BACKEND_DIR}}"
+    preconditions:
+      - test -f go.mod
+    cmds:
+      - task: setup-db
+      - echo "🚀 Starting backend server..."
+      - go run cmd/server/main.go
+
+  # Setup database (MongoDB + migrations)
+  setup-db:
+    desc: Start MongoDB and run migrations
+    cmds:
+      - echo "📦 Starting MongoDB..."
+      - docker-compose up -d
+      - echo "⏳ Waiting for MongoDB to be ready..."
+      - sleep 3
+      - echo "🔄 Running migrations..."
+      - task: migrate
+      - echo "✅ Database setup complete!"
+
+  # Run database migrations
+  migrate:
+    desc: Run database migrations
+    dir: "{{.BACKEND_DIR}}"
+    cmds:
+      - go run cmd/migrate/main.go create-collections
+
+  # Start the NestJS example client
+  example-client-nestjs:
+    desc: Start the NestJS example client
+    dir: "{{.EXAMPLE_CLIENT_DIR}}"
+    preconditions:
+      - test -f package.json
+    cmds:
+      - echo "🚀 Starting NestJS example client..."
+      - npm run start:dev
+
+  # Start the UI
+  ui:
+    desc: Start the UI frontend
+    dir: "{{.UI_DIR}}"
+    preconditions:
+      - test -f package.json
+    cmds:
+      - echo "🚀 Starting UI..."
+      - pnpm dev
+
+  # Cleanup: Kill all services and free ports
+  cleanup:
+    desc: Clean up all services and free ports
+    cmds:
+      - ./scripts/cleanup.sh
+
+  # Start all services (backend, example-client-nestjs, and UI)
+  up:
+    desc: Start all services (backend, example-client-nestjs, and UI)
+    cmds:
+      - task: cleanup
+      - |
+        echo "🚀 Starting all services..."
+        PIDS=()
+        task backend &
+        PIDS+=($!)
+        task example-client-nestjs &
+        PIDS+=($!)
+        task ui &
+        PIDS+=($!)
+        wait

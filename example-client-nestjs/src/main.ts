@@ -7,7 +7,7 @@ async function bootstrap() {
   // Enable CORS
   app.enableCors();
   
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 5202;
   await app.listen(port);
   
   console.log(`🚀 NestJS Example Client running on http://localhost:${port}`);

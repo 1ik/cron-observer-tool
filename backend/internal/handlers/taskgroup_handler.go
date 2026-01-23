@@ -295,9 +295,25 @@ func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 		}
 	}
 
-	// Calculate state based on time window (if start_time or end_time changed)
+	// Calculate state based on time window
 	state := existingTaskGroup.State // Preserve existing state by default
-	if req.StartTime != "" && req.EndTime != "" {
+
+	// If status is being changed to ACTIVE, recalculate state based on current time window
+	if req.Status == models.TaskGroupStatusActive && existingTaskGroup.Status != models.TaskGroupStatusActive {
+		// Status changed to ACTIVE, recalculate state based on current window
+		if req.StartTime != "" && req.EndTime != "" {
+			tempTaskGroup := &models.TaskGroup{
+				StartTime: req.StartTime,
+				EndTime:   req.EndTime,
+				Timezone:  timezone,
+			}
+			if h.scheduler.IsWithinGroupWindow(c.Request.Context(), tempTaskGroup) {
+				state = models.TaskGroupStateRunning
+			} else {
+				state = models.TaskGroupStateNotRunning
+			}
+		}
+	} else if req.StartTime != "" && req.EndTime != "" {
 		// Check if start_time or end_time changed
 		if req.StartTime != existingTaskGroup.StartTime || req.EndTime != existingTaskGroup.EndTime || req.Timezone != existingTaskGroup.Timezone {
 			// Calculate new state based on updated window

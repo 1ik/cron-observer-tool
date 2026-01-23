@@ -344,10 +344,20 @@ func (s *Scheduler) handleTaskGroupUpdated(event events.Event) {
 			log.Printf("[GROUP] Group %s updated: within window (start: %s, end: %s), registering tasks",
 				taskGroup.UUID, taskGroup.StartTime, taskGroup.EndTime)
 
+			// Update group state to RUNNING
+			if err := s.repo.UpdateTaskGroupState(ctx, taskGroup.UUID, models.TaskGroupStateRunning); err != nil {
+				log.Printf("[GROUP] Failed to update group %s state to RUNNING: %v", taskGroup.UUID, err)
+			}
+
 			registeredCount := 0
 			for _, task := range tasks {
 				// Only register ACTIVE or PAUSED tasks (skip DISABLED tasks)
 				if task.Status == models.TaskStatusActive || task.Status == models.TaskStatusPaused {
+					// Update task state to RUNNING
+					if err := s.repo.UpdateTaskState(ctx, task.UUID, models.TaskStateRunning); err != nil {
+						log.Printf("[GROUP] Failed to update task %s state to RUNNING: %v", task.UUID, err)
+					}
+
 					// Unregister first to avoid duplicates, then register
 					s.unregisterTask(task.UUID)
 

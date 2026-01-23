@@ -39,12 +39,12 @@ npm run start:prod
    ```bash
    npm run start:dev
    ```
-   The server will run on `http://localhost:3001` (or the port specified in `PORT` env variable).
+   The server will run on `http://localhost:5202` (or the port specified in `PORT` env variable).
 
 2. **Create a project in cron-observer UI:**
    - Go to the cron-observer UI
    - Create a new project
-   - Set the **Execution Endpoint** to: `http://localhost:3001/api/execute`
+   - Set the **Execution Endpoint** to: `http://localhost:5202/api/execute`
    - Save the project
 
 3. **Create a task in cron-observer UI:**
@@ -82,8 +82,8 @@ Receives execution notifications from cron-observer.
 ## Example Output
 
 ```
-🚀 NestJS Example Client running on http://localhost:3001
-📡 Execution endpoint: http://localhost:3001/api/execute
+🚀 NestJS Example Client running on http://localhost:5202
+📡 Execution endpoint: http://localhost:5202/api/execute
 
 [When a task executes, you'll see:]
 ═══════════════════════════════════════════════════
@@ -103,7 +103,7 @@ Timestamp: 2025-01-05T15:30:00.000Z
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PORT` | Port for NestJS server | `3001` |
+| `PORT` | Port for NestJS server | `5202` |
 
 ## Next Steps
 

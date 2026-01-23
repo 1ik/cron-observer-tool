@@ -1,4 +1,4 @@
-import { Task, ScheduleConfig } from '../types/task'
+import { Task } from '../types/task'
 
 export type TaskRuntimeStatus = 'running' | 'success' | 'not-running' | 'paused' | 'disabled'
 
@@ -111,7 +111,7 @@ export function getStatusTooltip(status: TaskRuntimeStatus): string {
     case 'running':
       return 'Task is running'
     case 'success':
-      return 'Success'
+      return 'Task is enabled'
     case 'not-running':
       return 'Task is not running'
     case 'paused':
