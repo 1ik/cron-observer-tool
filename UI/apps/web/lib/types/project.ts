@@ -22,6 +22,7 @@ export interface UpdateProjectRequest {
   description?: string
   execution_endpoint?: string
   alert_emails?: string
+  project_users?: ProjectUser[]
 }
 
 export type ProjectUserRole = 'admin' | 'readonly'

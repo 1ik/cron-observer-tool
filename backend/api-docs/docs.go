@@ -1749,6 +1749,12 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 1
+                },
+                "project_users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ProjectUser"
+                    }
                 }
             }
         },

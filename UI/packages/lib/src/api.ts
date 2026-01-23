@@ -30,6 +30,57 @@ const getDefaultApiBaseUrl = (): string => {
 
 const DEFAULT_API_BASE_URL = getDefaultApiBaseUrl();
 
+// Token cache for Authorization header
+let cachedToken: string | null = null;
+let tokenFetchPromise: Promise<string | null> | null = null;
+
+/**
+ * Get the authentication token from the Next.js API
+ * Uses caching to avoid repeated fetches
+ */
+async function getAuthToken(): Promise<string | null> {
+  // Return cached token if available
+  if (cachedToken) {
+    return cachedToken;
+  }
+
+  // If a fetch is already in progress, wait for it
+  if (tokenFetchPromise) {
+    return tokenFetchPromise;
+  }
+
+  // Only fetch token on client-side
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  tokenFetchPromise = (async () => {
+    try {
+      const response = await fetch('/api/auth/token');
+      if (response.ok) {
+        const data = await response.json();
+        cachedToken = data.token;
+        return cachedToken;
+      }
+    } catch (error) {
+      console.error('Failed to get auth token:', error);
+    }
+    return null;
+  })();
+
+  const token = await tokenFetchPromise;
+  tokenFetchPromise = null;
+  return token;
+}
+
+/**
+ * Clear the cached token (call on logout)
+ */
+export function clearAuthToken(): void {
+  cachedToken = null;
+  tokenFetchPromise = null;
+}
+
 // Create a singleton API client instance
 let apiClient: ReturnType<typeof createApiClient> | null = null;
 
@@ -40,6 +91,17 @@ function getApiClient(): ReturnType<typeof createApiClient> {
   if (!apiClient) {
     apiClient = createApiClient(DEFAULT_API_BASE_URL, {
       validate: false, // Disable Zod validation
+    });
+
+    // Add axios interceptor to include Authorization header
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (apiClient as any).axios.interceptors.request.use(async (config: any) => {
+      const token = await getAuthToken();
+      if (token) {
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
     });
   }
   return apiClient;
@@ -115,6 +177,7 @@ export async function updateProject(
     description?: string;
     execution_endpoint?: string;
     alert_emails?: string;
+    project_users?: Array<{ email: string; role: 'admin' | 'readonly' }>;
   }
 ) {
   const client = getApiClient();
@@ -125,6 +188,7 @@ export async function updateProject(
     description?: string;
     execution_endpoint?: string;
     alert_emails?: string;
+    project_users?: Array<{ email: string; role: 'admin' | 'readonly' }>;
   } = {};
 
   // Only include fields that are provided
@@ -139,6 +203,9 @@ export async function updateProject(
   }
   if (project.alert_emails !== undefined) {
     requestBody.alert_emails = project.alert_emails.trim() || '';
+  }
+  if (project.project_users !== undefined) {
+    requestBody.project_users = project.project_users;
   }
 
   return client.putProjectsProject_id(requestBody, { params: { project_id: projectId } });
@@ -250,13 +317,18 @@ export async function updateTaskStatus(projectId: string, taskUUID: string, stat
   
   // Use fetch directly since the endpoint might not be in the generated client yet
   const baseUrl = getDefaultApiBaseUrl();
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(
     `${baseUrl}/projects/${projectId}/tasks/${taskUUID}/status`,
     {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({ status }),
     }
   );

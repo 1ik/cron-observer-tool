@@ -16,7 +16,7 @@ type Project struct {
 	APIKey            string             `json:"api_key" bson:"api_key" example:"sk_live_abc123..."`
 	ExecutionEndpoint string             `json:"execution_endpoint" bson:"execution_endpoint" binding:"omitempty,url" example:"https://api.example.com/execute"`
 	AlertEmails       string             `json:"alert_emails,omitempty" bson:"alert_emails,omitempty" example:"admin@example.com,ops@example.com"`
-	ProjectUsers      []ProjectUser      `json:"project_users,omitempty" bson:"project_users,omitempty"`
+	ProjectUsers      []ProjectUser      `json:"project_users" bson:"project_users,omitempty"`
 	CreatedAt         time.Time          `json:"created_at" bson:"created_at" example:"2025-01-15T10:00:00Z"`
 	UpdatedAt         time.Time          `json:"updated_at" bson:"updated_at" example:"2025-01-15T10:00:00Z"`
 }
@@ -30,10 +30,11 @@ type CreateProjectRequest struct {
 
 // UpdateProjectRequest represents the request DTO for updating a project
 type UpdateProjectRequest struct {
-	Name              string `json:"name,omitempty" binding:"omitempty,min=1,max=255"`
-	Description       string `json:"description,omitempty" binding:"omitempty,max=1000"`
-	ExecutionEndpoint string `json:"execution_endpoint,omitempty" binding:"omitempty,url"`
-	AlertEmails       string `json:"alert_emails,omitempty" binding:"omitempty"`
+	Name              string        `json:"name,omitempty" binding:"omitempty,min=1,max=255"`
+	Description       string        `json:"description,omitempty" binding:"omitempty,max=1000"`
+	ExecutionEndpoint string        `json:"execution_endpoint,omitempty" binding:"omitempty,url"`
+	AlertEmails       string        `json:"alert_emails,omitempty" binding:"omitempty"`
+	ProjectUsers      []ProjectUser `json:"project_users,omitempty" binding:"omitempty,dive"`
 }
 
 // ProjectStatus represents the status of a project

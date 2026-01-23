@@ -65,6 +65,15 @@ func (r *MongoRepository) UpdateProject(ctx context.Context, projectID primitive
 		},
 	}
 
+	// Always include project_users in the update (even if empty array)
+	// This ensures the field exists in MongoDB
+	// If nil, initialize as empty array
+	projectUsers := project.ProjectUsers
+	if projectUsers == nil {
+		projectUsers = []models.ProjectUser{}
+	}
+	update["$set"].(bson.M)["project_users"] = projectUsers
+
 	_, err := collection.UpdateOne(ctx, bson.M{"_id": projectID}, update)
 	if err != nil {
 		return err

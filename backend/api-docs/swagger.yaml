@@ -488,6 +488,10 @@ definitions:
         maxLength: 255
         minLength: 1
         type: string
+      project_users:
+        items:
+          $ref: '#/definitions/models.ProjectUser'
+        type: array
     type: object
   models.UpdateTaskGroupRequest:
     properties:

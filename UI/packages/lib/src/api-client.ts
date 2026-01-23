@@ -37,6 +37,7 @@ const models_UpdateProjectRequest = z
     description: z.string().max(1000),
     execution_endpoint: z.string(),
     name: z.string().min(1).max(255),
+    project_users: z.array(models_ProjectUser),
   })
   .partial()
   .passthrough();

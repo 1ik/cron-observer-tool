@@ -4,10 +4,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Label from '@radix-ui/react-label'
 import { Box, Button, Flex, Heading, Tabs, Text, TextArea, TextField } from '@radix-ui/themes'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Project, UpdateProjectRequest } from '../lib/types/project'
+import { Project, ProjectUser, UpdateProjectRequest } from '../lib/types/project'
 import { UpdateProjectFormData, updateProjectSchema } from '../lib/validations/project'
+import { ProjectUsersTab } from './ProjectUsersTab'
 import { StyledDialogContent } from './StyledDialogContent'
 
 interface ProjectSettingsDialogProps {
@@ -23,11 +24,14 @@ export function ProjectSettingsDialog({
   project,
   onSubmit,
 }: ProjectSettingsDialogProps) {
+  const [projectUsers, setProjectUsers] = useState<ProjectUser[]>(project.project_users || [])
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<UpdateProjectFormData>({
     resolver: zodResolver(updateProjectSchema),
     defaultValues: {
@@ -35,20 +39,28 @@ export function ProjectSettingsDialog({
       description: project.description || '',
       execution_endpoint: project.execution_endpoint || '',
       alert_emails: project.alert_emails || '',
+      project_users: project.project_users || [],
     },
   })
 
   // Reset form when dialog opens or project changes
   useEffect(() => {
     if (open) {
+      setProjectUsers(project.project_users || [])
       reset({
         name: project.name,
         description: project.description || '',
         execution_endpoint: project.execution_endpoint || '',
         alert_emails: project.alert_emails || '',
+        project_users: project.project_users || [],
       })
     }
   }, [open, project, reset])
+
+  const handleUsersChange = (users: ProjectUser[]) => {
+    setProjectUsers(users)
+    setValue('project_users', users, { shouldValidate: true })
+  }
 
   const onFormSubmit = (data: UpdateProjectFormData) => {
     // Transform form data to API request format
@@ -57,14 +69,17 @@ export function ProjectSettingsDialog({
       description: data.description || undefined,
       execution_endpoint: data.execution_endpoint || undefined,
       alert_emails: data.alert_emails || undefined,
+      project_users: projectUsers.length > 0 ? projectUsers : undefined,
     }
     onSubmit(requestData)
     reset()
+    setProjectUsers([])
     onOpenChange(false)
   }
 
   const handleCancel = () => {
     reset()
+    setProjectUsers([])
     onOpenChange(false)
   }
 
@@ -108,6 +123,7 @@ export function ProjectSettingsDialog({
               <Tabs.List mb="4">
                 <Tabs.Trigger value="details">Details</Tabs.Trigger>
                 <Tabs.Trigger value="alerts">Alerts</Tabs.Trigger>
+                <Tabs.Trigger value="users">Users</Tabs.Trigger>
               </Tabs.List>
 
               {/* Details Tab */}
@@ -212,6 +228,15 @@ export function ProjectSettingsDialog({
                     )}
                   </Flex>
                 </Flex>
+              </Tabs.Content>
+
+              {/* Users Tab */}
+              <Tabs.Content value="users" style={{ flex: 1, overflowY: 'auto' }}>
+                <ProjectUsersTab
+                  projectUsers={projectUsers}
+                  onUsersChange={handleUsersChange}
+                  errors={errors}
+                />
               </Tabs.Content>
             </Tabs.Root>
           </form>

@@ -6,8 +6,8 @@ export * from './hooks';
 
 // Export API client generated from OpenAPI spec
 export type { ZodiosOptions } from '@zodios/core';
-export { api, createApiClient, setTokenProvider } from './api-client';
+export { api, createApiClient } from './api-client';
 
 // Export API functions
-export { updateProject } from './api';
+export { updateProject, clearAuthToken } from './api';
 

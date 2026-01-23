@@ -32,6 +32,11 @@ const validateCommaSeparatedEmails = (emails: string): boolean => {
   return emailList.every(email => emailRegex.test(email))
 }
 
+const projectUserSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  role: z.enum(['admin', 'readonly']),
+})
+
 export const updateProjectSchema = z.object({
   name: z
     .string()
@@ -62,6 +67,7 @@ export const updateProjectSchema = z.object({
         message: 'Please enter valid email addresses separated by commas',
       }
     ),
+  project_users: z.array(projectUserSchema).optional(),
 })
 
 export type UpdateProjectFormData = z.infer<typeof updateProjectSchema>

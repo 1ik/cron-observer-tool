@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -28,10 +29,14 @@ func AuthMiddleware(jwtSecret string, superAdmins []string) gin.HandlerFunc {
 		superAdminMap[strings.ToLower(strings.TrimSpace(admin))] = true
 	}
 
+	// Log super admin list on startup (once)
+	log.Printf("[AUTH] Initialized with %d super admins: %v", len(superAdmins), superAdmins)
+
 	return func(c *gin.Context) {
 		// Extract token from Authorization header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
+			log.Printf("[AUTH] Missing Authorization header for %s %s", c.Request.Method, c.Request.URL.Path)
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Authorization header required",
 			})
@@ -60,18 +65,48 @@ func AuthMiddleware(jwtSecret string, superAdmins []string) gin.HandlerFunc {
 		if err == nil && unverifiedToken != nil {
 			if claims, ok := unverifiedToken.Claims.(jwt.MapClaims); ok {
 				unverifiedClaims = claims
+				// Try multiple ways to extract email
 				userEmail = getStringClaim(claims, "email")
 				if userEmail == "" {
+					// Try nested user object
 					if userObj, ok := claims["user"].(map[string]interface{}); ok {
 						userEmail = getStringFromMap(userObj, "email")
+					}
+				}
+				if userEmail == "" {
+					// Try alternative claim names that NextAuth might use
+					// Check for common variations
+					userEmail = getStringClaim(claims, "preferred_username")
+				}
+			}
+		}
+
+		// If email extraction failed, try one more time with a fresh parser
+		// This handles edge cases where token format is slightly different
+		if userEmail == "" && tokenString != "" {
+			parser := jwt.NewParser()
+			if token, _, parseErr := parser.ParseUnverified(tokenString, jwt.MapClaims{}); parseErr == nil && token != nil {
+				if claims, ok := token.Claims.(jwt.MapClaims); ok {
+					if unverifiedClaims == nil {
+						unverifiedClaims = claims
+					}
+					userEmail = getStringClaim(claims, "email")
+					if userEmail == "" {
+						if userObj, ok := claims["user"].(map[string]interface{}); ok {
+							userEmail = getStringFromMap(userObj, "email")
+						}
 					}
 				}
 			}
 		}
 
 		// Check if user is a super admin - if yes, bypass JWT validation
-		if userEmail != "" && superAdminMap[strings.ToLower(strings.TrimSpace(userEmail))] {
+		normalizedEmail := strings.ToLower(strings.TrimSpace(userEmail))
+		log.Printf("[AUTH] Extracted email: '%s', normalized: '%s', is super admin: %v", userEmail, normalizedEmail, superAdminMap[normalizedEmail])
+
+		if userEmail != "" && superAdminMap[normalizedEmail] {
 			// Super admin - allow request without strict JWT validation
+			log.Printf("[AUTH] Super admin access granted for: %s", userEmail)
 			userInfo := UserInfo{
 				Email: userEmail,
 			}
@@ -88,6 +123,8 @@ func AuthMiddleware(jwtSecret string, superAdmins []string) gin.HandlerFunc {
 			c.Next()
 			return
 		}
+
+		log.Printf("[AUTH] Not a super admin, proceeding with JWT validation for email: '%s'", userEmail)
 
 		// Not a super admin - proceed with normal JWT validation
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {

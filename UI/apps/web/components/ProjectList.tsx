@@ -130,6 +130,7 @@ export function ProjectList() {
             alert_emails: (project as Record<string, unknown>).alert_emails && typeof (project as Record<string, unknown>).alert_emails === 'string' 
               ? (project as Record<string, unknown>).alert_emails as string 
               : undefined,
+            project_users: (project as Record<string, unknown>).project_users as Project['project_users'],
             created_at: project.created_at || new Date().toISOString(),
             updated_at: project.updated_at || new Date().toISOString(),
           }

@@ -47,6 +47,13 @@ func (h *ProjectHandler) GetAllProjects(c *gin.Context) {
 		projects = []*models.Project{}
 	}
 
+	// Ensure project_users is always initialized (not nil) for JSON serialization
+	for _, project := range projects {
+		if project.ProjectUsers == nil {
+			project.ProjectUsers = []models.ProjectUser{}
+		}
+	}
+
 	c.JSON(http.StatusOK, projects)
 }
 
@@ -178,7 +185,8 @@ func (h *ProjectHandler) UpdateProject(c *gin.Context) {
 		Description:       existingProject.Description,
 		ExecutionEndpoint: existingProject.ExecutionEndpoint,
 		AlertEmails:       existingProject.AlertEmails,
-		CreatedAt:         existingProject.CreatedAt, // Preserve original creation time
+		ProjectUsers:      existingProject.ProjectUsers, // Preserve existing users
+		CreatedAt:         existingProject.CreatedAt,    // Preserve original creation time
 		UpdatedAt:         now,
 	}
 
@@ -204,8 +212,18 @@ func (h *ProjectHandler) UpdateProject(c *gin.Context) {
 		// Allow clearing alert emails by sending empty string
 		updatedProject.AlertEmails = ""
 	}
+	if req.ProjectUsers != nil {
+		updatedProject.ProjectUsers = req.ProjectUsers
+		log.Printf("Updating project_users: %d users", len(req.ProjectUsers))
+		for i, user := range req.ProjectUsers {
+			log.Printf("  User %d: email=%s, role=%s", i+1, user.Email, user.Role)
+		}
+	} else {
+		log.Printf("ProjectUsers not provided in request, preserving existing: %d users", len(updatedProject.ProjectUsers))
+	}
 
 	// Update the project
+	log.Printf("Updating project with ProjectUsers: %v", updatedProject.ProjectUsers)
 	err = h.repo.UpdateProject(c.Request.Context(), projectID, updatedProject)
 	if err != nil {
 		log.Printf("Failed to update project: %v", err)
