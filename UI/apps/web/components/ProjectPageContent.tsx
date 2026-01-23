@@ -30,11 +30,15 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
   const { data: tasks = [], isLoading: isLoadingTasks, error: tasksError } = useTasksByProject(projectObjectId || '')
   const { data: taskGroups = [], isLoading: isLoadingTaskGroups, error: taskGroupsError } = useTaskGroupsByProject(projectObjectId || '')
 
-  // Find the selected task to get its UUID
-  const selectedTask = selectedTaskId
-    ? tasks.find((t) => t.id === selectedTaskId || t.uuid === selectedTaskId)
-    : null
-  const selectedTaskUUID = selectedTask?.uuid || selectedTask?.id || null
+  // Find the selected task to get its UUID (memoized to ensure proper updates)
+  const selectedTask = useMemo(() => {
+    if (!selectedTaskId) return null
+    return tasks.find((t) => t.id === selectedTaskId || t.uuid === selectedTaskId) || null
+  }, [selectedTaskId, tasks])
+
+  const selectedTaskUUID = useMemo(() => {
+    return selectedTask?.uuid || selectedTask?.id || null
+  }, [selectedTask])
 
   // Get current date string (always computed synchronously)
   const getCurrentDateString = () => {

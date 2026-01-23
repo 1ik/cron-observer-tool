@@ -40,9 +40,10 @@ export function useExecutionsByTask(projectId: string | null | undefined, taskUU
     },
     enabled: enabled && !!projectId && !!taskUUID && !!date && date.trim() !== '',
     retry: false, // Disable retries
-    staleTime: 30 * 1000, // Consider data fresh for 30 seconds to prevent duplicate requests
-    refetchOnMount: false, // Don't refetch when component remounts if data is fresh
+    staleTime: 0, // Always refetch when query key changes (taskUUID, date, or projectId)
+    refetchOnMount: true, // Refetch when component remounts to ensure fresh data
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    // Query will automatically refetch when queryKey changes (different taskUUID)
   });
 }
 
