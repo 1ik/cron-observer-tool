@@ -16,6 +16,7 @@ interface TaskGroupSettingsDialogProps {
   onOpenChange: (open: boolean) => void
   taskGroup: TaskGroup
   onSubmit: (data: UpdateTaskGroupRequest) => void
+  isReadOnly?: boolean
 }
 
 export function TaskGroupSettingsDialog({
@@ -23,6 +24,7 @@ export function TaskGroupSettingsDialog({
   onOpenChange,
   taskGroup,
   onSubmit,
+  isReadOnly = false,
 }: TaskGroupSettingsDialogProps) {
   const {
     register,
@@ -134,6 +136,7 @@ export function TaskGroupSettingsDialog({
                 size="3"
                 maxLength={255}
                 color={errors.name ? 'red' : undefined}
+                disabled={isReadOnly}
               />
               {errors.name && (
                 <Text size="2" color="red">
@@ -157,6 +160,7 @@ export function TaskGroupSettingsDialog({
                 size="3"
                 maxLength={1000}
                 color={errors.description ? 'red' : undefined}
+                disabled={isReadOnly}
               />
               {errors.description && (
                 <Text size="2" color="red">
@@ -179,6 +183,7 @@ export function TaskGroupSettingsDialog({
                   <Select.Root
                     value={field.value}
                     onValueChange={field.onChange}
+                    disabled={isReadOnly}
                   >
                     <Select.Trigger id="task-group-status" style={{ width: '100%' }}>
                       <Flex align="center" gap="2">
@@ -246,6 +251,7 @@ export function TaskGroupSettingsDialog({
                 size="3"
                 pattern="^([01]\d|2[0-3]):([0-5]\d)$"
                 color={errors.start_time ? 'red' : undefined}
+                disabled={isReadOnly}
               />
               <Text size="1" color="gray">
                 Format: HH:MM (24-hour format)
@@ -271,6 +277,7 @@ export function TaskGroupSettingsDialog({
                 size="3"
                 pattern="^([01]\d|2[0-3]):([0-5]\d)$"
                 color={errors.end_time ? 'red' : undefined}
+                disabled={isReadOnly}
               />
               <Text size="1" color="gray">
                 Format: HH:MM (24-hour format)
@@ -298,6 +305,7 @@ export function TaskGroupSettingsDialog({
                     <Select.Root
                       value={field.value}
                       onValueChange={field.onChange}
+                      disabled={isReadOnly}
                     >
                       <Select.Trigger
                         id="task-group-timezone"
@@ -328,12 +336,14 @@ export function TaskGroupSettingsDialog({
             <Flex gap="3" justify="end" mt="4">
               <Dialog.Close asChild>
                 <Button type="button" variant="soft" onClick={handleCancel}>
-                  Cancel
+                  {isReadOnly ? 'Close' : 'Cancel'}
                 </Button>
               </Dialog.Close>
-              <Button type="submit" variant="solid">
-                Save Changes
-              </Button>
+              {!isReadOnly && (
+                <Button type="submit" variant="solid">
+                  Save Changes
+                </Button>
+              )}
             </Flex>
             </form>
           </Flex>

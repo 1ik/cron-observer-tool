@@ -17,6 +17,7 @@ interface TaskGroupsListProps {
   onSettingsClick: (taskGroup: TaskGroup) => void
   onTaskSettingsClick: (task: Task) => void
   onCreateTaskClick?: (taskGroup: TaskGroup) => void
+  isReadOnly?: boolean
 }
 
 export function TaskGroupsList({
@@ -28,6 +29,7 @@ export function TaskGroupsList({
   onSettingsClick,
   onTaskSettingsClick,
   onCreateTaskClick,
+  isReadOnly = false,
 }: TaskGroupsListProps) {
   // Create a Set of task group IDs for quick lookup (memoized)
   const taskGroupIds = useMemo(() => new Set(taskGroups.map(tg => tg.id)), [taskGroups])
@@ -102,6 +104,7 @@ export function TaskGroupsList({
               onSettingsClick={onSettingsClick}
               onTaskSettingsClick={onTaskSettingsClick}
               onCreateTaskClick={onCreateTaskClick}
+              isReadOnly={isReadOnly}
             />
           ))}
         </Accordion.Root>

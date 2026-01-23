@@ -3,9 +3,10 @@
 import { useCreateTask, useCreateTaskGroup, useUpdateProject, useUpdateTask, useUpdateTaskGroup } from '@cron-observer/lib'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { CaretDownIcon, GearIcon, PlusIcon } from '@radix-ui/react-icons'
-import { Box, Button, Flex, IconButton, Text } from '@radix-ui/themes'
+import { Box, Button, Flex, IconButton, Text, Tooltip } from '@radix-ui/themes'
 import Link from 'next/link'
 import { useState } from 'react'
+import { useProjectRole } from '../contexts/ProjectRoleContext'
 import { Execution } from '../lib/types/execution'
 import { Project, UpdateProjectRequest } from '../lib/types/project'
 import { CreateTaskRequest, Task, UpdateTaskRequest } from '../lib/types/task'
@@ -36,6 +37,7 @@ export function ProjectLayout({
   selectedTaskId,
   isLoadingExecutions = false,
 }: ProjectLayoutProps) {
+  const { canEdit, isReadOnly } = useProjectRole()
   const [selectedTaskGroup, setSelectedTaskGroup] = useState<TaskGroup | null>(null)
   const [isTaskGroupSettingsOpen, setIsTaskGroupSettingsOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -212,74 +214,76 @@ export function ProjectLayout({
               <GearIcon width="16" height="16" />
             </IconButton>
             
-            {/* GitHub-style split button */}
-            <DropdownMenu.Root>
-            <Flex style={{ display: 'inline-flex', gap: 0 }}>
-              <Button
-                size="2"
-                variant="outline"
-                onClick={() => setIsCreateTaskDialogOpen(true)}
-                style={{
-                  borderTopRightRadius: 0,
-                  borderBottomRightRadius: 0,
-                  borderRight: '1px solid var(--gray-6)',
-                  marginRight: '-1px',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer',
-                }}
-              >
-                <PlusIcon width="14" height="14" />
-              </Button>
-              <DropdownMenu.Trigger asChild>
-                <Button
-                  size="2"
-                  variant="outline"
+            {/* GitHub-style split button - only show for users with edit permissions */}
+            {canEdit && (
+              <DropdownMenu.Root>
+                <Flex style={{ display: 'inline-flex', gap: 0 }}>
+                  <Button
+                    size="2"
+                    variant="outline"
+                    onClick={() => setIsCreateTaskDialogOpen(true)}
+                    style={{
+                      borderTopRightRadius: 0,
+                      borderBottomRightRadius: 0,
+                      borderRight: '1px solid var(--gray-6)',
+                      marginRight: '-1px',
+                      backgroundColor: 'transparent',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <PlusIcon width="14" height="14" />
+                  </Button>
+                  <DropdownMenu.Trigger asChild>
+                    <Button
+                      size="2"
+                      variant="outline"
+                      style={{
+                        borderTopLeftRadius: 0,
+                        borderBottomLeftRadius: 0,
+                        paddingLeft: 'var(--space-1)',
+                        paddingRight: 'var(--space-2)',
+                        backgroundColor: 'transparent',
+                      }}
+                    >
+                      <CaretDownIcon width="14" height="14" />
+                    </Button>
+                  </DropdownMenu.Trigger>
+                </Flex>
+                <DropdownMenu.Content
+                  align="end"
                   style={{
-                    borderTopLeftRadius: 0,
-                    borderBottomLeftRadius: 0,
-                    paddingLeft: 'var(--space-1)',
-                    paddingRight: 'var(--space-2)',
-                    backgroundColor: 'transparent',
+                    backgroundColor: 'var(--color-panel)',
+                    border: '1px solid var(--gray-6)',
+                    borderRadius: 'var(--radius-3)',
+                    boxShadow: 'var(--shadow-4)',
+                    padding: 'var(--space-1)',
+                    minWidth: '180px',
+                    zIndex: 1000,
                   }}
                 >
-                  <CaretDownIcon width="14" height="14" />
-                </Button>
-              </DropdownMenu.Trigger>
-            </Flex>
-            <DropdownMenu.Content
-              align="end"
-              style={{
-                backgroundColor: 'var(--color-panel)',
-                border: '1px solid var(--gray-6)',
-                borderRadius: 'var(--radius-3)',
-                boxShadow: 'var(--shadow-4)',
-                padding: 'var(--space-1)',
-                minWidth: '180px',
-                zIndex: 1000,
-              }}
-            >
-              <DropdownMenu.Item
-                onSelect={() => setIsCreateTaskDialogOpen(true)}
-                style={{
-                  borderRadius: 'var(--radius-2)',
-                  padding: 'var(--space-2) var(--space-3)',
-                  cursor: 'pointer',
-                }}
-              >
-                Create Task
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onSelect={() => setIsCreateTaskGroupDialogOpen(true)}
-                style={{
-                  borderRadius: 'var(--radius-2)',
-                  padding: 'var(--space-2) var(--space-3)',
-                  cursor: 'pointer',
-                }}
-              >
-                Create Task Group
-              </DropdownMenu.Item>
-            </DropdownMenu.Content>
-          </DropdownMenu.Root>
+                  <DropdownMenu.Item
+                    onSelect={() => setIsCreateTaskDialogOpen(true)}
+                    style={{
+                      borderRadius: 'var(--radius-2)',
+                      padding: 'var(--space-2) var(--space-3)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Create Task
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={() => setIsCreateTaskGroupDialogOpen(true)}
+                    style={{
+                      borderRadius: 'var(--radius-2)',
+                      padding: 'var(--space-2) var(--space-3)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Create Task Group
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            )}
           </Flex>
         </Flex>
       </Box>
@@ -296,7 +300,8 @@ export function ProjectLayout({
               selectedTaskId={selectedTaskId}
               onSettingsClick={handleTaskGroupSettingsClick}
               onTaskSettingsClick={handleTaskSettingsClick}
-              onCreateTaskClick={handleCreateTaskClick}
+              onCreateTaskClick={canEdit ? handleCreateTaskClick : undefined}
+              isReadOnly={isReadOnly}
             />
           }
           rightContent={
@@ -319,6 +324,7 @@ export function ProjectLayout({
           onOpenChange={setIsTaskGroupSettingsOpen}
           taskGroup={selectedTaskGroup}
           onSubmit={handleTaskGroupSettingsSubmit}
+          isReadOnly={isReadOnly}
         />
       )}
 
@@ -328,29 +334,35 @@ export function ProjectLayout({
           onOpenChange={setIsTaskSettingsOpen}
           task={selectedTask}
           onSubmit={handleTaskSettingsSubmit}
+          isReadOnly={isReadOnly}
         />
       )}
 
-      <CreateTaskGroupDialog
-        open={isCreateTaskGroupDialogOpen}
-        onOpenChange={setIsCreateTaskGroupDialogOpen}
-        projectId={project.id}
-        onSubmit={handleCreateTaskGroupSubmit}
-      />
+      {canEdit && (
+        <>
+          <CreateTaskGroupDialog
+            open={isCreateTaskGroupDialogOpen}
+            onOpenChange={setIsCreateTaskGroupDialogOpen}
+            projectId={project.id}
+            onSubmit={handleCreateTaskGroupSubmit}
+          />
 
-      <CreateTaskDialog
-        open={isCreateTaskDialogOpen}
-        onOpenChange={setIsCreateTaskDialogOpen}
-        projectId={project.id}
-        taskGroupId={selectedTaskGroupForCreate?.id}
-        onSubmit={handleCreateTaskSubmit}
-      />
+          <CreateTaskDialog
+            open={isCreateTaskDialogOpen}
+            onOpenChange={setIsCreateTaskDialogOpen}
+            projectId={project.id}
+            taskGroupId={selectedTaskGroupForCreate?.id}
+            onSubmit={handleCreateTaskSubmit}
+          />
+        </>
+      )}
 
       <ProjectSettingsDialog
         open={isProjectSettingsOpen}
         onOpenChange={setIsProjectSettingsOpen}
         project={project}
         onSubmit={handleProjectSettingsSubmit}
+        isReadOnly={isReadOnly}
       />
     </Flex>
   )

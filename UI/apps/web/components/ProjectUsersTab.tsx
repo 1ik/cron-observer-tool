@@ -11,6 +11,7 @@ interface ProjectUsersTabProps {
   projectUsers: ProjectUser[]
   onUsersChange: (users: ProjectUser[]) => void
   errors?: FieldErrors
+  isReadOnly?: boolean
 }
 
 interface ProjectUserRow extends ProjectUser {
@@ -18,7 +19,7 @@ interface ProjectUserRow extends ProjectUser {
   tempId?: string
 }
 
-export function ProjectUsersTab({ projectUsers, onUsersChange, errors }: ProjectUsersTabProps) {
+export function ProjectUsersTab({ projectUsers, onUsersChange, errors, isReadOnly = false }: ProjectUsersTabProps) {
   const [users, setUsers] = useState<ProjectUserRow[]>(projectUsers || [])
 
   const handleAddUser = () => {
@@ -61,13 +62,15 @@ export function ProjectUsersTab({ projectUsers, onUsersChange, errors }: Project
             Project Users
           </Text>
           <Text size="2" color="gray">
-            Manage user access and roles for this project
+            {isReadOnly ? 'View user access and roles for this project' : 'Manage user access and roles for this project'}
           </Text>
         </Box>
-        <Button type="button" size="2" variant="soft" onClick={handleAddUser}>
-          <PlusIcon />
-          Add User
-        </Button>
+        {!isReadOnly && (
+          <Button type="button" size="2" variant="soft" onClick={handleAddUser}>
+            <PlusIcon />
+            Add User
+          </Button>
+        )}
       </Flex>
 
       {/* Table */}
@@ -119,7 +122,7 @@ export function ProjectUsersTab({ projectUsers, onUsersChange, errors }: Project
             >
               {/* Email Column */}
               <Box style={{ flex: '1' }}>
-                {user.isNew ? (
+                {user.isNew && !isReadOnly ? (
                   <TextField.Root
                     type="email"
                     placeholder="user@example.com"
@@ -137,6 +140,7 @@ export function ProjectUsersTab({ projectUsers, onUsersChange, errors }: Project
                 <Select.Root
                   value={user.role}
                   onValueChange={(value) => handleRoleChange(index, value as ProjectUserRole)}
+                  disabled={isReadOnly}
                 >
                   <Select.Trigger
                     style={{
@@ -234,15 +238,17 @@ export function ProjectUsersTab({ projectUsers, onUsersChange, errors }: Project
 
               {/* Actions Column */}
               <Box style={{ width: '60px' }}>
-                <IconButton
-                  type="button"
-                  size="2"
-                  variant="ghost"
-                  color="red"
-                  onClick={() => handleDeleteUser(index)}
-                >
-                  <TrashIcon />
-                </IconButton>
+                {!isReadOnly && (
+                  <IconButton
+                    type="button"
+                    size="2"
+                    variant="ghost"
+                    color="red"
+                    onClick={() => handleDeleteUser(index)}
+                  >
+                    <TrashIcon />
+                  </IconButton>
+                )}
               </Box>
             </Flex>
           ))}
@@ -257,7 +263,7 @@ export function ProjectUsersTab({ projectUsers, onUsersChange, errors }: Project
           }}
         >
           <Text size="2" color="gray">
-            No users added yet. Click &ldquo;Add User&rdquo; to get started.
+            {isReadOnly ? 'No users have been added to this project.' : 'No users added yet. Click "Add User" to get started.'}
           </Text>
         </Box>
       )}

@@ -17,6 +17,7 @@ interface TaskSettingsDialogProps {
   onOpenChange: (open: boolean) => void
   task: Task
   onSubmit: (data: UpdateTaskRequest) => void
+  isReadOnly?: boolean
 }
 
 export function TaskSettingsDialog({
@@ -24,6 +25,7 @@ export function TaskSettingsDialog({
   onOpenChange,
   task,
   onSubmit,
+  isReadOnly = false,
 }: TaskSettingsDialogProps) {
   const {
     register,
@@ -148,6 +150,7 @@ export function TaskSettingsDialog({
                 size="3"
                 maxLength={255}
                 color={errors.name ? 'red' : undefined}
+                disabled={isReadOnly}
               />
               {errors.name && (
                 <Text size="2" color="red">
@@ -171,6 +174,7 @@ export function TaskSettingsDialog({
                 size="3"
                 maxLength={1000}
                 color={errors.description ? 'red' : undefined}
+                disabled={isReadOnly}
               />
               {errors.description && (
                 <Text size="2" color="red">
@@ -193,6 +197,7 @@ export function TaskSettingsDialog({
                   <Select.Root
                     value={field.value}
                     onValueChange={field.onChange}
+                    disabled={isReadOnly}
                   >
                     <Select.Trigger id="task-status" style={{ width: '100%' }}>
                       <Flex align="center" gap="2">
@@ -262,6 +267,7 @@ export function TaskSettingsDialog({
                     <Select.Root
                       value={field.value}
                       onValueChange={field.onChange}
+                      disabled={isReadOnly}
                     >
                       <Select.Trigger
                         id="task-timezone"
@@ -301,6 +307,7 @@ export function TaskSettingsDialog({
                 placeholder="e.g., 0 2 * * *"
                 size="3"
                 color={errors.schedule_config?.cron_expression ? 'red' : undefined}
+                disabled={isReadOnly}
               />
               {cronDescription && (
                 <Text size="2" color="gray">
@@ -329,16 +336,18 @@ export function TaskSettingsDialog({
           <Flex gap="3" justify="end">
             <Dialog.Close asChild>
               <Button type="button" variant="soft" onClick={handleCancel}>
-                Cancel
+                {isReadOnly ? 'Close' : 'Cancel'}
               </Button>
             </Dialog.Close>
-            <Button
-              type="submit"
-              variant="solid"
-              onClick={handleSubmit(onFormSubmit)}
-            >
-              Save Changes
-            </Button>
+            {!isReadOnly && (
+              <Button
+                type="submit"
+                variant="solid"
+                onClick={handleSubmit(onFormSubmit)}
+              >
+                Save Changes
+              </Button>
+            )}
           </Flex>
         </Box>
       </StyledDialogContent>

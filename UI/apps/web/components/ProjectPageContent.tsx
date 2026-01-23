@@ -2,9 +2,12 @@
 
 import { useExecutionsByTask, useProjects, useTaskGroupsByProject, useTasksByProject } from '@cron-observer/lib'
 import { Box, Flex, Heading, Spinner, Text } from '@radix-ui/themes'
+import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo } from 'react'
+import { ProjectRoleProvider } from '../contexts/ProjectRoleContext'
 import { Execution } from '../lib/types/execution'
+import { ProjectUserRole } from '../lib/types/project'
 import { ProjectLayout } from './ProjectLayout'
 
 interface ProjectPageContentProps {
@@ -15,6 +18,7 @@ interface ProjectPageContentProps {
 export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageContentProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { data: session } = useSession()
   
   // Fetch projects to find the one we need
   const { data: projects = [], isLoading: isLoadingProjects } = useProjects()
@@ -81,6 +85,25 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
     validDate,
     !!projectObjectId && !!selectedTaskUUID && !!validDate && validDate.trim() !== ''
   )
+
+  // Determine the current user's role in this project
+  // Must be called before any early returns to follow React hooks rules
+  const userRole = useMemo((): ProjectUserRole | null => {
+    if (!session?.user?.email || !project) return null
+    
+    const projectUsers = (project as Record<string, unknown>).project_users as Array<{ email: string; role: 'admin' | 'readonly' }> | undefined
+    if (!projectUsers || projectUsers.length === 0) {
+      // No project_users defined - user is likely a super admin with full access
+      return null
+    }
+    
+    const currentUserEmail = session.user.email.toLowerCase()
+    const userEntry = projectUsers.find(
+      (u) => u.email.toLowerCase() === currentUserEmail
+    )
+    
+    return userEntry?.role || null
+  }, [project, session?.user?.email])
 
   // Loading state (excluding executions loading - that will be shown in ExecutionsList)
   if (isLoadingProjects || isLoadingTasks || isLoadingTaskGroups) {
@@ -192,31 +215,34 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
     }
   })
 
+  const mappedProject = {
+    id: project.id || project.uuid || '',
+    uuid: project.uuid || project.id || '',
+    name: project.name || '',
+    description: project.description,
+    api_key: project.api_key,
+    execution_endpoint: project.execution_endpoint,
+    alert_emails: (project as Record<string, unknown>).alert_emails && typeof (project as Record<string, unknown>).alert_emails === 'string' 
+      ? (project as Record<string, unknown>).alert_emails as string 
+      : undefined,
+    project_users: (project as Record<string, unknown>).project_users as Array<{ email: string; role: 'admin' | 'readonly' }>,
+    created_at: project.created_at || new Date().toISOString(),
+    updated_at: project.updated_at || new Date().toISOString(),
+  }
 
   return (
-    <Box style={{ height: '100%', width: '100%' }}>
-      <ProjectLayout
-        project={{
-          id: project.id || project.uuid || '',
-          uuid: project.uuid || project.id || '',
-          name: project.name || '',
-          description: project.description,
-          api_key: project.api_key,
-          execution_endpoint: project.execution_endpoint,
-          alert_emails: (project as Record<string, unknown>).alert_emails && typeof (project as Record<string, unknown>).alert_emails === 'string' 
-            ? (project as Record<string, unknown>).alert_emails as string 
-            : undefined,
-          project_users: (project as Record<string, unknown>).project_users as Array<{ email: string; role: 'admin' | 'readonly' }>,
-          created_at: project.created_at || new Date().toISOString(),
-          updated_at: project.updated_at || new Date().toISOString(),
-        }}
-        taskGroups={mappedTaskGroups}
-        tasks={mappedTasks}
-        executions={projectExecutions}
-        selectedTaskId={selectedTaskId}
-        isLoadingExecutions={isLoadingExecutions}
-      />
-    </Box>
+    <ProjectRoleProvider userRole={userRole}>
+      <Box style={{ height: '100%', width: '100%' }}>
+        <ProjectLayout
+          project={mappedProject}
+          taskGroups={mappedTaskGroups}
+          tasks={mappedTasks}
+          executions={projectExecutions}
+          selectedTaskId={selectedTaskId}
+          isLoadingExecutions={isLoadingExecutions}
+        />
+      </Box>
+    </ProjectRoleProvider>
   )
 }
 

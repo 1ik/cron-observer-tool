@@ -16,6 +16,7 @@ interface ProjectSettingsDialogProps {
   onOpenChange: (open: boolean) => void
   project: Project
   onSubmit: (data: UpdateProjectRequest) => void
+  isReadOnly?: boolean
 }
 
 export function ProjectSettingsDialog({
@@ -23,6 +24,7 @@ export function ProjectSettingsDialog({
   onOpenChange,
   project,
   onSubmit,
+  isReadOnly = false,
 }: ProjectSettingsDialogProps) {
   const [projectUsers, setProjectUsers] = useState<ProjectUser[]>(project.project_users || [])
 
@@ -143,6 +145,7 @@ export function ProjectSettingsDialog({
                       size="3"
                       maxLength={255}
                       color={errors.name ? 'red' : undefined}
+                      disabled={isReadOnly}
                     />
                     {errors.name && (
                       <Text size="2" color="red">
@@ -166,6 +169,7 @@ export function ProjectSettingsDialog({
                       size="3"
                       maxLength={1000}
                       color={errors.description ? 'red' : undefined}
+                      disabled={isReadOnly}
                     />
                     {errors.description && (
                       <Text size="2" color="red">
@@ -187,6 +191,7 @@ export function ProjectSettingsDialog({
                       placeholder="https://api.example.com/execute"
                       size="3"
                       color={errors.execution_endpoint ? 'red' : undefined}
+                      disabled={isReadOnly}
                     />
                     <Text size="1" color="gray">
                       URL where task execution notifications will be sent
@@ -217,6 +222,7 @@ export function ProjectSettingsDialog({
                       rows={6}
                       size="3"
                       color={errors.alert_emails ? 'red' : undefined}
+                      disabled={isReadOnly}
                     />
                     <Text size="1" color="gray">
                       Comma-separated email addresses for receiving alerts (task failures, errors, etc.)
@@ -236,6 +242,7 @@ export function ProjectSettingsDialog({
                   projectUsers={projectUsers}
                   onUsersChange={handleUsersChange}
                   errors={errors}
+                  isReadOnly={isReadOnly}
                 />
               </Tabs.Content>
             </Tabs.Root>
@@ -253,12 +260,14 @@ export function ProjectSettingsDialog({
           <Flex gap="3" justify="end">
             <Dialog.Close asChild>
               <Button type="button" variant="soft" onClick={handleCancel}>
-                Cancel
+                {isReadOnly ? 'Close' : 'Cancel'}
               </Button>
             </Dialog.Close>
-            <Button type="submit" variant="solid" onClick={handleSubmit(onFormSubmit)}>
-              Save Settings
-            </Button>
+            {!isReadOnly && (
+              <Button type="submit" variant="solid" onClick={handleSubmit(onFormSubmit)}>
+                Save Settings
+              </Button>
+            )}
           </Flex>
         </Box>
       </StyledDialogContent>

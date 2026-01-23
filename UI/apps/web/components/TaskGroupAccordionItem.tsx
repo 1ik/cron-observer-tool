@@ -16,6 +16,7 @@ interface TaskGroupAccordionItemProps {
   onSettingsClick: (taskGroup: TaskGroup) => void
   onTaskSettingsClick: (task: Task) => void
   onCreateTaskClick?: (taskGroup: TaskGroup) => void
+  isReadOnly?: boolean
 }
 
 export function TaskGroupAccordionItem({
@@ -26,6 +27,7 @@ export function TaskGroupAccordionItem({
   onSettingsClick,
   onTaskSettingsClick,
   onCreateTaskClick,
+  isReadOnly = false,
 }: TaskGroupAccordionItemProps) {
   const handleSettingsClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -85,7 +87,7 @@ export function TaskGroupAccordionItem({
               size={8}
             />
           </Accordion.Trigger>
-          {onCreateTaskClick && (
+          {onCreateTaskClick && !isReadOnly && (
             <IconButton
               variant="ghost"
               size="1"
