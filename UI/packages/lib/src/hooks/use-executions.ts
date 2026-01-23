@@ -7,24 +7,40 @@ import { getExecutionsByTaskUUID } from '../api';
 export const executionKeys = {
   all: ['executions'] as const,
   lists: () => [...executionKeys.all, 'list'] as const,
-  list: (projectId: string, taskUUID: string, date: string) => [...executionKeys.lists(), projectId, taskUUID, date] as const,
+  list: (projectId: string, taskUUID: string, date: string, page: number, pageSize: number) => 
+    [...executionKeys.lists(), projectId, taskUUID, date, page, pageSize] as const,
 };
 
 /**
- * Hook to fetch executions for a specific task
+ * Hook to fetch paginated executions for a specific task
  * @param projectId - Project ID (MongoDB ObjectID)
  * @param taskUUID - Task UUID
  * @param date - Required date filter (YYYY-MM-DD format). Returns executions for that date only
+ * @param page - Page number (default: 1)
+ * @param pageSize - Page size (default: 100)
  * @param enabled - Whether the query should be enabled (default: true)
  */
-export function useExecutionsByTask(projectId: string | null | undefined, taskUUID: string | null | undefined, date: string, enabled = true) {
+export function useExecutionsByTask(
+  projectId: string | null | undefined,
+  taskUUID: string | null | undefined,
+  date: string,
+  page: number = 1,
+  pageSize: number = 100,
+  enabled = true
+) {
   return useQuery({
-    queryKey: executionKeys.list(projectId || '', taskUUID || '', date),
+    queryKey: executionKeys.list(projectId || '', taskUUID || '', date, page, pageSize),
     queryFn: async () => {
       // Validate all parameters before making the API call
       if (!projectId || !taskUUID || !date || date.trim() === '') {
         console.warn('useExecutionsByTask: Missing required parameters', { projectId, taskUUID, date });
-        return [];
+        return {
+          data: [],
+          page: 1,
+          page_size: pageSize,
+          total_count: 0,
+          total_pages: 0,
+        };
       }
       
       // Ensure date is a valid format (YYYY-MM-DD)
@@ -35,8 +51,8 @@ export function useExecutionsByTask(projectId: string | null | undefined, taskUU
         throw new Error(`Invalid date format: ${trimmedDate}. Expected YYYY-MM-DD`);
       }
       
-      console.log('useExecutionsByTask: Calling API with', { projectId, taskUUID, date: trimmedDate });
-      return getExecutionsByTaskUUID(projectId, taskUUID, trimmedDate);
+      console.log('useExecutionsByTask: Calling API with', { projectId, taskUUID, date: trimmedDate, page, pageSize });
+      return getExecutionsByTaskUUID(projectId, taskUUID, trimmedDate, page, pageSize);
     },
     enabled: enabled && !!projectId && !!taskUUID && !!date && date.trim() !== '',
     retry: false, // Disable retries

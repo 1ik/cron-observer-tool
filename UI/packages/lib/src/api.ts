@@ -346,13 +346,21 @@ export async function updateTaskStatus(projectId: string, taskUUID: string, stat
 // ============================================================================
 
 /**
- * Get executions for a specific task
+ * Get paginated executions for a specific task
  * @param projectId - Project ID (MongoDB ObjectID)
  * @param taskUUID - Task UUID
  * @param date - Required date filter (YYYY-MM-DD format). Returns executions for that date only
- * @returns Promise resolving to an array of executions
+ * @param page - Page number (default: 1)
+ * @param pageSize - Page size (default: 100)
+ * @returns Promise resolving to paginated executions response
  */
-export async function getExecutionsByTaskUUID(projectId: string, taskUUID: string, date: string) {
+export async function getExecutionsByTaskUUID(
+  projectId: string,
+  taskUUID: string,
+  date: string,
+  page: number = 1,
+  pageSize: number = 100
+) {
   if (!date || typeof date !== 'string' || date.trim() === '') {
     throw new Error('Date parameter is required and must be a non-empty string (YYYY-MM-DD format)');
   }
@@ -365,6 +373,14 @@ export async function getExecutionsByTaskUUID(projectId: string, taskUUID: strin
     throw new Error(`Missing required parameters: projectId=${!!projectId}, taskUUID=${!!taskUUID}, date=${!!trimmedDate}`);
   }
   
+  // Validate pagination parameters
+  if (page < 1) {
+    throw new Error('Page must be greater than 0');
+  }
+  if (pageSize < 1 || pageSize > 100) {
+    throw new Error('Page size must be between 1 and 100');
+  }
+  
   // openapi-zod-client generates incomplete types (doesn't include query params in method signature)
   // Zodios supports query parameters via a separate 'queries' property
   // We use 'as any' because the generated types are incomplete
@@ -375,6 +391,8 @@ export async function getExecutionsByTaskUUID(projectId: string, taskUUID: strin
     },
     queries: {
       date: trimmedDate,
+      page,
+      page_size: pageSize,
     },
   });
 }

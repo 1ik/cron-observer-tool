@@ -182,6 +182,16 @@ const models_Execution = z
   })
   .partial()
   .passthrough();
+const models_PaginatedExecutionsResponse = z
+  .object({
+    data: z.array(models_Execution),
+    page: z.number().int(),
+    page_size: z.number().int(),
+    total_count: z.number().int(),
+    total_pages: z.number().int(),
+  })
+  .partial()
+  .passthrough();
 
 export const schemas = {
   models_ErrorResponse,
@@ -211,6 +221,7 @@ export const schemas = {
   models_LogEntry,
   models_ExecutionStatus,
   models_Execution,
+  models_PaginatedExecutionsResponse,
 };
 
 const endpoints = makeApi([
@@ -294,7 +305,7 @@ const endpoints = makeApi([
     method: "get",
     path: "/projects",
     alias: "getProjects",
-    description: `Retrieve a list of all projects`,
+    description: `Retrieve a list of all projects. Super admins get all projects, regular users get only projects they are members of.`,
     requestFormat: "json",
     response: z.array(models_Project),
     errors: [
@@ -778,7 +789,7 @@ const endpoints = makeApi([
     method: "get",
     path: "/projects/:project_id/tasks/:task_uuid/executions",
     alias: "getProjectsProject_idtasksTask_uuidexecutions",
-    description: `Retrieve all executions for a specific task filtered by date`,
+    description: `Retrieve paginated executions for a specific task filtered by date`,
     requestFormat: "json",
     parameters: [
       {
@@ -796,8 +807,18 @@ const endpoints = makeApi([
         type: "Query",
         schema: z.string(),
       },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().optional(),
+      },
+      {
+        name: "page_size",
+        type: "Query",
+        schema: z.number().int().optional(),
+      },
     ],
-    response: z.array(models_Execution),
+    response: models_PaginatedExecutionsResponse,
     errors: [
       {
         status: 400,

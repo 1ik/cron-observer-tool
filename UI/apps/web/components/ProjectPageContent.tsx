@@ -75,16 +75,59 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
     }
   }, [searchParams, router])
 
+  // Get pagination params from URL (default: page=1, pageSize=100)
+  const page = useMemo(() => {
+    const pageParam = searchParams.get('page')
+    if (pageParam) {
+      const parsed = parseInt(pageParam, 10)
+      return isNaN(parsed) || parsed < 1 ? 1 : parsed
+    }
+    return 1
+  }, [searchParams])
+
+  const pageSize = useMemo(() => {
+    const pageSizeParam = searchParams.get('page_size')
+    if (pageSizeParam) {
+      const parsed = parseInt(pageSizeParam, 10)
+      return isNaN(parsed) || parsed < 1 ? 100 : Math.min(parsed, 100) // Max 100
+    }
+    return 100
+  }, [searchParams])
+
   // Fetch executions for the selected task (only if a task is selected)
   // Ensure selectedDate is always a valid date string before passing to the query
   const validDate = selectedDate && selectedDate.trim() !== '' ? selectedDate : getCurrentDateString()
   
-  const { data: executionsData = [], isLoading: isLoadingExecutions } = useExecutionsByTask(
+  const { data: executionsResponse, isLoading: isLoadingExecutions } = useExecutionsByTask(
     projectObjectId || null,
     selectedTaskUUID,
     validDate,
+    page,
+    pageSize,
     !!projectObjectId && !!selectedTaskUUID && !!validDate && validDate.trim() !== ''
   )
+
+  // Extract executions array and pagination metadata from response
+  const executionsData = useMemo(() => {
+    if (!executionsResponse) return []
+    // Handle both old array format (for backward compatibility) and new paginated format
+    if (Array.isArray(executionsResponse)) {
+      return executionsResponse
+    }
+    return executionsResponse.data || []
+  }, [executionsResponse])
+
+  const paginationData = useMemo(() => {
+    if (!executionsResponse || Array.isArray(executionsResponse)) {
+      return null
+    }
+    return {
+      page: executionsResponse.page || 1,
+      page_size: executionsResponse.page_size || 100,
+      total_count: executionsResponse.total_count || 0,
+      total_pages: executionsResponse.total_pages || 0,
+    }
+  }, [executionsResponse])
 
   // Determine the current user's role in this project
   // Must be called before any early returns to follow React hooks rules
@@ -240,6 +283,7 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
           executions={projectExecutions}
           selectedTaskId={selectedTaskId}
           isLoadingExecutions={isLoadingExecutions}
+          paginationData={paginationData}
         />
       </Box>
     </ProjectRoleProvider>

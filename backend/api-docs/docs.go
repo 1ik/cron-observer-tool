@@ -141,7 +141,7 @@ const docTemplate = `{
         },
         "/projects": {
             "get": {
-                "description": "Retrieve a list of all projects",
+                "description": "Retrieve a list of all projects. Super admins get all projects, regular users get only projects they are members of.",
                 "consumes": [
                     "application/json"
                 ],
@@ -913,7 +913,7 @@ const docTemplate = `{
         },
         "/projects/{project_id}/tasks/{task_uuid}/executions": {
             "get": {
-                "description": "Retrieve all executions for a specific task filtered by date",
+                "description": "Retrieve paginated executions for a specific task filtered by date",
                 "consumes": [
                     "application/json"
                 ],
@@ -945,16 +945,25 @@ const docTemplate = `{
                         "name": "date",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default: 10)",
+                        "name": "page_size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Execution"
-                            }
+                            "$ref": "#/definitions/models.PaginatedExecutionsResponse"
                         }
                     },
                     "400": {
@@ -1334,6 +1343,29 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "type": "string"
+                }
+            }
+        },
+        "models.PaginatedExecutionsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Execution"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "page_size": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
                 }
             }
         },

@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -22,14 +23,16 @@ func NewExecutionHandler(repo repositories.Repository) *ExecutionHandler {
 
 // GetExecutionsByTaskUUID retrieves executions for a specific task
 // @Summary      Get executions for a task
-// @Description  Retrieve all executions for a specific task filtered by date
+// @Description  Retrieve paginated executions for a specific task filtered by date
 // @Tags         executions
 // @Accept       json
 // @Produce      json
 // @Param        project_id path string true "Project ID"
 // @Param        task_uuid path string true "Task UUID"
 // @Param        date query string true "Filter by date (YYYY-MM-DD format). Returns executions for that date only"
-// @Success      200  {array}   models.Execution
+// @Param        page query int false "Page number (default: 1)"
+// @Param        page_size query int false "Page size (default: 100)"
+// @Success      200  {object}  models.PaginatedExecutionsResponse
 // @Failure      400  {object}  models.ErrorResponse
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /projects/{project_id}/tasks/{task_uuid}/executions [get]
@@ -67,6 +70,26 @@ func (h *ExecutionHandler) GetExecutionsByTaskUUID(c *gin.Context) {
 		return
 	}
 
+	// Parse pagination parameters with defaults
+	page := 1
+	if pageParam := c.Query("page"); pageParam != "" {
+		if parsedPage, err := strconv.Atoi(pageParam); err == nil && parsedPage > 0 {
+			page = parsedPage
+		}
+	}
+
+	pageSize := 100
+	if pageSizeParam := c.Query("page_size"); pageSizeParam != "" {
+		if parsedPageSize, err := strconv.Atoi(pageSizeParam); err == nil && parsedPageSize > 0 {
+			// Limit max page size to prevent abuse
+			if parsedPageSize > 100 {
+				pageSize = 100
+			} else {
+				pageSize = parsedPageSize
+			}
+		}
+	}
+
 	// MongoDB stores times in UTC, so we need to create date range in UTC
 	// Set startDate to beginning of day in UTC
 	startOfDay := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, time.UTC)
@@ -75,7 +98,7 @@ func (h *ExecutionHandler) GetExecutionsByTaskUUID(c *gin.Context) {
 	endOfDay := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 23, 59, 59, 999999999, time.UTC)
 	endDate := &endOfDay
 
-	executions, err := h.repo.GetExecutionsByTaskUUID(c.Request.Context(), taskUUID, startDate, endDate)
+	executions, totalCount, err := h.repo.GetExecutionsByTaskUUIDPaginated(c.Request.Context(), taskUUID, startDate, endDate, page, pageSize)
 	if err != nil {
 		log.Printf("Failed to get executions for task %s: %v", taskUUID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -89,7 +112,21 @@ func (h *ExecutionHandler) GetExecutionsByTaskUUID(c *gin.Context) {
 		executions = []*models.Execution{}
 	}
 
-	c.JSON(http.StatusOK, executions)
+	// Calculate total pages
+	totalPages := int((totalCount + int64(pageSize) - 1) / int64(pageSize))
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	response := models.PaginatedExecutionsResponse{
+		Data:       executions,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalCount: totalCount,
+		TotalPages: totalPages,
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // AppendLogToExecution appends a log entry to an execution

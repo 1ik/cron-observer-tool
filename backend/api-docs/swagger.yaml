@@ -206,6 +206,21 @@ definitions:
       timestamp:
         type: string
     type: object
+  models.PaginatedExecutionsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.Execution'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total_count:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
   models.Project:
     description: Project represents a project entity that contains tasks
     properties:
@@ -647,7 +662,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve a list of all projects
+      description: Retrieve a list of all projects. Super admins get all projects,
+        regular users get only projects they are members of.
       produces:
       - application/json
       responses:
@@ -1161,7 +1177,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve all executions for a specific task filtered by date
+      description: Retrieve paginated executions for a specific task filtered by date
       parameters:
       - description: Project ID
         in: path
@@ -1179,15 +1195,21 @@ paths:
         name: date
         required: true
         type: string
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Page size (default: 10)'
+        in: query
+        name: page_size
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.Execution'
-            type: array
+            $ref: '#/definitions/models.PaginatedExecutionsResponse'
         "400":
           description: Bad Request
           schema:

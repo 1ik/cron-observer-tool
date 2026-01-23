@@ -27,6 +27,12 @@ interface ProjectLayoutProps {
   executions: Execution[]
   selectedTaskId?: string | null
   isLoadingExecutions?: boolean
+  paginationData?: {
+    page: number
+    page_size: number
+    total_count: number
+    total_pages: number
+  } | null
 }
 
 export function ProjectLayout({
@@ -36,6 +42,7 @@ export function ProjectLayout({
   executions,
   selectedTaskId,
   isLoadingExecutions = false,
+  paginationData,
 }: ProjectLayoutProps) {
   const { canEdit, isReadOnly } = useProjectRole()
   const [selectedTaskGroup, setSelectedTaskGroup] = useState<TaskGroup | null>(null)
@@ -310,6 +317,7 @@ export function ProjectLayout({
               isLoading={isLoadingExecutions}
               selectedTaskId={selectedTaskId}
               projectId={project.id}
+              paginationData={paginationData}
             />
           }
           initialLeftWidth={20}

@@ -413,6 +413,62 @@ func (r *MongoRepository) GetExecutionsByTaskUUID(ctx context.Context, taskUUID 
 	return executions, nil
 }
 
+func (r *MongoRepository) GetExecutionsByTaskUUIDPaginated(ctx context.Context, taskUUID string, startDate, endDate *time.Time, page, pageSize int) ([]*models.Execution, int64, error) {
+	collection := r.db.Collection(database.CollectionExecutions)
+
+	filter := bson.M{"task_uuid": taskUUID}
+
+	// Add date filtering if provided
+	if startDate != nil || endDate != nil {
+		dateFilter := bson.M{}
+		if startDate != nil {
+			// Ensure startDate is in UTC for MongoDB comparison
+			startUTC := startDate.UTC()
+			dateFilter["$gte"] = startUTC
+		}
+		if endDate != nil {
+			// Ensure endDate is in UTC for MongoDB comparison
+			endUTC := endDate.UTC()
+			dateFilter["$lte"] = endUTC
+		}
+		filter["started_at"] = dateFilter
+	}
+
+	// Get total count
+	totalCount, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Calculate skip value
+	skip := (page - 1) * pageSize
+
+	// Set up pagination options
+	opts := options.Find().
+		SetSort(bson.M{"started_at": -1}). // Most recent first
+		SetSkip(int64(skip)).
+		SetLimit(int64(pageSize))
+
+	cursor, err := collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var executions []*models.Execution
+	err = cursor.All(ctx, &executions)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Ensure we always return an empty slice instead of nil
+	if executions == nil {
+		executions = []*models.Execution{}
+	}
+
+	return executions, totalCount, nil
+}
+
 func (r *MongoRepository) AppendLogToExecution(ctx context.Context, executionUUID string, logEntry models.LogEntry) error {
 	collection := r.db.Collection(database.CollectionExecutions)
 

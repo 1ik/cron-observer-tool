@@ -38,3 +38,12 @@ const (
 	ExecutionStatusSuccess ExecutionStatus = "SUCCESS"
 	ExecutionStatusFailed  ExecutionStatus = "FAILED"
 )
+
+// PaginatedExecutionsResponse represents a paginated response for executions
+type PaginatedExecutionsResponse struct {
+	Data       []*Execution `json:"data"`
+	Page       int          `json:"page"`
+	PageSize   int          `json:"page_size"`
+	TotalCount int64       `json:"total_count"`
+	TotalPages int          `json:"total_pages"`
+}

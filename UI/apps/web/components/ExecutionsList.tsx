@@ -2,7 +2,7 @@
 
 import { useTasksByProject, useUpdateTaskStatus } from '@cron-observer/lib'
 import { useToast } from '@cron-observer/ui'
-import { CalendarIcon, PauseIcon, PlayIcon } from '@radix-ui/react-icons'
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, PauseIcon, PlayIcon } from '@radix-ui/react-icons'
 import * as Popover from '@radix-ui/react-popover'
 import { Box, Button, Flex, IconButton, Spinner, Text, Tooltip } from '@radix-ui/themes'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -17,12 +17,40 @@ interface ExecutionsListProps {
   isLoading?: boolean
   selectedTaskId?: string | null
   projectId?: string | null
+  paginationData?: {
+    page: number
+    page_size: number
+    total_count: number
+    total_pages: number
+  } | null
 }
 
-export function ExecutionsList({ executions, isLoading = false, selectedTaskId, projectId }: ExecutionsListProps) {
+export function ExecutionsList({ executions, isLoading = false, selectedTaskId, projectId, paginationData }: ExecutionsListProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  
+  // Get current page from URL or pagination data
+  const currentPage = useMemo(() => {
+    const pageParam = searchParams.get('page')
+    if (pageParam) {
+      const parsed = parseInt(pageParam, 10)
+      return isNaN(parsed) || parsed < 1 ? 1 : parsed
+    }
+    return paginationData?.page || 1
+  }, [searchParams, paginationData])
+
+  const pageSize = paginationData?.page_size || 100
+  const totalCount = paginationData?.total_count || 0
+  const totalPages = paginationData?.total_pages || 0
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return
+    
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('page', newPage.toString())
+    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+  }
   
   // Get tasks to find the selected task's status
   const { data: tasks = [] } = useTasksByProject(projectId || '')
@@ -39,28 +67,21 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
   // Update task status mutation
   const updateStatusMutation = useUpdateTaskStatus(projectId || '', selectedTaskUUID || '')
 
-  // Extract unique dates from executions
+  // Generate available dates (last 30 days) for date picker
+  // Since we're using pagination, we can't extract dates from executions
   const availableDates = useMemo(() => {
-    const dateSet = new Set<string>()
-    executions.forEach((execution) => {
-      const date = new Date(execution.started_at).toISOString().split('T')[0]
-      dateSet.add(date)
-    })
-    
-    // For demo purposes, if we have fewer than 5 dates, add some demo dates
-    const dates = Array.from(dateSet).sort().reverse()
-    if (dates.length < 5) {
-      // Add some demo dates going back
-      const mostRecent = dates[0] ? new Date(dates[0]) : new Date()
-      for (let i = dates.length; i < 6; i++) {
-        const date = new Date(mostRecent)
-        date.setDate(date.getDate() - (i - dates.length))
-        dates.push(date.toISOString().split('T')[0])
-      }
-      return dates.sort().reverse()
+    const dates: string[] = []
+    const today = new Date()
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(today)
+      date.setDate(date.getDate() - i)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      dates.push(`${year}-${month}-${day}`)
     }
     return dates
-  }, [executions])
+  }, [])
 
   // Get selected date from URL or default to most recent
   const selectedDateString = searchParams.get('date') || availableDates[0] || ''
@@ -81,6 +102,8 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
     
     const params = new URLSearchParams(searchParams.toString())
     params.set('date', dateString)
+    // Reset to page 1 when date changes
+    params.set('page', '1')
     const queryString = params.toString()
     router.push(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false })
   }
@@ -265,50 +288,102 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
         </Flex>
       </Box>
 
-      {/* Scrollable body */}
-      <Box
+      {/* Scrollable body with sticky pagination */}
+      <Flex
+        direction="column"
         style={{
           flex: 1,
-          overflowY: 'auto',
-          padding: 'var(--space-3)',
+          overflow: 'hidden',
+          minHeight: 0,
         }}
       >
-        {isLoading ? (
-          <Flex justify="center" align="center" style={{ minHeight: '200px' }}>
-            <Flex direction="column" gap="3" align="center">
-              <Spinner size="3" />
-              <Text size="2" color="gray">
-                Loading executions...
+        {/* Scrollable content */}
+        <Box
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: 'var(--space-3)',
+            minHeight: 0,
+          }}
+        >
+          {isLoading ? (
+            <Flex justify="center" align="center" style={{ minHeight: '200px' }}>
+              <Flex direction="column" gap="3" align="center">
+                <Spinner size="3" />
+                <Text size="2" color="gray">
+                  Loading executions...
+                </Text>
+              </Flex>
+            </Flex>
+          ) : executions.length === 0 ? (
+            <Flex justify="center" align="center" style={{ minHeight: '200px' }}>
+              <Text
+                size="2"
+                color="gray"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                No executions found
               </Text>
             </Flex>
-          </Flex>
-        ) : executions.length === 0 ? (
-          <Flex justify="center" align="center" style={{ minHeight: '200px' }}>
-            <Text
-              size="2"
-              color="gray"
+          ) : (
+            <Box
               style={{
-                fontFamily: 'var(--font-mono)',
+                border: '1px solid var(--gray-4)',
+                borderRadius: 'var(--radius-2)',
+                overflow: 'hidden',
+                backgroundColor: 'var(--color-panel)',
               }}
             >
-              No executions found
-            </Text>
-          </Flex>
-        ) : (
+              {executions.map((execution, index) => (
+                <ExecutionItem key={execution.id || index} execution={execution} />
+              ))}
+            </Box>
+          )}
+        </Box>
+
+        {/* Sticky pagination footer */}
+        {paginationData && totalPages > 0 && (
           <Box
             style={{
-              border: '1px solid var(--gray-4)',
-              borderRadius: 'var(--radius-2)',
-              overflow: 'hidden',
+              flexShrink: 0,
+              borderTop: '1px solid var(--gray-6)',
+              padding: 'var(--space-3)',
               backgroundColor: 'var(--color-panel)',
             }}
           >
-            {executions.map((execution, index) => (
-              <ExecutionItem key={execution.id || index} execution={execution} />
-            ))}
+            <Flex justify="between" align="center" gap="3">
+              <Text size="2" color="gray">
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} executions
+              </Text>
+              <Flex align="center" gap="2">
+                <IconButton
+                  variant="soft"
+                  size="2"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage <= 1 || isLoading}
+                  style={{ cursor: currentPage <= 1 ? 'not-allowed' : 'pointer' }}
+                >
+                  <ChevronLeftIcon width="16" height="16" />
+                </IconButton>
+                <Text size="2" color="gray">
+                  Page {currentPage} of {totalPages}
+                </Text>
+                <IconButton
+                  variant="soft"
+                  size="2"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= totalPages || isLoading}
+                  style={{ cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer' }}
+                >
+                  <ChevronRightIcon width="16" height="16" />
+                </IconButton>
+              </Flex>
+            </Flex>
           </Box>
         )}
-      </Box>
+      </Flex>
     </Flex>
   )
 }
