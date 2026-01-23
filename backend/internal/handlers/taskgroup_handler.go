@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -18,16 +19,27 @@ import (
 )
 
 type TaskGroupHandler struct {
-	repo      repositories.Repository
-	eventBus  *events.EventBus
-	scheduler *scheduler.Scheduler
+	repo          repositories.Repository
+	eventBus      *events.EventBus
+	scheduler     *scheduler.Scheduler
+	superAdminMap map[string]bool
 }
 
-func NewTaskGroupHandler(repo repositories.Repository, eventBus *events.EventBus, sched *scheduler.Scheduler) *TaskGroupHandler {
+func NewTaskGroupHandler(repo repositories.Repository, eventBus *events.EventBus, sched *scheduler.Scheduler, superAdmins []string) *TaskGroupHandler {
+	// Create a map for O(1) lookup
+	superAdminMap := make(map[string]bool)
+	for _, admin := range superAdmins {
+		normalizedAdmin := strings.ToLower(strings.TrimSpace(admin))
+		if normalizedAdmin != "" {
+			superAdminMap[normalizedAdmin] = true
+		}
+	}
+
 	return &TaskGroupHandler{
-		repo:      repo,
-		eventBus:  eventBus,
-		scheduler: sched,
+		repo:          repo,
+		eventBus:      eventBus,
+		scheduler:     sched,
+		superAdminMap: superAdminMap,
 	}
 }
 
@@ -320,6 +332,11 @@ func (h *TaskGroupHandler) UpdateTaskGroup(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid project_id format in path",
 		})
+		return
+	}
+
+	// Check authorization: user must be admin in project or super admin
+	if !RequireProjectAdmin(c, h.repo, projectID, h.superAdminMap) {
 		return
 	}
 
