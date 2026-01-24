@@ -2,24 +2,24 @@
 
 An open-source task scheduling and execution tracking system where external systems execute tasks and report status/logs via SDK.
 
-## Quick Start
-
-1. Read the [Master Plan](MASTER_PLAN.md) for project overview
-2. Follow modules in order:
-   - ✅ [Module 1: Project Structure](docs/MODULE_01_PROJECT_STRUCTURE.md) - **Complete**
-   - ✅ [Module 2: Data Models](docs/MODULE_02_DATA_MODELS.md) - **Complete**
-   - ✅ [Module 3: Database Setup](docs/MODULE_03_DATABASE.md) - **Complete**
-   - ✅ [Module 4: API Endpoints](docs/MODULE_04_API_ENDPOINTS.md) - **Complete** (includes TaskGroups)
-   - ✅ [Module 5: Scheduler Engine](docs/MODULE_05_SCHEDULER.md) - **Complete**
-   - 🚧 [Module 6: SDK/API](docs/MODULE_06_SDK_API.md) - Coming soon
-   - 🚧 [Module 7: Execution Tracking](docs/MODULE_07_EXECUTION_TRACKING.md) - Coming soon
-   - 🚧 [Module 8: Frontend](docs/MODULE_08_FRONTEND.md) - Coming soon
-   - 🚧 [Module 9: Testing](docs/MODULE_09_TESTING.md) - Coming soon
-   - 🚧 [Module 10: Deployment](docs/MODULE_10_DEPLOYMENT.md) - Coming soon
-
 ## Project Status
 
-🚀 **Active Development - Phase 2 (Core Backend)** - Core API, scheduler, and TaskGroup functionality implemented
+### Implemented Features
+- ✅ **Backend**: Complete REST API with OpenAPI documentation
+- ✅ **Scheduler**: Cron-based task scheduling with timezone support
+- ✅ **Execution Tracking**: Real-time status updates, log management, pagination
+- ✅ **Statistics**: Pre-aggregated failure stats, execution analytics
+- ✅ **Frontend**: Modern React/Next.js UI with Radix UI components
+- ✅ **Alerting**: Email notifications for execution failures via Gmail
+- ✅ **Event-Driven Architecture**: Event bus for decoupled services
+- ✅ **Task Timeouts**: Configurable execution timeouts with automatic failure handling
+
+### Current Architecture
+- **Backend**: Go (Gin framework) with MongoDB
+- **Frontend**: Next.js 14+ with React Query, Radix UI
+- **Event System**: In-memory event bus (ready for message queue upgrade)
+- **Email**: Gmail SMTP integration
+- **Documentation**: Auto-generated OpenAPI/Swagger specs
 
 See [backend/README.md](backend/README.md) for development setup and API documentation.
 
@@ -28,11 +28,15 @@ See [backend/README.md](backend/README.md) for development setup and API documen
 - **Task Scheduling**: Complex cron-like scheduling with timezone support
 - **Task Groups**: Group tasks together with time windows and coordinated control
 - **External Execution**: Tasks executed by external systems, not by Cron Observer
-- **Status Tracking**: Real-time execution status updates via SDK (planned)
-- **Log Management**: Append-only logs with timestamps and levels (planned)
-- **Execution History**: Complete history with date-based navigation (planned)
+- **Status Tracking**: Real-time execution status updates via SDK
+- **Log Management**: Append-only logs with timestamps and levels
+- **Execution History**: Complete history with date-based navigation and pagination
+- **Execution Statistics**: Pre-aggregated stats (failures, success, totals) with 6-hour refresh
+- **Task Failure Alerts**: Automatic email notifications to project users on execution failures
+- **Task Timeouts**: Configurable execution timeouts with automatic failure handling
 - **UUID-Based**: Tasks and executions use UUIDs for external reference
 - **OpenAPI Specification**: Auto-generated API documentation (swagger.json/yaml)
+- **Event-Driven Architecture**: Decoupled services using event bus pattern
 
 ## Generating OpenAPI Documentation
 
@@ -61,9 +65,42 @@ External Systems (Execute actual work)
 Cron Observer (Tracks & Displays)
 ```
 
+## Scaling Strategy
+
+### Current: Single instance, MongoDB
+- Single backend instance
+- Direct MongoDB connection
+- In-memory event bus
+- Suitable for small to medium deployments
+
+### 10x Scale: Add Redis cache, connection pooling
+- **Redis caching**: Cache frequently accessed data (project configs, task definitions)
+- **Connection pooling**: Optimize database connections
+- **Query optimization**: Add database indexes for common queries
+- **Load balancing**: Multiple backend instances behind a load balancer
+
+### 100x Scale: Shard MongoDB, add read replicas
+- **MongoDB sharding**: Distribute data across multiple shards by project_id
+- **Read replicas**: Separate read and write operations
+- **Horizontal scaling**: Multiple backend instances
+- **Caching layer**: Redis for session management and frequently accessed data
+- **CDN**: Static asset delivery for frontend
+
+### 1000x Scale: Microservices, message queue, CDN
+- **Microservices architecture**: 
+  - Scheduler service (cron job management)
+  - Execution tracking service
+  - Notification service (alerts)
+  - API gateway
+- **Message queue**: Replace in-memory event bus with RabbitMQ/Kafka for guaranteed delivery
+- **Service mesh**: Inter-service communication and monitoring
+- **Database**: MongoDB cluster with automatic sharding
+- **CDN**: Global content delivery for frontend
+- **Monitoring**: Distributed tracing, metrics aggregation
+- **Auto-scaling**: Kubernetes-based auto-scaling based on load
+
 ## Documentation Structure
 
-- **MASTER_PLAN.md**: Complete project overview, goals, requirements
 - **docs/MODULE_XX_*.md**: Phase-by-phase implementation guides
 - Each module is self-contained and can be implemented independently
 
@@ -84,6 +121,3 @@ This project follows a **modular, phase-by-phase** development approach:
 [Contributing guidelines to be added]
 
 ---
-
-**Note**: Core backend functionality is implemented and actively being developed. Frontend, execution tracking, and SDK endpoints are planned for upcoming phases.
-
