@@ -7,17 +7,21 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/yourusername/cron-observer/backend/internal/events"
 	"github.com/yourusername/cron-observer/backend/internal/models"
 	"github.com/yourusername/cron-observer/backend/internal/repositories"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ExecutionHandler struct {
-	repo repositories.Repository
+	repo     repositories.Repository
+	eventBus *events.EventBus
 }
 
-func NewExecutionHandler(repo repositories.Repository) *ExecutionHandler {
+func NewExecutionHandler(repo repositories.Repository, eventBus *events.EventBus) *ExecutionHandler {
 	return &ExecutionHandler{
-		repo: repo,
+		repo:     repo,
+		eventBus: eventBus,
 	}
 }
 
@@ -259,8 +263,92 @@ func (h *ExecutionHandler) UpdateExecutionStatus(c *gin.Context) {
 		return
 	}
 
+	// Emit ExecutionFailed event if status is FAILED
+	if models.ExecutionStatus(statusRequest.Status) == models.ExecutionStatusFailed {
+		// Fetch execution and task for event payload
+		execution, err := h.repo.GetExecutionByUUID(c.Request.Context(), executionUUID)
+		if err == nil && execution != nil {
+			task, err := h.repo.GetTaskByUUID(c.Request.Context(), execution.TaskUUID)
+			if err == nil && task != nil {
+				h.eventBus.Publish(events.Event{
+					Type: events.ExecutionFailed,
+					Payload: events.ExecutionFailedPayload{
+						Execution: execution,
+						Task:      task,
+					},
+				})
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Execution status updated successfully",
 		"status":  statusRequest.Status,
 	})
+}
+
+// GetFailedExecutionsStats retrieves failure statistics for a project
+// @Summary      Get failure statistics for a project
+// @Description  Retrieve failed executions grouped by date for the last N days
+// @Tags         executions
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        days query int false "Number of days to look back (default: 7)"
+// @Success      200  {object}  models.FailedExecutionsStatsResponse
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/executions/failed-stats [get]
+func (h *ExecutionHandler) GetFailedExecutionsStats(c *gin.Context) {
+	projectIDParam := c.Param("project_id")
+	if projectIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "project_id is required in path",
+		})
+		return
+	}
+
+	// Parse project ID
+	projectID, err := primitive.ObjectIDFromHex(projectIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid project_id format",
+		})
+		return
+	}
+
+	// Parse optional days parameter (default: 7, max: 30)
+	days := 7
+	if daysParam := c.Query("days"); daysParam != "" {
+		if parsedDays, err := strconv.Atoi(daysParam); err == nil && parsedDays > 0 {
+			if parsedDays > 30 {
+				days = 30
+			} else {
+				days = parsedDays
+			}
+		}
+	}
+
+	// Get failure stats
+	stats, total, err := h.repo.GetFailureStatsByProject(c.Request.Context(), projectID, days)
+	if err != nil {
+		log.Printf("Failed to get failure stats for project %s: %v", projectIDParam, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get failure statistics",
+		})
+		return
+	}
+
+	// Convert pointers to values
+	statsValues := make([]models.FailedExecutionStats, len(stats))
+	for i, stat := range stats {
+		statsValues[i] = *stat
+	}
+
+	response := models.FailedExecutionsStatsResponse{
+		Stats: statsValues,
+		Total: total,
+	}
+
+	c.JSON(http.StatusOK, response)
 }

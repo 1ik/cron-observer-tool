@@ -11,6 +11,7 @@ import { DayPicker } from 'react-day-picker'
 import 'react-day-picker/dist/style.css'
 import { Execution } from '../lib/types/execution'
 import { ExecutionItem } from './ExecutionItem'
+import { FailedExecutionsStats } from './FailedExecutionsStats'
 
 interface ExecutionsListProps {
   executions: Execution[]
@@ -141,6 +142,9 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
         overflow: 'hidden',
       }}
     >
+      {/* Failure Statistics */}
+      <FailedExecutionsStats projectId={projectId || null} days={7} />
+
       {/* Sticky header */}
       <Box
         py="3"

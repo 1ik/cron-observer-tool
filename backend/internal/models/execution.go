@@ -47,3 +47,24 @@ type PaginatedExecutionsResponse struct {
 	TotalCount int64        `json:"total_count"`
 	TotalPages int          `json:"total_pages"`
 }
+
+// ExecutionFailureStat represents aggregated failure statistics for a project on a specific date
+type ExecutionFailureStat struct {
+	ID        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	ProjectID primitive.ObjectID `json:"project_id" bson:"project_id"`
+	Date      string             `json:"date" bson:"date"` // YYYY-MM-DD format
+	Count     int                `json:"count" bson:"count"`
+	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at"`
+}
+
+// FailedExecutionStats represents failure statistics grouped by date (for API response)
+type FailedExecutionStats struct {
+	Date  string `json:"date"`  // YYYY-MM-DD format
+	Count int    `json:"count"` // Number of failed executions on this date
+}
+
+// FailedExecutionsStatsResponse represents the response for failure statistics
+type FailedExecutionsStatsResponse struct {
+	Stats []FailedExecutionStats `json:"stats"`
+	Total int                    `json:"total"` // Total failures in the period
+}

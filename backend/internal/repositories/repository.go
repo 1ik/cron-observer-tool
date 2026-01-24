@@ -44,4 +44,9 @@ type Repository interface {
 	GetExecutionsByTaskUUIDPaginated(ctx context.Context, taskUUID string, startDate, endDate *time.Time, page, pageSize int) ([]*models.Execution, int64, error)
 	AppendLogToExecution(ctx context.Context, executionUUID string, logEntry models.LogEntry) error
 	UpdateExecutionStatus(ctx context.Context, executionUUID string, status models.ExecutionStatus, errorMessage *string) error
+	GetExecutionByUUID(ctx context.Context, executionUUID string) (*models.Execution, error)
+
+	// failure statistics
+	IncrementFailureStat(ctx context.Context, projectID primitive.ObjectID, date string) error
+	GetFailureStatsByProject(ctx context.Context, projectID primitive.ObjectID, days int) ([]*models.FailedExecutionStats, int, error)
 }

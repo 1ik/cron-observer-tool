@@ -513,6 +513,82 @@ func (r *MongoRepository) UpdateExecutionStatus(ctx context.Context, executionUU
 	return err
 }
 
+func (r *MongoRepository) GetExecutionByUUID(ctx context.Context, executionUUID string) (*models.Execution, error) {
+	collection := r.db.Collection(database.CollectionExecutions)
+
+	var execution models.Execution
+	err := collection.FindOne(ctx, bson.M{"uuid": executionUUID}).Decode(&execution)
+	if err != nil {
+		return nil, err
+	}
+
+	return &execution, nil
+}
+
+func (r *MongoRepository) IncrementFailureStat(ctx context.Context, projectID primitive.ObjectID, date string) error {
+	collection := r.db.Collection(database.CollectionExecutionFailureStats)
+
+	filter := bson.M{
+		"project_id": projectID,
+		"date":        date,
+	}
+
+	update := bson.M{
+		"$inc": bson.M{"count": 1},
+		"$set": bson.M{"updated_at": time.Now()},
+		"$setOnInsert": bson.M{
+			"project_id": projectID,
+			"date":       date,
+		},
+	}
+
+	opts := options.Update().SetUpsert(true)
+	_, err := collection.UpdateOne(ctx, filter, update, opts)
+	return err
+}
+
+func (r *MongoRepository) GetFailureStatsByProject(ctx context.Context, projectID primitive.ObjectID, days int) ([]*models.FailedExecutionStats, int, error) {
+	collection := r.db.Collection(database.CollectionExecutionFailureStats)
+
+	// Calculate date range (last N days)
+	now := time.Now().UTC()
+	startDate := now.AddDate(0, 0, -days)
+	startDateStr := startDate.Format("2006-01-02")
+
+	// Build filter
+	filter := bson.M{
+		"project_id": projectID,
+		"date": bson.M{
+			"$gte": startDateStr,
+		},
+	}
+
+	// Find all stats for the project in the date range
+	cursor, err := collection.Find(ctx, filter, options.Find().SetSort(bson.D{{Key: "date", Value: -1}}))
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var stats []*models.ExecutionFailureStat
+	if err := cursor.All(ctx, &stats); err != nil {
+		return nil, 0, err
+	}
+
+	// Convert to response format
+	result := make([]*models.FailedExecutionStats, 0, len(stats))
+	total := 0
+	for _, stat := range stats {
+		result = append(result, &models.FailedExecutionStats{
+			Date:  stat.Date,
+			Count: stat.Count,
+		})
+		total += stat.Count
+	}
+
+	return result, total, nil
+}
+
 func NewMongoRepository(db *mongo.Database) *MongoRepository {
 	return &MongoRepository{
 		db: db,

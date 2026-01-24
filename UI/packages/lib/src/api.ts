@@ -434,6 +434,45 @@ export async function getExecutionsByTaskUUID(
   });
 }
 
+/**
+ * Get failure statistics for a project
+ * @param projectId - Project ID (MongoDB ObjectID)
+ * @param days - Number of days to look back (default: 7)
+ * @returns Promise resolving to failure statistics response
+ */
+export async function getFailedExecutionsStats(
+  projectId: string,
+  days: number = 7
+): Promise<{ stats: Array<{ date: string; count: number }>; total: number }> {
+  if (!projectId) {
+    throw new Error('Missing required parameter: projectId is required');
+  }
+
+  const baseUrl = getDefaultApiBaseUrl();
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(
+    `${baseUrl}/projects/${projectId}/executions/failed-stats?days=${days}`,
+    {
+      method: 'GET',
+      headers,
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch failure statistics' }));
+    throw new Error(error.error || `HTTP ${response.status}: Failed to fetch failure statistics`);
+  }
+
+  return response.json();
+}
+
 // ============================================================================
 // Task Groups API
 // ============================================================================

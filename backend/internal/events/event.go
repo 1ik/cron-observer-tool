@@ -12,6 +12,7 @@ const (
 	TaskGroupCreated EventType = "taskgroup.created"
 	TaskGroupUpdated EventType = "taskgroup.updated"
 	TaskGroupDeleted EventType = "taskgroup.deleted"
+	ExecutionFailed  EventType = "execution.failed"
 )
 
 // Event represents an event in the system
@@ -38,4 +39,10 @@ type TaskGroupPayload struct {
 // TaskGroupDeletedPayload contains the task group UUID for deleted events
 type TaskGroupDeletedPayload struct {
 	TaskGroupUUID string
+}
+
+// ExecutionFailedPayload contains execution and task data for failed execution events
+type ExecutionFailedPayload struct {
+	Execution *models.Execution
+	Task      *models.Task
 }
