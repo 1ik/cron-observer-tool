@@ -250,6 +250,7 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
         type: 'HTTP' as const,
         http: task.trigger_config.http,
       } : undefined,
+      timeout_seconds: task.timeout_seconds, // Preserve timeout_seconds field
       metadata: task.metadata,
       created_at: task.created_at || new Date().toISOString(),
       updated_at: task.updated_at || new Date().toISOString(),

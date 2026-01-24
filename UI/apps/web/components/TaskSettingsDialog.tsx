@@ -45,7 +45,7 @@ export function TaskSettingsDialog({
         timezone: task.schedule_config?.timezone || 'Asia/Dhaka',
       },
       task_group_id: task.task_group_id || '',
-      timeout_seconds: task.timeout_seconds || undefined,
+      timeout_seconds: task.timeout_seconds !== undefined && task.timeout_seconds !== null ? task.timeout_seconds : undefined,
     },
   })
 
@@ -59,6 +59,9 @@ export function TaskSettingsDialog({
   // Reset form when task changes
   useEffect(() => {
     if (open) {
+      // Debug: log the task to see what timeout_seconds value we're getting
+      console.log('TaskSettingsDialog - task.timeout_seconds:', task.timeout_seconds, typeof task.timeout_seconds)
+      
       reset({
         name: task.name,
         description: task.description || '',
@@ -68,7 +71,7 @@ export function TaskSettingsDialog({
           timezone: task.schedule_config?.timezone || 'Asia/Dhaka',
         },
         task_group_id: task.task_group_id || '',
-        timeout_seconds: task.timeout_seconds || undefined,
+        timeout_seconds: task.timeout_seconds !== undefined && task.timeout_seconds !== null ? task.timeout_seconds : undefined,
       })
     }
   }, [task, open, reset])
@@ -331,15 +334,26 @@ export function TaskSettingsDialog({
                     Execution Timeout (seconds)
                   </Text>
                 </Label.Root>
-                <TextField.Root
-                  id="task-timeout"
-                  type="number"
-                  {...register('timeout_seconds', { valueAsNumber: true })}
-                  placeholder="Optional - leave empty for no timeout"
-                  size="3"
-                  min={1}
-                  disabled={isReadOnly}
-                  color={errors.timeout_seconds ? 'red' : undefined}
+                <Controller
+                  name="timeout_seconds"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField.Root
+                      id="task-timeout"
+                      type="number"
+                      value={field.value !== undefined && field.value !== null ? String(field.value) : ''}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        field.onChange(value === '' ? undefined : Number(value))
+                      }}
+                      onBlur={field.onBlur}
+                      placeholder="Optional - leave empty for no timeout"
+                      size="3"
+                      min={1}
+                      disabled={isReadOnly}
+                      color={errors.timeout_seconds ? 'red' : undefined}
+                    />
+                  )}
                 />
                 <Text size="1" color="gray">
                   Maximum time allowed for execution. If exceeded, execution will be marked as failed.
