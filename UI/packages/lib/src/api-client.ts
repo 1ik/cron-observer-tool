@@ -875,6 +875,43 @@ const endpoints = makeApi([
       },
     ],
   },
+  {
+    method: "post",
+    path: "/projects/:project_id/tasks/:task_uuid/trigger",
+    alias: "postProjectsProject_idtasksTask_uuidtrigger",
+    description: `Manually trigger a task execution outside of cron schedule. Creates an execution record and sends it to the project&#x27;s execution endpoint.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "project_id",
+        type: "Path",
+        schema: z.string(),
+      },
+      {
+        name: "task_uuid",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: z.object({}).partial().passthrough(),
+    errors: [
+      {
+        status: 400,
+        description: `Bad Request`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 404,
+        description: `Not Found`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 500,
+        description: `Internal Server Error`,
+        schema: models_ErrorResponse,
+      },
+    ],
+  },
 ]);
 
 export const api = new Zodios(endpoints);

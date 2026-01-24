@@ -1199,7 +1199,7 @@ paths:
         in: query
         name: page
         type: integer
-      - description: 'Page size (default: 10)'
+      - description: 'Page size (default: 100)'
         in: query
         name: page_size
         type: integer
@@ -1264,6 +1264,46 @@ paths:
           schema:
             $ref: '#/definitions/models.ErrorResponse'
       summary: Update task status
+      tags:
+      - tasks
+  /projects/{project_id}/tasks/{task_uuid}/trigger:
+    post:
+      consumes:
+      - application/json
+      description: Manually trigger a task execution outside of cron schedule. Creates
+        an execution record and sends it to the project's execution endpoint.
+      parameters:
+      - description: Project ID
+        in: path
+        name: project_id
+        required: true
+        type: string
+      - description: Task UUID
+        in: path
+        name: task_uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Trigger task manually
       tags:
       - tasks
 swagger: "2.0"

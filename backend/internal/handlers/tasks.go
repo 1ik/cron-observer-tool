@@ -13,8 +13,10 @@ import (
 	"github.com/yourusername/cron-observer/backend/internal/middleware"
 	"github.com/yourusername/cron-observer/backend/internal/models"
 	"github.com/yourusername/cron-observer/backend/internal/repositories"
+	"github.com/yourusername/cron-observer/backend/internal/scheduler"
 	"github.com/yourusername/cron-observer/backend/internal/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type TaskHandler struct {
@@ -658,4 +660,80 @@ func (h *TaskHandler) UpdateTaskStatus(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusOK, &updatedTask)
+}
+
+// TriggerTask manually triggers a task execution
+// @Summary      Trigger task manually
+// @Description  Manually trigger a task execution outside of cron schedule. Creates an execution record and sends it to the project's execution endpoint.
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        task_uuid path string true "Task UUID"
+// @Success      201  {object}  map[string]interface{}
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      404  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/tasks/{task_uuid}/trigger [post]
+func (h *TaskHandler) TriggerTask(c *gin.Context) {
+	// Get project_id and task_uuid from path parameters
+	projectIDParam := c.Param("project_id")
+	taskUUIDParam := c.Param("task_uuid")
+
+	if projectIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "project_id is required in path",
+		})
+		return
+	}
+
+	if taskUUIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "task_uuid is required in path",
+		})
+		return
+	}
+
+	// Get the task
+	task, err := h.repo.GetTaskByUUID(c.Request.Context(), taskUUIDParam)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Task not found",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get task",
+			})
+		}
+		return
+	}
+
+	// Use the shared ExecuteTask function from scheduler package
+	executionUUID, err := scheduler.ExecuteTask(c.Request.Context(), task, h.repo, "TRIGGER")
+	if err != nil {
+		if err.Error() == "no execution_endpoint set for project" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "No execution_endpoint set for this project",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create execution record",
+		})
+		return
+	}
+
+	// Return immediately with the execution UUID
+	now := time.Now()
+	c.JSON(http.StatusCreated, gin.H{
+		"data": gin.H{
+			"execution_uuid": executionUUID,
+			"task_uuid":      task.UUID,
+			"status":         "PENDING",
+			"trigger_type":   "MANUAL",
+			"scheduled_at":   now.Format(time.RFC3339),
+			"message":        "Execution created successfully",
+		},
+	})
 }

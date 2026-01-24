@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
-import { createTask, getTasksByProject, updateTask, updateTaskStatus } from '../api';
+import { createTask, getTasksByProject, triggerTask, updateTask, updateTaskStatus } from '../api';
 import { schemas } from '../api-client';
 
 // Infer the Task type from the Zod schema
@@ -95,6 +95,25 @@ export function useUpdateTaskStatus(projectId: string, taskUUID: string) {
       queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
       // Also invalidate task details if needed
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
+    },
+  });
+}
+
+/**
+ * Hook to trigger a task manually
+ * @param projectId - The ID of the project
+ * @param taskUUID - The UUID of the task
+ */
+export function useTriggerTask(projectId: string, taskUUID: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      return triggerTask(projectId, taskUUID);
+    },
+    onSuccess: () => {
+      // Invalidate executions to show the new triggered execution
+      queryClient.invalidateQueries({ queryKey: ['executions'] });
     },
   });
 }

@@ -221,7 +221,7 @@ func (h *ExecutionHandler) UpdateExecutionStatus(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&statusRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
+			"error":   "Invalid request body",
 			"details": []string{err.Error()},
 		})
 		return

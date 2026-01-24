@@ -3,7 +3,7 @@
 import { useCreateTask, useCreateTaskGroup, useUpdateProject, useUpdateTask, useUpdateTaskGroup } from '@cron-observer/lib'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { CaretDownIcon, GearIcon, PlusIcon } from '@radix-ui/react-icons'
-import { Box, Button, Flex, IconButton, Text, Tooltip } from '@radix-ui/themes'
+import { Box, Button, Flex, IconButton, Text } from '@radix-ui/themes'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useProjectRole } from '../contexts/ProjectRoleContext'

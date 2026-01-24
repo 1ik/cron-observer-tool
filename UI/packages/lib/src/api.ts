@@ -341,6 +341,43 @@ export async function updateTaskStatus(projectId: string, taskUUID: string, stat
   return response.json();
 }
 
+/**
+ * Trigger a task manually
+ * @param projectId - Project ID (MongoDB ObjectID)
+ * @param taskUUID - Task UUID
+ * @returns Promise resolving to the trigger response with execution UUID
+ */
+export async function triggerTask(projectId: string, taskUUID: string) {
+  if (!projectId || !taskUUID) {
+    throw new Error('Missing required parameters: projectId and taskUUID are required');
+  }
+  
+  // Use fetch directly since the generated client may have issues with POST requests without body
+  const baseUrl = getDefaultApiBaseUrl();
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
+  const response = await fetch(
+    `${baseUrl}/projects/${projectId}/tasks/${taskUUID}/trigger`,
+    {
+      method: 'POST',
+      headers,
+    }
+  );
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to trigger task' }));
+    throw new Error(error.error || `HTTP ${response.status}: Failed to trigger task`);
+  }
+  
+  return response.json();
+}
+
 // ============================================================================
 // Executions API
 // ============================================================================

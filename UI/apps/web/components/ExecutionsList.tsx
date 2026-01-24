@@ -1,8 +1,8 @@
 'use client'
 
-import { useTasksByProject, useUpdateTaskStatus } from '@cron-observer/lib'
+import { useTasksByProject, useTriggerTask } from '@cron-observer/lib'
 import { useToast } from '@cron-observer/ui'
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, PauseIcon, PlayIcon } from '@radix-ui/react-icons'
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons'
 import * as Popover from '@radix-ui/react-popover'
 import { Box, Button, Flex, IconButton, Spinner, Text, Tooltip } from '@radix-ui/themes'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -58,14 +58,12 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
     ? tasks.find((t) => t.id === selectedTaskId || t.uuid === selectedTaskId)
     : null
   const selectedTaskUUID = selectedTask?.uuid || selectedTask?.id || null
-  const currentTaskStatus = selectedTask?.status || 'ACTIVE'
-  const isTaskDisabled = currentTaskStatus === 'DISABLED'
   
   // Toast hook for imperative API
   const toast = useToast()
   
-  // Update task status mutation
-  const updateStatusMutation = useUpdateTaskStatus(projectId || '', selectedTaskUUID || '')
+  // Trigger task mutation
+  const triggerTaskMutation = useTriggerTask(projectId || '', selectedTaskUUID || '')
 
   // Generate available dates (last 30 days) for date picker
   // Since we're using pagination, we can't extract dates from executions
@@ -116,27 +114,23 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
     })
   }
 
-  const handleToggle = async () => {
+  const handleTrigger = async () => {
     if (!selectedTaskUUID || !projectId) {
       return
     }
     
-    const newStatus = isTaskDisabled ? 'ACTIVE' : 'DISABLED'
-    
     try {
-      await updateStatusMutation.mutateAsync(newStatus)
-      toast.success(
-        newStatus === 'DISABLED' ? 'Task disabled successfully' : 'Task enabled successfully'
-      )
+      await triggerTaskMutation.mutateAsync()
+      toast.success('Task triggered successfully')
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to update task status',
+        error instanceof Error ? error.message : 'Failed to trigger task',
         'Error'
       )
     }
   }
   
-  const isLoadingStatus = updateStatusMutation.isPending
+  const isTriggering = triggerTaskMutation.isPending
 
   return (
     <Flex
@@ -267,20 +261,31 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
             </Popover.Root>
           </Flex>
           {selectedTaskUUID && projectId && (
-            <Tooltip content={isTaskDisabled ? "Enable task" : "Disable task"}>
+            <Tooltip content="Trigger task manually">
               <IconButton
                 variant="outline"
                 size="2"
-                onClick={handleToggle}
-                disabled={isLoadingStatus}
-                style={{ cursor: isLoadingStatus ? 'wait' : 'pointer', marginRight: 'var(--space-1)' }}
+                onClick={handleTrigger}
+                disabled={isTriggering}
+                style={{ cursor: isTriggering ? 'wait' : 'pointer', marginRight: 'var(--space-1)' }}
               >
-                {isLoadingStatus ? (
+                {isTriggering ? (
                   <Spinner size="2" />
-                ) : isTaskDisabled ? (
-                  <PlayIcon width="16" height="16" />
                 ) : (
-                  <PauseIcon width="16" height="16" />
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    style={{ stroke: 'currentColor', strokeWidth: 1.5, fill: 'none' }}
+                  >
+                    <path
+                      d="M8.5 2L4.5 9H8.5L7.5 14L11.5 7H7.5L8.5 2Z"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 )}
               </IconButton>
             </Tooltip>
