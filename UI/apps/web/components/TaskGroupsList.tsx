@@ -18,6 +18,7 @@ interface TaskGroupsListProps {
   onTaskSettingsClick: (task: Task) => void
   onCreateTaskClick?: (taskGroup: TaskGroup) => void
   isReadOnly?: boolean
+  taskFailuresMap?: Map<string, number>
 }
 
 export function TaskGroupsList({
@@ -30,6 +31,7 @@ export function TaskGroupsList({
   onTaskSettingsClick,
   onCreateTaskClick,
   isReadOnly = false,
+  taskFailuresMap = new Map(),
 }: TaskGroupsListProps) {
   // Create a Set of task group IDs for quick lookup (memoized)
   const taskGroupIds = useMemo(() => new Set(taskGroups.map(tg => tg.id)), [taskGroups])
@@ -105,6 +107,7 @@ export function TaskGroupsList({
               onTaskSettingsClick={onTaskSettingsClick}
               onCreateTaskClick={onCreateTaskClick}
               isReadOnly={isReadOnly}
+              taskFailuresMap={taskFailuresMap}
             />
           ))}
         </Accordion.Root>
@@ -123,6 +126,7 @@ export function TaskGroupsList({
                 projectUuid={projectUuid}
                 isSelected={selectedTaskId === task.id || selectedTaskId === task.uuid}
                 onSettingsClick={onTaskSettingsClick}
+                taskFailuresMap={taskFailuresMap}
               />
             ))}
           </Box>

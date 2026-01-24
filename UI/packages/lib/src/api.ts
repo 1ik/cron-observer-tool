@@ -512,6 +512,48 @@ export async function getExecutionStats(
   return response.json();
 }
 
+/**
+ * Get task failures by date for a project
+ * @param projectId - Project ID (MongoDB ObjectID)
+ * @param date - Date in YYYY-MM-DD format
+ * @returns Promise resolving to array of task failures
+ */
+export async function getTaskFailuresByDate(
+  projectId: string,
+  date: string
+): Promise<Array<{ taskId: string; failures: number }>> {
+  if (!projectId) {
+    throw new Error('Missing required parameter: projectId is required');
+  }
+  if (!date) {
+    throw new Error('Missing required parameter: date is required');
+  }
+
+  const baseUrl = getDefaultApiBaseUrl();
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(
+    `${baseUrl}/projects/${projectId}/failures?date=${date}`,
+    {
+      method: 'GET',
+      headers,
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch task failures' }));
+    throw new Error(error.error || `HTTP ${response.status}: Failed to fetch task failures`);
+  }
+
+  return response.json();
+}
+
 // ============================================================================
 // Task Groups API
 // ============================================================================

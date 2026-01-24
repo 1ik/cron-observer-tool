@@ -33,6 +33,7 @@ interface ProjectLayoutProps {
     total_count: number
     total_pages: number
   } | null
+  taskFailuresMap?: Map<string, number>
 }
 
 export function ProjectLayout({
@@ -43,6 +44,7 @@ export function ProjectLayout({
   selectedTaskId,
   isLoadingExecutions = false,
   paginationData,
+  taskFailuresMap = new Map(),
 }: ProjectLayoutProps) {
   const { canEdit, isReadOnly } = useProjectRole()
   const [selectedTaskGroup, setSelectedTaskGroup] = useState<TaskGroup | null>(null)
@@ -309,6 +311,7 @@ export function ProjectLayout({
               onTaskSettingsClick={handleTaskSettingsClick}
               onCreateTaskClick={canEdit ? handleCreateTaskClick : undefined}
               isReadOnly={isReadOnly}
+              taskFailuresMap={taskFailuresMap}
             />
           }
           rightContent={

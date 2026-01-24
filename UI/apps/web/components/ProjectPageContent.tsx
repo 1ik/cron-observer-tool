@@ -1,6 +1,6 @@
 'use client'
 
-import { useExecutionsByTask, useProjects, useTaskGroupsByProject, useTasksByProject } from '@cron-observer/lib'
+import { useExecutionsByTask, useProjects, useTaskFailuresByDate, useTaskGroupsByProject, useTasksByProject } from '@cron-observer/lib'
 import { Box, Flex, Heading, Spinner, Text } from '@radix-ui/themes'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -30,9 +30,33 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
   // The backend expects MongoDB ObjectID format (hex string), not UUID
   const projectObjectId = project?.id
   
+  // Get current date string (always computed synchronously)
+  const getCurrentDateString = () => {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  // Get current date for failures polling (always use today's date)
+  const currentDate = getCurrentDateString()
+  
   // Only fetch tasks and task groups if we have the ObjectID (after projects load)
   const { data: tasks = [], isLoading: isLoadingTasks, error: tasksError } = useTasksByProject(projectObjectId || '')
   const { data: taskGroups = [], isLoading: isLoadingTaskGroups, error: taskGroupsError } = useTaskGroupsByProject(projectObjectId || '')
+
+  // Fetch task failures for current date (polls every 10 seconds)
+  const { data: taskFailures = [] } = useTaskFailuresByDate(projectObjectId || null, currentDate)
+
+  // Create a map of task UUID -> failures count for quick lookup
+  const taskFailuresMap = useMemo(() => {
+    const map = new Map<string, number>()
+    taskFailures.forEach((failure) => {
+      map.set(failure.taskId, failure.failures)
+    })
+    return map
+  }, [taskFailures])
 
   // Find the selected task to get its UUID (memoized to ensure proper updates)
   const selectedTask = useMemo(() => {
@@ -43,15 +67,6 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
   const selectedTaskUUID = useMemo(() => {
     return selectedTask?.uuid || selectedTask?.id || null
   }, [selectedTask])
-
-  // Get current date string (always computed synchronously)
-  const getCurrentDateString = () => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
 
   // Get selected date from URL params or default to current date
   // Memoize to prevent unnecessary recalculations and query key changes
@@ -284,6 +299,7 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
           selectedTaskId={selectedTaskId}
           isLoadingExecutions={isLoadingExecutions}
           paginationData={paginationData}
+          taskFailuresMap={taskFailuresMap}
         />
       </Box>
     </ProjectRoleProvider>

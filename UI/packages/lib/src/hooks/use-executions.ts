@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getExecutionsByTaskUUID, getFailedExecutionsStats, getExecutionStats } from '../api';
+import { getExecutionsByTaskUUID, getExecutionStats, getFailedExecutionsStats, getTaskFailuresByDate } from '../api';
 
 /**
  * Query keys for executions
@@ -88,6 +88,21 @@ export function useExecutionStats(projectId: string | null, days: number = 7) {
     queryFn: () => getExecutionStats(projectId!, days),
     enabled: !!projectId,
     staleTime: 30000, // 30 seconds
+  });
+}
+
+/**
+ * Hook to fetch task failures by date with polling (every 10 seconds)
+ * @param projectId - Project ID (MongoDB ObjectID)
+ * @param date - Date in YYYY-MM-DD format
+ */
+export function useTaskFailuresByDate(projectId: string | null, date: string) {
+  return useQuery({
+    queryKey: ['task-failures', projectId, date],
+    queryFn: () => getTaskFailuresByDate(projectId!, date),
+    enabled: !!projectId && !!date,
+    refetchInterval: 10000, // Poll every 10 seconds
+    staleTime: 0, // Always consider data stale to ensure polling
   });
 }
 

@@ -17,6 +17,7 @@ interface TaskGroupAccordionItemProps {
   onTaskSettingsClick: (task: Task) => void
   onCreateTaskClick?: (taskGroup: TaskGroup) => void
   isReadOnly?: boolean
+  taskFailuresMap?: Map<string, number>
 }
 
 export function TaskGroupAccordionItem({
@@ -28,6 +29,7 @@ export function TaskGroupAccordionItem({
   onTaskSettingsClick,
   onCreateTaskClick,
   isReadOnly = false,
+  taskFailuresMap = new Map(),
 }: TaskGroupAccordionItemProps) {
   const handleSettingsClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -121,6 +123,7 @@ export function TaskGroupAccordionItem({
                       projectUuid={projectUuid}
                       isSelected={selectedTaskId === task.id || selectedTaskId === task.uuid}
                       onSettingsClick={onTaskSettingsClick}
+                      taskFailuresMap={taskFailuresMap}
                     />
                   ))}
           </Box>

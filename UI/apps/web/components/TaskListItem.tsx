@@ -1,7 +1,7 @@
 'use client'
 
-import { GearIcon } from '@radix-ui/react-icons'
-import { Box, Flex, IconButton, Text } from '@radix-ui/themes'
+import { ExclamationTriangleIcon, GearIcon } from '@radix-ui/react-icons'
+import { Box, Flex, IconButton, Text, Tooltip } from '@radix-ui/themes'
 import { useRouter } from 'next/navigation'
 import { Task } from '../lib/types/task'
 import { StatusAndStateDots } from './StatusAndStateDots'
@@ -11,10 +11,16 @@ interface TaskListItemProps {
   projectUuid: string
   isSelected: boolean
   onSettingsClick?: (task: Task) => void
+  taskFailuresMap?: Map<string, number>
 }
 
-export function TaskListItem({ task, projectUuid, isSelected, onSettingsClick }: TaskListItemProps) {
+export function TaskListItem({ task, projectUuid, isSelected, onSettingsClick, taskFailuresMap = new Map() }: TaskListItemProps) {
   const router = useRouter()
+
+  // Check if task has failures for current date
+  const taskUUID = task.uuid || task.id
+  const failures = taskFailuresMap.get(taskUUID) || 0
+  const hasFailures = failures > 0
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent event from bubbling to accordion trigger
@@ -62,6 +68,19 @@ export function TaskListItem({ task, projectUuid, isSelected, onSettingsClick }:
           {task.name}
         </Text>
         <Flex align="center" gap="2">
+          {hasFailures && (
+            <Tooltip content={`${failures} failure${failures > 1 ? 's' : ''} today`}>
+              <Box
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: 'var(--red-9)',
+                }}
+              >
+                <ExclamationTriangleIcon width="14" height="14" />
+              </Box>
+            </Tooltip>
+          )}
           {onSettingsClick && (
             <IconButton
               variant="ghost"
