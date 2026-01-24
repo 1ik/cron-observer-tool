@@ -7,6 +7,7 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	Auth     AuthConfig
+	Gmail    GmailConfig
 }
 
 // ServerConfig holds HTTP server configuration
@@ -28,4 +29,10 @@ type DatabaseConfig struct {
 type AuthConfig struct {
 	JWTSecret   string   `mapstructure:"jwt_secret"`
 	SuperAdmins []string `mapstructure:"super_admins"` // Comma-separated list of super admin emails
+}
+
+// GmailConfig holds Gmail SMTP configuration
+type GmailConfig struct {
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
 }

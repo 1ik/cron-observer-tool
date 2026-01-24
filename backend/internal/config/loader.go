@@ -88,4 +88,8 @@ func bindEnvVars(v *viper.Viper) {
 	// Auth environment variables
 	v.BindEnv("auth.jwt_secret", "JWT_SECRET")
 	v.BindEnv("auth.super_admins", "SUPER_ADMINS")
+
+	// Gmail environment variables
+	v.BindEnv("gmail.user", "GMAIL_USER")
+	v.BindEnv("gmail.password", "GMAIL_APP_PASSWORD")
 }
