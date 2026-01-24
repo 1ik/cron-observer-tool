@@ -98,7 +98,7 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
         }}
       >
         <Flex direction="column" gap="2">
-          {/* First row: Task name, status, and expand icon */}
+          {/* First row: Start time, duration, status, and expand icon */}
           <Flex justify="between" align="center" gap="3">
             <Flex align="center" gap="2" style={{ flex: 1, minWidth: 0 }}>
               {hasLogs && (
@@ -124,72 +124,40 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
                 </Box>
               )}
               {!hasLogs && <Box style={{ width: '16px', flexShrink: 0 }} />}
-              <Text
-                size="2"
-                weight="medium"
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  color: 'var(--gray-12)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {execution.task_name}
-              </Text>
+              <Flex gap="2" align="center" wrap="wrap">
+                <Text
+                  size="2"
+                  weight="medium"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    color: 'var(--gray-12)',
+                  }}
+                >
+                  {formatTime(execution.started_at)}
+                </Text>
+                {execution.duration_ms && (
+                  <>
+                    <Text size="2" color="gray" style={{ fontSize: '12px' }}>
+                      •
+                    </Text>
+                    <Text
+                      size="2"
+                      color="gray"
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                      }}
+                    >
+                      {formatDuration(execution.duration_ms)}
+                    </Text>
+                  </>
+                )}
+              </Flex>
             </Flex>
             <Badge color={getStatusColor(execution.status)} variant="soft" size="1" radius="full">
               {execution.status}
             </Badge>
           </Flex>
 
-          {/* Second row: Timestamp and duration */}
-          <Flex gap="4" wrap="wrap" align="center" pl="5">
-            <Text
-              size="1"
-              color="gray"
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-              }}
-            >
-              {formatDate(execution.started_at)}
-            </Text>
-            {execution.duration_ms && (
-              <>
-                <Text size="1" color="gray" style={{ fontSize: '11px' }}>
-                  •
-                </Text>
-                <Text
-                  size="1"
-                  color="gray"
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '11px',
-                  }}
-                >
-                  {formatDuration(execution.duration_ms)}
-                </Text>
-              </>
-            )}
-            {execution.response_status && (
-              <>
-                <Text size="1" color="gray" style={{ fontSize: '11px' }}>
-                  •
-                </Text>
-                <Text
-                  size="1"
-                  color="gray"
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '11px',
-                  }}
-                >
-                  HTTP {execution.response_status}
-                </Text>
-              </>
-            )}
-          </Flex>
 
           {/* Error message */}
           {execution.error_message && (

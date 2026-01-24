@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/yourusername/cron-observer/backend/internal/events"
 	"github.com/yourusername/cron-observer/backend/internal/models"
 	"github.com/yourusername/cron-observer/backend/internal/repositories"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,14 +18,15 @@ import (
 
 // TaskJob represents a cron job for a task
 type TaskJob struct {
-	Task *models.Task
-	Repo repositories.Repository
+	Task     *models.Task
+	Repo     repositories.Repository
+	EventBus *events.EventBus
 }
 
 // ExecuteTask creates an execution record and sends it to the execution endpoint.
 // Returns the execution UUID and any error encountered during execution creation.
 // The actual HTTP request to the execution endpoint is sent asynchronously.
-func ExecuteTask(ctx context.Context, task *models.Task, repo repositories.Repository, logPrefix string) (string, error) {
+func ExecuteTask(ctx context.Context, task *models.Task, repo repositories.Repository, eventBus *events.EventBus, logPrefix string) (string, error) {
 	// Get the project to retrieve execution_endpoint
 	project, err := repo.GetProjectByID(ctx, task.ProjectID)
 	if err != nil {
@@ -60,8 +62,50 @@ func ExecuteTask(ctx context.Context, task *models.Task, repo repositories.Repos
 		return "", err
 	}
 
+	// Create cancellable context for HTTP request (for timeout cancellation)
+	requestCtx, cancelRequest := context.WithCancel(context.Background())
+
+	// If timeout is configured, start timeout goroutine
+	if task.TimeoutSeconds != nil && *task.TimeoutSeconds > 0 {
+		go func() {
+			time.Sleep(time.Duration(*task.TimeoutSeconds) * time.Second)
+
+			// Check current execution status to avoid race condition
+			// If execution already completed (SUCCESS or FAILED), don't cancel or emit timeout
+			currentExecution, err := repo.GetExecutionByUUID(context.Background(), executionUUID)
+			if err != nil {
+				log.Printf("[%s] Failed to get execution for timeout check: %v", logPrefix, err)
+				return
+			}
+
+			// Only cancel and emit timeout if execution is still pending or running
+			if currentExecution.Status == models.ExecutionStatusPending ||
+				currentExecution.Status == models.ExecutionStatusRunning {
+				// Cancel the HTTP request
+				cancelRequest()
+
+				// Emit ExecutionTimedOut event
+				if eventBus != nil {
+					eventBus.Publish(events.Event{
+						Type: events.ExecutionTimedOut,
+						Payload: events.ExecutionTimedOutPayload{
+							ExecutionUUID:  executionUUID,
+							TaskUUID:       task.UUID,
+							TimeoutSeconds: *task.TimeoutSeconds,
+						},
+					})
+					log.Printf("[%s] Execution timed out after %d seconds for task %s (execution: %s)", logPrefix, *task.TimeoutSeconds, task.UUID, executionUUID)
+				}
+			} else {
+				// Execution already completed, no need to cancel or emit timeout
+				log.Printf("[%s] Execution %s already completed with status %s before timeout, skipping timeout handling", logPrefix, executionUUID, currentExecution.Status)
+			}
+		}()
+	}
+
 	// Send execution to the execution endpoint asynchronously (don't wait for response)
 	go func() {
+		defer cancelRequest() // Ensure cleanup when goroutine exits
 		// Prepare request body with task name and execution ID
 		requestBody := map[string]interface{}{
 			"task_name":    task.Name,
@@ -74,8 +118,8 @@ func ExecuteTask(ctx context.Context, task *models.Task, repo repositories.Repos
 			return
 		}
 
-		// Send POST request to execution_endpoint
-		req, err := http.NewRequest("POST", project.ExecutionEndpoint, bytes.NewBuffer(jsonBody))
+		// Send POST request to execution_endpoint with cancellable context
+		req, err := http.NewRequestWithContext(requestCtx, "POST", project.ExecutionEndpoint, bytes.NewBuffer(jsonBody))
 		if err != nil {
 			log.Printf("[%s] Failed to create HTTP request for task %s: %v", logPrefix, task.UUID, err)
 			return
@@ -89,6 +133,11 @@ func ExecuteTask(ctx context.Context, task *models.Task, repo repositories.Repos
 
 		resp, err := client.Do(req)
 		if err != nil {
+			// Check if error is due to context cancellation (timeout)
+			if err == context.Canceled {
+				log.Printf("[%s] HTTP request canceled due to timeout for task %s (execution: %s)", logPrefix, task.UUID, executionUUID)
+				return
+			}
 			log.Printf("[%s] Failed to send POST request for task %s: %v", logPrefix, task.UUID, err)
 			return
 		}
@@ -109,7 +158,7 @@ func (j *TaskJob) Run() {
 	ctx := context.Background()
 	log.Printf("[CRON] Task triggered: %s (UUID: %s)", j.Task.Name, j.Task.UUID)
 
-	_, err := ExecuteTask(ctx, j.Task, j.Repo, "CRON")
+	_, err := ExecuteTask(ctx, j.Task, j.Repo, j.EventBus, "CRON")
 	if err != nil {
 		// Error already logged in ExecuteTask
 		return

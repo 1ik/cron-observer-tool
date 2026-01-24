@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -351,4 +353,86 @@ func (h *ExecutionHandler) GetFailedExecutionsStats(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+// HandleExecutionTimedOut handles ExecutionTimedOut events
+func (h *ExecutionHandler) HandleExecutionTimedOut(event events.Event) {
+	payload, ok := event.Payload.(events.ExecutionTimedOutPayload)
+	if !ok {
+		log.Printf("Invalid payload for ExecutionTimedOut event")
+		return
+	}
+
+	// Get current execution status to avoid race conditions
+	execution, err := h.repo.GetExecutionByUUID(context.Background(), payload.ExecutionUUID)
+	if err != nil {
+		log.Printf("Failed to get execution for timeout handling: %v", err)
+		return
+	}
+
+	// Only mark as failed if still pending or running
+	if execution.Status != models.ExecutionStatusPending &&
+		execution.Status != models.ExecutionStatusRunning {
+		// Execution already completed, ignore timeout
+		return
+	}
+
+	// Add timeout log entry first
+	logEntry := models.LogEntry{
+		Message:   "Task timed out",
+		Level:     "error",
+		Timestamp: time.Now(),
+	}
+	if err := h.repo.AppendLogToExecution(context.Background(), payload.ExecutionUUID, logEntry); err != nil {
+		log.Printf("Failed to add timeout log: %v", err)
+	}
+
+	// Mark execution as failed
+	timeoutError := fmt.Sprintf("Execution timed out after %d seconds", payload.TimeoutSeconds)
+	err = h.repo.UpdateExecutionStatus(
+		context.Background(),
+		payload.ExecutionUUID,
+		models.ExecutionStatusFailed,
+		&timeoutError,
+	)
+	if err != nil {
+		log.Printf("Failed to mark execution as failed on timeout: %v", err)
+		return
+	}
+
+	// Emit ExecutionFailed event (for failure stats aggregator)
+	task, err := h.repo.GetTaskByUUID(context.Background(), payload.TaskUUID)
+	if err == nil && task != nil {
+		failedExecution, err := h.repo.GetExecutionByUUID(context.Background(), payload.ExecutionUUID)
+		if err == nil && failedExecution != nil {
+			h.eventBus.Publish(events.Event{
+				Type: events.ExecutionFailed,
+				Payload: events.ExecutionFailedPayload{
+					Execution: failedExecution,
+					Task:      task,
+				},
+			})
+		}
+	}
+}
+
+// Start starts the execution handler event listener
+func (h *ExecutionHandler) Start(ctx context.Context) {
+	executionTimedOutCh := h.eventBus.Subscribe(events.ExecutionTimedOut)
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				log.Println("ExecutionHandler context cancelled, stopping event listener")
+				return
+			case event, ok := <-executionTimedOutCh:
+				if !ok {
+					log.Println("ExecutionTimedOut channel closed")
+					return
+				}
+				h.HandleExecutionTimedOut(event)
+			}
+		}
+	}()
 }

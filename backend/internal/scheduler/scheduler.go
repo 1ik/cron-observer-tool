@@ -176,7 +176,7 @@ func (s *Scheduler) registerTask(ctx context.Context, task *models.Task) error {
 		}
 	}
 
-	job := &TaskJob{Task: task, Repo: s.repo}
+	job := &TaskJob{Task: task, Repo: s.repo, EventBus: s.eventBus}
 	entryID, err := s.cron.AddJob(task.ScheduleConfig.CronExpression, job)
 	if err != nil {
 		return err

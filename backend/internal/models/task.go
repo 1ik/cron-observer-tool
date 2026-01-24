@@ -19,7 +19,8 @@ type Task struct {
 	Status         TaskStatus             `json:"status" bson:"status" enums:"ACTIVE,RUNNING,DISABLED" example:"ACTIVE"`
 	State          TaskState              `json:"state" bson:"state" enums:"RUNNING,NOT_RUNNING" example:"NOT_RUNNING"` // System-controlled: based on time window
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" bson:"schedule_config"`
-	TriggerConfig  TriggerConfig          `json:"trigger_config,omitempty" bson:"trigger_config,omitempty"` // Deprecated: Tasks now use project's execution_endpoint
+	TriggerConfig  TriggerConfig          `json:"trigger_config,omitempty" bson:"trigger_config,omitempty"`                             // Deprecated: Tasks now use project's execution_endpoint
+	TimeoutSeconds *int                   `json:"timeout_seconds,omitempty" bson:"timeout_seconds,omitempty" binding:"omitempty,min=1"` // Optional timeout in seconds
 	Metadata       map[string]interface{} `json:"metadata,omitempty" bson:"metadata,omitempty"`
 
 	CreatedAt time.Time `json:"created_at" bson:"created_at" example:"2025-01-15T10:00:00Z"`
@@ -93,6 +94,7 @@ type CreateTaskRequest struct {
 	ScheduleType   ScheduleType           `json:"schedule_type" binding:"required,oneof=RECURRING ONEOFF"`
 	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE RUNNING DISABLED"`
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" binding:"required"`
+	TimeoutSeconds *int                   `json:"timeout_seconds,omitempty" binding:"omitempty,min=1"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -105,6 +107,7 @@ type UpdateTaskRequest struct {
 	ScheduleType   ScheduleType           `json:"schedule_type" binding:"required,oneof=RECURRING ONEOFF"`
 	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE RUNNING DISABLED"`
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" binding:"required"`
+	TimeoutSeconds *int                   `json:"timeout_seconds,omitempty" binding:"omitempty,min=1"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 }
 

@@ -207,9 +207,10 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 			DaysOfWeek:     req.ScheduleConfig.DaysOfWeek,
 			Exclusions:     req.ScheduleConfig.Exclusions,
 		},
-		Metadata:  req.Metadata,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		TimeoutSeconds: req.TimeoutSeconds,
+		Metadata:       req.Metadata,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	}
 
 	// Convert TimeRange if provided
@@ -370,9 +371,10 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 			DaysOfWeek:     req.ScheduleConfig.DaysOfWeek,
 			Exclusions:     req.ScheduleConfig.Exclusions,
 		},
-		Metadata:  req.Metadata,
-		CreatedAt: existingTask.CreatedAt, // Preserve original creation time
-		UpdatedAt: time.Now(),
+		TimeoutSeconds: req.TimeoutSeconds,
+		Metadata:       req.Metadata,
+		CreatedAt:      existingTask.CreatedAt, // Preserve original creation time
+		UpdatedAt:      time.Now(),
 	}
 
 	// Convert TimeRange if provided
@@ -710,7 +712,7 @@ func (h *TaskHandler) TriggerTask(c *gin.Context) {
 	}
 
 	// Use the shared ExecuteTask function from scheduler package
-	executionUUID, err := scheduler.ExecuteTask(c.Request.Context(), task, h.repo, "TRIGGER")
+	executionUUID, err := scheduler.ExecuteTask(c.Request.Context(), task, h.repo, h.eventBus, "TRIGGER")
 	if err != nil {
 		if err.Error() == "no execution_endpoint set for project" {
 			c.JSON(http.StatusBadRequest, gin.H{

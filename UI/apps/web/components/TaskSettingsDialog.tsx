@@ -45,6 +45,7 @@ export function TaskSettingsDialog({
         timezone: task.schedule_config?.timezone || 'Asia/Dhaka',
       },
       task_group_id: task.task_group_id || '',
+      timeout_seconds: task.timeout_seconds || undefined,
     },
   })
 
@@ -67,6 +68,7 @@ export function TaskSettingsDialog({
           timezone: task.schedule_config?.timezone || 'Asia/Dhaka',
         },
         task_group_id: task.task_group_id || '',
+        timeout_seconds: task.timeout_seconds || undefined,
       })
     }
   }, [task, open, reset])
@@ -80,6 +82,7 @@ export function TaskSettingsDialog({
       status: data.status,
       schedule_config: data.schedule_config,
       task_group_id: data.task_group_id || undefined,
+      timeout_seconds: data.timeout_seconds || undefined,
       metadata: data.metadata,
     }
     onSubmit(requestData)
@@ -318,8 +321,35 @@ export function TaskSettingsDialog({
                 <Text size="2" color="red">
                   {errors.schedule_config.cron_expression.message}
                 </Text>
-              )}
-            </Flex>
+                )}
+              </Flex>
+
+              {/* Timeout */}
+              <Flex direction="column" gap="2">
+                <Label.Root htmlFor="task-timeout">
+                  <Text size="3" weight="medium">
+                    Execution Timeout (seconds)
+                  </Text>
+                </Label.Root>
+                <TextField.Root
+                  id="task-timeout"
+                  type="number"
+                  {...register('timeout_seconds', { valueAsNumber: true })}
+                  placeholder="Optional - leave empty for no timeout"
+                  size="3"
+                  min={1}
+                  disabled={isReadOnly}
+                  color={errors.timeout_seconds ? 'red' : undefined}
+                />
+                <Text size="1" color="gray">
+                  Maximum time allowed for execution. If exceeded, execution will be marked as failed.
+                </Text>
+                {errors.timeout_seconds && (
+                  <Text size="2" color="red">
+                    {errors.timeout_seconds.message}
+                  </Text>
+                )}
+              </Flex>
 
             </form>
           </Flex>

@@ -47,6 +47,7 @@ export interface Task {
   state: TaskState // System-controlled: based on time window
   schedule_config: ScheduleConfig
   trigger_config?: TriggerConfig // Deprecated: Tasks now use project's execution_endpoint
+  timeout_seconds?: number // Optional timeout in seconds
   metadata?: Record<string, unknown>
   created_at: string
   updated_at: string
@@ -60,6 +61,7 @@ export interface CreateTaskRequest {
   schedule_type: ScheduleType
   status?: TaskStatus
   schedule_config: ScheduleConfig
+  timeout_seconds?: number
   metadata?: Record<string, unknown>
 }
 
@@ -70,6 +72,7 @@ export interface UpdateTaskRequest {
   schedule_type: ScheduleType
   status?: TaskStatus
   schedule_config: ScheduleConfig
+  timeout_seconds?: number
   metadata?: Record<string, unknown>
 }
 

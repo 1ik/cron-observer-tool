@@ -82,6 +82,7 @@ export function CreateTaskDialog({
         days_of_week: data.schedule_config.days_of_week,
         exclusions: data.schedule_config.exclusions,
       },
+      timeout_seconds: data.timeout_seconds || undefined,
       metadata: data.metadata,
     }
     onSubmit(requestData)

@@ -38,6 +38,7 @@ export const updateTaskSchema = z.object({
   status: taskStatusSchema.optional(),
   schedule_config: scheduleConfigSchema,
   task_group_id: z.string().trim().optional().or(z.literal('')),
+  timeout_seconds: z.number().int().min(1, 'Timeout must be at least 1 second').optional().or(z.literal('')),
   metadata: z.record(z.string(), z.unknown()).optional(),
 })
 
@@ -56,6 +57,7 @@ export const createTaskSchema = z.object({
     .optional()
     .or(z.literal('')),
   schedule_config: scheduleConfigSchema,
+  timeout_seconds: z.number().int().min(1, 'Timeout must be at least 1 second').optional().or(z.literal('')),
   metadata: z.record(z.string(), z.unknown()).optional(),
 })
 

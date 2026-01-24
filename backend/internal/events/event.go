@@ -6,13 +6,14 @@ import "github.com/yourusername/cron-observer/backend/internal/models"
 type EventType string
 
 const (
-	TaskCreated      EventType = "task.created"
-	TaskUpdated      EventType = "task.updated"
-	TaskDeleted      EventType = "task.deleted"
-	TaskGroupCreated EventType = "taskgroup.created"
-	TaskGroupUpdated EventType = "taskgroup.updated"
-	TaskGroupDeleted EventType = "taskgroup.deleted"
-	ExecutionFailed  EventType = "execution.failed"
+	TaskCreated       EventType = "task.created"
+	TaskUpdated       EventType = "task.updated"
+	TaskDeleted       EventType = "task.deleted"
+	TaskGroupCreated  EventType = "taskgroup.created"
+	TaskGroupUpdated  EventType = "taskgroup.updated"
+	TaskGroupDeleted  EventType = "taskgroup.deleted"
+	ExecutionFailed   EventType = "execution.failed"
+	ExecutionTimedOut EventType = "execution.timed_out"
 )
 
 // Event represents an event in the system
@@ -45,4 +46,11 @@ type TaskGroupDeletedPayload struct {
 type ExecutionFailedPayload struct {
 	Execution *models.Execution
 	Task      *models.Task
+}
+
+// ExecutionTimedOutPayload contains execution UUID and timeout information
+type ExecutionTimedOutPayload struct {
+	ExecutionUUID  string
+	TaskUUID       string
+	TimeoutSeconds int
 }
