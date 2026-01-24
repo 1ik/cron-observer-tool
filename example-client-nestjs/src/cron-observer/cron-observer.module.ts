@@ -9,7 +9,7 @@ export class CronObserverModule {
   static forRoot(config: CronObserverConfig): DynamicModule {
     const cronObserverServiceProvider: Provider = {
       provide: CronObserverService,
-      useValue: new CronObserverService(config.backendUrl),
+      useValue: new CronObserverService(config.backendUrl, config.apiKey),
     };
 
     return {

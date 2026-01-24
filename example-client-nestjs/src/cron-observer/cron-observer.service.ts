@@ -5,9 +5,14 @@ import { LogEntry } from './interfaces';
 export class CronObserverService {
   private readonly logger = new Logger(CronObserverService.name);
   private backendUrl: string;
+  private apiKey: string;
 
-  constructor(backendUrl: string) {
+  constructor(backendUrl: string, apiKey: string) {
     this.backendUrl = backendUrl;
+    this.apiKey = apiKey;
+    if (!apiKey) {
+      this.logger.warn('⚠️  API key is empty! Set CRON_OBSERVER_API_KEY environment variable.');
+    }
   }
 
   async log(executionId: string, message: string, level: 'info' | 'warn' | 'error' = 'info'): Promise<void> {
@@ -17,11 +22,17 @@ export class CronObserverService {
     };
 
     try {
+      if (!this.apiKey) {
+        this.logger.error(`Cannot send log: API key is not set. Set CRON_OBSERVER_API_KEY environment variable.`);
+        return;
+      }
+
       const url = `${this.backendUrl}/api/v1/executions/${executionId}/logs`;
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': this.apiKey,
         },
         body: JSON.stringify(logEntry),
       });
@@ -41,6 +52,11 @@ export class CronObserverService {
    */
   async success(executionId: string): Promise<void> {
     try {
+      if (!this.apiKey) {
+        this.logger.error(`Cannot mark execution as SUCCESS: API key is not set. Set CRON_OBSERVER_API_KEY environment variable.`);
+        throw new Error('API key is not set');
+      }
+
       const url = `${this.backendUrl}/api/v1/executions/${executionId}/status`;
       this.logger.log(`Attempting to mark execution ${executionId} as SUCCESS`);
       this.logger.log(`Sending PATCH request to: ${url}`);
@@ -49,6 +65,7 @@ export class CronObserverService {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': this.apiKey,
         },
         body: JSON.stringify({ status: 'SUCCESS' }),
       });
@@ -75,6 +92,11 @@ export class CronObserverService {
    */
   async fail(executionId: string, errorMessage?: string): Promise<void> {
     try {
+      if (!this.apiKey) {
+        this.logger.error(`Cannot mark execution as FAILED: API key is not set. Set CRON_OBSERVER_API_KEY environment variable.`);
+        throw new Error('API key is not set');
+      }
+
       const url = `${this.backendUrl}/api/v1/executions/${executionId}/status`;
       const body: { status: string; error?: string } = { status: 'FAILED' };
       if (errorMessage) {
@@ -88,6 +110,7 @@ export class CronObserverService {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': this.apiKey,
         },
         body: JSON.stringify(body),
       });

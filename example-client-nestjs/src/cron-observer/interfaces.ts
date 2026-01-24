@@ -5,6 +5,7 @@ export interface ExecutionContext {
 
 export interface CronObserverConfig {
   backendUrl: string;
+  apiKey: string;
 }
 
 export interface LogEntry {

@@ -7,6 +7,7 @@ import { TaskHandlersService } from './execution/task-handlers.service';
   imports: [
     CronObserverModule.forRoot({
       backendUrl: process.env.CRON_OBSERVER_URL || 'http://localhost:8080',
+      apiKey: process.env.CRON_OBSERVER_API_KEY || '',
     }),
   ],
   controllers: [ExecutionController],
