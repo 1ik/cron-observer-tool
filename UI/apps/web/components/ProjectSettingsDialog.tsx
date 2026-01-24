@@ -40,7 +40,6 @@ export function ProjectSettingsDialog({
       name: project.name,
       description: project.description || '',
       execution_endpoint: project.execution_endpoint || '',
-      alert_emails: project.alert_emails || '',
       project_users: project.project_users || [],
     },
   })
@@ -53,7 +52,6 @@ export function ProjectSettingsDialog({
         name: project.name,
         description: project.description || '',
         execution_endpoint: project.execution_endpoint || '',
-        alert_emails: project.alert_emails || '',
         project_users: project.project_users || [],
       })
     }
@@ -70,7 +68,6 @@ export function ProjectSettingsDialog({
       name: data.name,
       description: data.description || undefined,
       execution_endpoint: data.execution_endpoint || undefined,
-      alert_emails: data.alert_emails || undefined,
       project_users: projectUsers.length > 0 ? projectUsers : undefined,
     }
     onSubmit(requestData)
@@ -104,7 +101,7 @@ export function ProjectSettingsDialog({
 
           <Dialog.Description asChild>
             <Text size="3" color="gray">
-              Configure project settings and alert preferences.
+              Configure project settings.
             </Text>
           </Dialog.Description>
         </Box>
@@ -124,7 +121,6 @@ export function ProjectSettingsDialog({
             <Tabs.Root defaultValue="details" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
               <Tabs.List mb="4">
                 <Tabs.Trigger value="details">Details</Tabs.Trigger>
-                <Tabs.Trigger value="alerts">Alerts</Tabs.Trigger>
                 <Tabs.Trigger value="users">Users</Tabs.Trigger>
               </Tabs.List>
 
@@ -199,37 +195,6 @@ export function ProjectSettingsDialog({
                     {errors.execution_endpoint && (
                       <Text size="2" color="red">
                         {errors.execution_endpoint.message}
-                      </Text>
-                    )}
-                  </Flex>
-                </Flex>
-              </Tabs.Content>
-
-              {/* Alerts Tab */}
-              <Tabs.Content value="alerts" style={{ flex: 1, overflowY: 'auto' }}>
-                <Flex direction="column" gap="4">
-                  {/* Alert Emails */}
-                  <Flex direction="column" gap="2">
-                    <Label.Root htmlFor="project-alert-emails">
-                      <Text size="3" weight="medium">
-                        Alert Emails
-                      </Text>
-                    </Label.Root>
-                    <TextArea
-                      id="project-alert-emails"
-                      {...register('alert_emails')}
-                      placeholder="email1@example.com, email2@example.com"
-                      rows={6}
-                      size="3"
-                      color={errors.alert_emails ? 'red' : undefined}
-                      disabled={isReadOnly}
-                    />
-                    <Text size="1" color="gray">
-                      Comma-separated email addresses for receiving alerts (task failures, errors, etc.)
-                    </Text>
-                    {errors.alert_emails && (
-                      <Text size="2" color="red">
-                        {errors.alert_emails.message}
                       </Text>
                     )}
                   </Flex>
