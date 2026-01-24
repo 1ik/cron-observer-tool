@@ -420,6 +420,74 @@ func (h *ExecutionHandler) GetExecutionStats(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// GetTaskFailuresByDate retrieves task failures for a specific date
+// @Summary      Get task failures by date
+// @Description  Retrieve failure statistics grouped by task for a specific date
+// @Tags         executions
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        date query string true "Date in YYYY-MM-DD format"
+// @Success      200  {array}  models.TaskFailureStats
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/failures [get]
+func (h *ExecutionHandler) GetTaskFailuresByDate(c *gin.Context) {
+	projectIDParam := c.Param("project_id")
+	if projectIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "project_id is required in path",
+		})
+		return
+	}
+
+	// Parse project ID
+	projectID, err := primitive.ObjectIDFromHex(projectIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid project_id format",
+		})
+		return
+	}
+
+	// Get date parameter
+	dateParam := c.Query("date")
+	if dateParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "date parameter is required (YYYY-MM-DD format)",
+		})
+		return
+	}
+
+	// Validate date format
+	_, err = time.Parse("2006-01-02", dateParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid date format. Use YYYY-MM-DD",
+		})
+		return
+	}
+
+	// Get task failures by date
+	stats, _, err := h.repo.GetTaskFailuresByDate(c.Request.Context(), projectID, dateParam)
+	if err != nil {
+		log.Printf("Failed to get task failures for project %s on date %s: %v", projectIDParam, dateParam, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get task failures",
+		})
+		return
+	}
+
+	// Convert pointers to values
+	statsValues := make([]models.TaskFailureStats, len(stats))
+	for i, stat := range stats {
+		statsValues[i] = *stat
+	}
+
+	// Return array directly as requested: [{taskId: 'sdf', failures: 3}, ...]
+	c.JSON(http.StatusOK, statsValues)
+}
+
 // HandleExecutionTimedOut handles ExecutionTimedOut events
 func (h *ExecutionHandler) HandleExecutionTimedOut(event events.Event) {
 	payload, ok := event.Payload.(events.ExecutionTimedOutPayload)

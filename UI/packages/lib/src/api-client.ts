@@ -41,6 +41,34 @@ const models_UpdateProjectRequest = z
   })
   .partial()
   .passthrough();
+const models_FailedExecutionStats = z
+  .object({ count: z.number().int(), date: z.string() })
+  .partial()
+  .passthrough();
+const models_FailedExecutionsStatsResponse = z
+  .object({
+    stats: z.array(models_FailedExecutionStats),
+    total: z.number().int(),
+  })
+  .partial()
+  .passthrough();
+const models_ExecutionStats = z
+  .object({
+    date: z.string(),
+    failures: z.number().int(),
+    success: z.number().int(),
+    total: z.number().int(),
+  })
+  .partial()
+  .passthrough();
+const models_ExecutionStatsResponse = z
+  .object({ stats: z.array(models_ExecutionStats) })
+  .partial()
+  .passthrough();
+const models_TaskFailureStats = z
+  .object({ failures: z.number().int(), taskId: z.string() })
+  .partial()
+  .passthrough();
 const models_TaskGroupState = z.enum(["RUNNING", "NOT_RUNNING"]);
 const models_TaskGroupStatus = z.enum(["ACTIVE", "DISABLED"]);
 const models_TaskGroup = z
@@ -127,6 +155,7 @@ const models_Task = z
     state: models_TaskState,
     status: models_TaskStatus,
     task_group_id: z.string(),
+    timeout_seconds: z.number().int().gte(1),
     trigger_config: models_TriggerConfig,
     updated_at: z.string(),
     uuid: z.string(),
@@ -143,6 +172,7 @@ const models_CreateTaskRequest = z
     schedule_type: models_ScheduleType,
     status: models_TaskStatus.optional(),
     task_group_id: z.string().optional(),
+    timeout_seconds: z.number().int().gte(1).optional(),
   })
   .passthrough();
 const models_UpdateTaskRequest = z
@@ -154,6 +184,7 @@ const models_UpdateTaskRequest = z
     schedule_type: models_ScheduleType,
     status: models_TaskStatus.optional(),
     task_group_id: z.string().optional(),
+    timeout_seconds: z.number().int().gte(1).optional(),
   })
   .passthrough();
 const models_LogEntry = z
@@ -200,6 +231,11 @@ export const schemas = {
   models_Project,
   models_CreateProjectRequest,
   models_UpdateProjectRequest,
+  models_FailedExecutionStats,
+  models_FailedExecutionsStatsResponse,
+  models_ExecutionStats,
+  models_ExecutionStatsResponse,
+  models_TaskFailureStats,
   models_TaskGroupState,
   models_TaskGroupStatus,
   models_TaskGroup,
@@ -373,6 +409,102 @@ const endpoints = makeApi([
       {
         status: 404,
         description: `Not Found`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 500,
+        description: `Internal Server Error`,
+        schema: models_ErrorResponse,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/projects/:project_id/executions/failed-stats",
+    alias: "getProjectsProject_idexecutionsfailedStats",
+    description: `Retrieve failed executions grouped by date for the last N days`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "project_id",
+        type: "Path",
+        schema: z.string(),
+      },
+      {
+        name: "days",
+        type: "Query",
+        schema: z.number().int().optional(),
+      },
+    ],
+    response: models_FailedExecutionsStatsResponse,
+    errors: [
+      {
+        status: 400,
+        description: `Bad Request`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 500,
+        description: `Internal Server Error`,
+        schema: models_ErrorResponse,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/projects/:project_id/executions/stats",
+    alias: "getProjectsProject_idexecutionsstats",
+    description: `Retrieve execution statistics grouped by date (failures, success, total) for the last N days`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "project_id",
+        type: "Path",
+        schema: z.string(),
+      },
+      {
+        name: "days",
+        type: "Query",
+        schema: z.number().int().optional(),
+      },
+    ],
+    response: models_ExecutionStatsResponse,
+    errors: [
+      {
+        status: 400,
+        description: `Bad Request`,
+        schema: models_ErrorResponse,
+      },
+      {
+        status: 500,
+        description: `Internal Server Error`,
+        schema: models_ErrorResponse,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/projects/:project_id/failures",
+    alias: "getProjectsProject_idfailures",
+    description: `Retrieve failure statistics grouped by task for a specific date`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "project_id",
+        type: "Path",
+        schema: z.string(),
+      },
+      {
+        name: "date",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: z.array(models_TaskFailureStats),
+    errors: [
+      {
+        status: 400,
+        description: `Bad Request`,
         schema: models_ErrorResponse,
       },
       {

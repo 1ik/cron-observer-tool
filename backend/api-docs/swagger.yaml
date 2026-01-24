@@ -75,6 +75,9 @@ definitions:
       task_group_id:
         description: Optional task group ID
         type: string
+      timeout_seconds:
+        minimum: 1
+        type: integer
     required:
     - name
     - project_id
@@ -137,6 +140,28 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
     type: object
+  models.ExecutionStats:
+    properties:
+      date:
+        description: YYYY-MM-DD format
+        type: string
+      failures:
+        description: Number of failed executions
+        type: integer
+      success:
+        description: Number of successful executions
+        type: integer
+      total:
+        description: Total executions
+        type: integer
+    type: object
+  models.ExecutionStatsResponse:
+    properties:
+      stats:
+        items:
+          $ref: '#/definitions/models.ExecutionStats'
+        type: array
+    type: object
   models.ExecutionStatus:
     enum:
     - PENDING
@@ -149,6 +174,25 @@ definitions:
     - ExecutionStatusRunning
     - ExecutionStatusSuccess
     - ExecutionStatusFailed
+  models.FailedExecutionStats:
+    properties:
+      count:
+        description: Number of failed executions on this date
+        type: integer
+      date:
+        description: YYYY-MM-DD format
+        type: string
+    type: object
+  models.FailedExecutionsStatsResponse:
+    properties:
+      stats:
+        items:
+          $ref: '#/definitions/models.FailedExecutionStats'
+        type: array
+      total:
+        description: Total failures in the period
+        type: integer
+    type: object
   models.Frequency:
     properties:
       unit:
@@ -362,6 +406,10 @@ definitions:
         description: Optional reference to task group
         example: 507f1f77bcf86cd799439011
         type: string
+      timeout_seconds:
+        description: Optional timeout in seconds
+        minimum: 1
+        type: integer
       trigger_config:
         allOf:
         - $ref: '#/definitions/models.TriggerConfig'
@@ -371,6 +419,15 @@ definitions:
         type: string
       uuid:
         example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  models.TaskFailureStats:
+    properties:
+      failures:
+        description: Number of failed executions
+        type: integer
+      taskId:
+        description: Task UUID
         type: string
     type: object
   models.TaskGroup:
@@ -564,6 +621,9 @@ definitions:
       task_group_id:
         description: Optional task group ID
         type: string
+      timeout_seconds:
+        minimum: 1
+        type: integer
     required:
     - name
     - schedule_config
@@ -748,6 +808,109 @@ paths:
       summary: Update a project
       tags:
       - projects
+  /projects/{project_id}/executions/failed-stats:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve failed executions grouped by date for the last N days
+      parameters:
+      - description: Project ID
+        in: path
+        name: project_id
+        required: true
+        type: string
+      - description: 'Number of days to look back (default: 7)'
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.FailedExecutionsStatsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get failure statistics for a project
+      tags:
+      - executions
+  /projects/{project_id}/executions/stats:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve execution statistics grouped by date (failures, success,
+        total) for the last N days
+      parameters:
+      - description: Project ID
+        in: path
+        name: project_id
+        required: true
+        type: string
+      - description: 'Number of days to look back (default: 7)'
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ExecutionStatsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get execution statistics for a project
+      tags:
+      - executions
+  /projects/{project_id}/failures:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve failure statistics grouped by task for a specific date
+      parameters:
+      - description: Project ID
+        in: path
+        name: project_id
+        required: true
+        type: string
+      - description: Date in YYYY-MM-DD format
+        in: query
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.TaskFailureStats'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get task failures by date
+      tags:
+      - executions
   /projects/{project_id}/task-groups:
     get:
       consumes:

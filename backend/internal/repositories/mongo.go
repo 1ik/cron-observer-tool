@@ -707,6 +707,100 @@ func (r *MongoRepository) GetExecutionStatsByProject(ctx context.Context, projec
 	return stats, nil
 }
 
+func (r *MongoRepository) GetTaskFailuresByDate(ctx context.Context, projectID primitive.ObjectID, date string) ([]*models.TaskFailureStats, int, error) {
+	collection := r.db.Collection(database.CollectionExecutions)
+
+	// Parse date string (YYYY-MM-DD) to time range
+	parsedDate, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Create date range for the entire day (UTC)
+	startOfDay := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, time.UTC)
+	endOfDay := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 23, 59, 59, 999999999, time.UTC)
+
+	// Get all tasks for this project
+	tasksCollection := r.db.Collection(database.CollectionTasks)
+	taskCursor, err := tasksCollection.Find(ctx, bson.M{"project_id": projectID})
+	if err != nil {
+		return nil, 0, err
+	}
+	defer taskCursor.Close(ctx)
+
+	var tasks []models.Task
+	if err := taskCursor.All(ctx, &tasks); err != nil {
+		return nil, 0, err
+	}
+
+	if len(tasks) == 0 {
+		return []*models.TaskFailureStats{}, 0, nil
+	}
+
+	// Get task IDs
+	taskIDs := make([]primitive.ObjectID, len(tasks))
+	taskIDToUUID := make(map[primitive.ObjectID]string)
+	for i, task := range tasks {
+		taskIDs[i] = task.ID
+		taskIDToUUID[task.ID] = task.UUID
+	}
+
+	// Aggregate failed executions by task_id for the given date
+	pipeline := []bson.M{
+		{
+			"$match": bson.M{
+				"task_id": bson.M{"$in": taskIDs},
+				"status":  models.ExecutionStatusFailed,
+				"started_at": bson.M{
+					"$gte": startOfDay,
+					"$lte": endOfDay,
+				},
+			},
+		},
+		{
+			"$group": bson.M{
+				"_id":   "$task_id",
+				"count": bson.M{"$sum": 1},
+			},
+		},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	type aggregationResult struct {
+		ID    primitive.ObjectID `bson:"_id"`
+		Count int                `bson:"count"`
+	}
+
+	var results []aggregationResult
+	if err := cursor.All(ctx, &results); err != nil {
+		return nil, 0, err
+	}
+
+	// Convert to TaskFailureStats format
+	stats := make([]*models.TaskFailureStats, 0, len(results))
+	total := 0
+	for _, result := range results {
+		taskUUID, exists := taskIDToUUID[result.ID]
+		if !exists {
+			continue // Skip if task not found (shouldn't happen)
+		}
+
+		stat := &models.TaskFailureStats{
+			TaskID:   taskUUID,
+			Failures: result.Count,
+		}
+		stats = append(stats, stat)
+		total += result.Count
+	}
+
+	return stats, total, nil
+}
+
 func NewMongoRepository(db *mongo.Database) *MongoRepository {
 	return &MongoRepository{
 		db: db,

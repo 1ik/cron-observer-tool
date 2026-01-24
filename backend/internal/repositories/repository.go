@@ -52,4 +52,7 @@ type Repository interface {
 	
 	// execution statistics
 	GetExecutionStatsByProject(ctx context.Context, projectID primitive.ObjectID, days int) ([]*models.ExecutionStats, error)
+	
+	// task failures by date
+	GetTaskFailuresByDate(ctx context.Context, projectID primitive.ObjectID, date string) ([]*models.TaskFailureStats, int, error)
 }

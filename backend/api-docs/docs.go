@@ -274,6 +274,160 @@ const docTemplate = `{
                 }
             }
         },
+        "/projects/{project_id}/executions/failed-stats": {
+            "get": {
+                "description": "Retrieve failed executions grouped by date for the last N days",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "executions"
+                ],
+                "summary": "Get failure statistics for a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of days to look back (default: 7)",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.FailedExecutionsStatsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{project_id}/executions/stats": {
+            "get": {
+                "description": "Retrieve execution statistics grouped by date (failures, success, total) for the last N days",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "executions"
+                ],
+                "summary": "Get execution statistics for a project",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of days to look back (default: 7)",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ExecutionStatsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{project_id}/failures": {
+            "get": {
+                "description": "Retrieve failure statistics grouped by task for a specific date",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "executions"
+                ],
+                "summary": "Get task failures by date",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Project ID",
+                        "name": "project_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date in YYYY-MM-DD format",
+                        "name": "date",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.TaskFailureStats"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/projects/{project_id}/task-groups": {
             "get": {
                 "description": "Retrieve all task groups belonging to a project",
@@ -1224,6 +1378,10 @@ const docTemplate = `{
                 "task_group_id": {
                     "description": "Optional task group ID",
                     "type": "string"
+                },
+                "timeout_seconds": {
+                    "type": "integer",
+                    "minimum": 1
                 }
             }
         },
@@ -1307,6 +1465,38 @@ const docTemplate = `{
                 }
             }
         },
+        "models.ExecutionStats": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "description": "YYYY-MM-DD format",
+                    "type": "string"
+                },
+                "failures": {
+                    "description": "Number of failed executions",
+                    "type": "integer"
+                },
+                "success": {
+                    "description": "Number of successful executions",
+                    "type": "integer"
+                },
+                "total": {
+                    "description": "Total executions",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.ExecutionStatsResponse": {
+            "type": "object",
+            "properties": {
+                "stats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ExecutionStats"
+                    }
+                }
+            }
+        },
         "models.ExecutionStatus": {
             "type": "string",
             "enum": [
@@ -1321,6 +1511,34 @@ const docTemplate = `{
                 "ExecutionStatusSuccess",
                 "ExecutionStatusFailed"
             ]
+        },
+        "models.FailedExecutionStats": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "description": "Number of failed executions on this date",
+                    "type": "integer"
+                },
+                "date": {
+                    "description": "YYYY-MM-DD format",
+                    "type": "string"
+                }
+            }
+        },
+        "models.FailedExecutionsStatsResponse": {
+            "type": "object",
+            "properties": {
+                "stats": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.FailedExecutionStats"
+                    }
+                },
+                "total": {
+                    "description": "Total failures in the period",
+                    "type": "integer"
+                }
+            }
         },
         "models.Frequency": {
             "type": "object",
@@ -1633,6 +1851,11 @@ const docTemplate = `{
                     "type": "string",
                     "example": "507f1f77bcf86cd799439011"
                 },
+                "timeout_seconds": {
+                    "description": "Optional timeout in seconds",
+                    "type": "integer",
+                    "minimum": 1
+                },
                 "trigger_config": {
                     "description": "Deprecated: Tasks now use project's execution_endpoint",
                     "allOf": [
@@ -1648,6 +1871,19 @@ const docTemplate = `{
                 "uuid": {
                     "type": "string",
                     "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "models.TaskFailureStats": {
+            "type": "object",
+            "properties": {
+                "failures": {
+                    "description": "Number of failed executions",
+                    "type": "integer"
+                },
+                "taskId": {
+                    "description": "Task UUID",
+                    "type": "string"
                 }
             }
         },
@@ -1937,6 +2173,10 @@ const docTemplate = `{
                 "task_group_id": {
                     "description": "Optional task group ID",
                     "type": "string"
+                },
+                "timeout_seconds": {
+                    "type": "integer",
+                    "minimum": 1
                 }
             }
         }

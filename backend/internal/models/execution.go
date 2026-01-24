@@ -81,3 +81,16 @@ type ExecutionStats struct {
 type ExecutionStatsResponse struct {
 	Stats []ExecutionStats `json:"stats"`
 }
+
+// TaskFailureStats represents failure statistics for a specific task on a date
+type TaskFailureStats struct {
+	TaskID   string `json:"taskId"`   // Task UUID
+	Failures int    `json:"failures"` // Number of failed executions
+}
+
+// TaskFailuresByDateResponse represents the response for task failures by date
+type TaskFailuresByDateResponse struct {
+	Date  string             `json:"date"`  // YYYY-MM-DD format
+	Tasks []TaskFailureStats `json:"tasks"` // List of task failures
+	Total int                `json:"total"` // Total failures across all tasks
+}
