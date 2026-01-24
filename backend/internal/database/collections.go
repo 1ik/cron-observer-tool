@@ -17,6 +17,7 @@ const (
 	CollectionTaskGroups            = "task_groups"
 	CollectionExecutions            = "executions"
 	CollectionExecutionFailureStats = "execution_failure_stats"
+	CollectionTaskFailureStats      = "task_failure_stats"
 )
 
 // GetProjectsCollection returns the projects collection
@@ -54,6 +55,11 @@ func (d *Database) CreateIndexes(ctx context.Context) error {
 	// Create indexes for execution_failure_stats collection
 	if err := d.createExecutionFailureStatsIndexes(ctx); err != nil {
 		return fmt.Errorf("failed to create execution failure stats indexes: %w", err)
+	}
+
+	// Create indexes for task_failure_stats collection
+	if err := d.createTaskFailureStatsIndexes(ctx); err != nil {
+		return fmt.Errorf("failed to create task failure stats indexes: %w", err)
 	}
 
 	return nil
@@ -194,6 +200,42 @@ func (d *Database) createExecutionFailureStatsIndexes(ctx context.Context) error
 		{
 			Keys:    bson.D{{Key: "date", Value: -1}},
 			Options: options.Index().SetName("idx_date"),
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	_, err := collection.Indexes().CreateMany(ctx, indexes)
+	if err != nil {
+		return fmt.Errorf("failed to create indexes: %w", err)
+	}
+
+	return nil
+}
+
+// createTaskFailureStatsIndexes creates indexes for the task_failure_stats collection
+func (d *Database) createTaskFailureStatsIndexes(ctx context.Context) error {
+	collection := d.DB.Collection(CollectionTaskFailureStats)
+	indexes := []mongo.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "project_id", Value: 1},
+				{Key: "date", Value: 1},
+			},
+			Options: options.Index().SetUnique(true).SetName("idx_project_date"),
+		},
+		{
+			Keys:    bson.D{{Key: "project_id", Value: 1}},
+			Options: options.Index().SetName("idx_project_id"),
+		},
+		{
+			Keys:    bson.D{{Key: "date", Value: -1}},
+			Options: options.Index().SetName("idx_date"),
+		},
+		{
+			Keys:    bson.D{{Key: "calculated_at", Value: -1}},
+			Options: options.Index().SetName("idx_calculated_at"),
 		},
 	}
 

@@ -49,10 +49,15 @@ type Repository interface {
 	// failure statistics
 	IncrementFailureStat(ctx context.Context, projectID primitive.ObjectID, date string) error
 	GetFailureStatsByProject(ctx context.Context, projectID primitive.ObjectID, days int) ([]*models.FailedExecutionStats, int, error)
-	
+
 	// execution statistics
 	GetExecutionStatsByProject(ctx context.Context, projectID primitive.ObjectID, days int) ([]*models.ExecutionStats, error)
-	
+
 	// task failures by date
 	GetTaskFailuresByDate(ctx context.Context, projectID primitive.ObjectID, date string) ([]*models.TaskFailureStats, int, error)
+
+	// stored task failure stats (pre-calculated)
+	StoreTaskFailureStats(ctx context.Context, stats *models.StoredTaskFailureStats) error
+	GetStoredTaskFailureStats(ctx context.Context, projectID primitive.ObjectID, date string) (*models.StoredTaskFailureStats, error)
+	CalculateTaskFailureStats(ctx context.Context, projectID primitive.ObjectID, date string) (*models.StoredTaskFailureStats, error)
 }

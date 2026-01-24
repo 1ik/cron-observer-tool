@@ -530,7 +530,7 @@ func (r *MongoRepository) IncrementFailureStat(ctx context.Context, projectID pr
 
 	filter := bson.M{
 		"project_id": projectID,
-		"date":        date,
+		"date":       date,
 	}
 
 	update := bson.M{
@@ -707,13 +707,37 @@ func (r *MongoRepository) GetExecutionStatsByProject(ctx context.Context, projec
 	return stats, nil
 }
 
+// GetTaskFailuresByDate retrieves task failure stats from stored pre-calculated stats
 func (r *MongoRepository) GetTaskFailuresByDate(ctx context.Context, projectID primitive.ObjectID, date string) ([]*models.TaskFailureStats, int, error) {
+	// Try to get stored stats first
+	storedStats, err := r.GetStoredTaskFailureStats(ctx, projectID, date)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// If stored stats exist, return them
+	if storedStats != nil {
+		// Convert []TaskFailureStats to []*TaskFailureStats
+		stats := make([]*models.TaskFailureStats, len(storedStats.Tasks))
+		for i := range storedStats.Tasks {
+			stats[i] = &storedStats.Tasks[i]
+		}
+		return stats, storedStats.Total, nil
+	}
+
+	// If no stored stats, return empty (stats will be calculated by cron job)
+	return []*models.TaskFailureStats{}, 0, nil
+}
+
+// CalculateTaskFailureStats calculates task failure stats for a given project and date
+// This is the same logic as GetTaskFailuresByDate but returns a StoredTaskFailureStats
+func (r *MongoRepository) CalculateTaskFailureStats(ctx context.Context, projectID primitive.ObjectID, date string) (*models.StoredTaskFailureStats, error) {
 	collection := r.db.Collection(database.CollectionExecutions)
 
 	// Parse date string (YYYY-MM-DD) to time range
 	parsedDate, err := time.Parse("2006-01-02", date)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	// Create date range for the entire day (UTC)
@@ -724,17 +748,23 @@ func (r *MongoRepository) GetTaskFailuresByDate(ctx context.Context, projectID p
 	tasksCollection := r.db.Collection(database.CollectionTasks)
 	taskCursor, err := tasksCollection.Find(ctx, bson.M{"project_id": projectID})
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	defer taskCursor.Close(ctx)
 
 	var tasks []models.Task
 	if err := taskCursor.All(ctx, &tasks); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	if len(tasks) == 0 {
-		return []*models.TaskFailureStats{}, 0, nil
+		return &models.StoredTaskFailureStats{
+			ProjectID:    projectID,
+			Date:         date,
+			Tasks:        []models.TaskFailureStats{},
+			Total:        0,
+			CalculatedAt: time.Now().UTC(),
+		}, nil
 	}
 
 	// Get task IDs
@@ -767,7 +797,7 @@ func (r *MongoRepository) GetTaskFailuresByDate(ctx context.Context, projectID p
 
 	cursor, err := collection.Aggregate(ctx, pipeline)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	defer cursor.Close(ctx)
 
@@ -778,11 +808,11 @@ func (r *MongoRepository) GetTaskFailuresByDate(ctx context.Context, projectID p
 
 	var results []aggregationResult
 	if err := cursor.All(ctx, &results); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	// Convert to TaskFailureStats format
-	stats := make([]*models.TaskFailureStats, 0, len(results))
+	taskStats := make([]models.TaskFailureStats, 0, len(results))
 	total := 0
 	for _, result := range results {
 		taskUUID, exists := taskIDToUUID[result.ID]
@@ -790,15 +820,68 @@ func (r *MongoRepository) GetTaskFailuresByDate(ctx context.Context, projectID p
 			continue // Skip if task not found (shouldn't happen)
 		}
 
-		stat := &models.TaskFailureStats{
+		taskStats = append(taskStats, models.TaskFailureStats{
 			TaskID:   taskUUID,
 			Failures: result.Count,
-		}
-		stats = append(stats, stat)
+		})
 		total += result.Count
 	}
 
-	return stats, total, nil
+	return &models.StoredTaskFailureStats{
+		ProjectID:    projectID,
+		Date:         date,
+		Tasks:        taskStats,
+		Total:        total,
+		CalculatedAt: time.Now().UTC(),
+	}, nil
+}
+
+// StoreTaskFailureStats stores pre-calculated task failure stats (upsert)
+func (r *MongoRepository) StoreTaskFailureStats(ctx context.Context, stats *models.StoredTaskFailureStats) error {
+	collection := r.db.Collection(database.CollectionTaskFailureStats)
+
+	// Use upsert to update if exists, insert if not
+	filter := bson.M{
+		"project_id": stats.ProjectID,
+		"date":       stats.Date,
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"tasks":         stats.Tasks,
+			"total":         stats.Total,
+			"calculated_at": stats.CalculatedAt,
+		},
+		"$setOnInsert": bson.M{
+			"project_id": stats.ProjectID,
+			"date":       stats.Date,
+		},
+	}
+
+	opts := options.Update().SetUpsert(true)
+	_, err := collection.UpdateOne(ctx, filter, update, opts)
+	return err
+}
+
+// GetStoredTaskFailureStats retrieves pre-calculated task failure stats
+func (r *MongoRepository) GetStoredTaskFailureStats(ctx context.Context, projectID primitive.ObjectID, date string) (*models.StoredTaskFailureStats, error) {
+	collection := r.db.Collection(database.CollectionTaskFailureStats)
+
+	filter := bson.M{
+		"project_id": projectID,
+		"date":       date,
+	}
+
+	var stats models.StoredTaskFailureStats
+	err := collection.FindOne(ctx, filter).Decode(&stats)
+	if err == mongo.ErrNoDocuments {
+		return nil, nil // Not found, return nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &stats, nil
 }
 
 func NewMongoRepository(db *mongo.Database) *MongoRepository {

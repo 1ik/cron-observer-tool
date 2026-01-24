@@ -468,8 +468,8 @@ func (h *ExecutionHandler) GetTaskFailuresByDate(c *gin.Context) {
 		return
 	}
 
-	// Get task failures by date
-	stats, _, err := h.repo.GetTaskFailuresByDate(c.Request.Context(), projectID, dateParam)
+	// Get stored task failure stats (includes calculated_at timestamp)
+	storedStats, err := h.repo.GetStoredTaskFailureStats(c.Request.Context(), projectID, dateParam)
 	if err != nil {
 		log.Printf("Failed to get task failures for project %s on date %s: %v", projectIDParam, dateParam, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -478,14 +478,26 @@ func (h *ExecutionHandler) GetTaskFailuresByDate(c *gin.Context) {
 		return
 	}
 
-	// Convert pointers to values
-	statsValues := make([]models.TaskFailureStats, len(stats))
-	for i, stat := range stats {
-		statsValues[i] = *stat
+	// If no stored stats, return empty response with current time as calculated_at
+	if storedStats == nil {
+		response := models.TaskFailuresByDateResponse{
+			Date:         dateParam,
+			Tasks:        []models.TaskFailureStats{},
+			Total:        0,
+			CalculatedAt: time.Now().UTC(),
+		}
+		c.JSON(http.StatusOK, response)
+		return
 	}
 
-	// Return array directly as requested: [{taskId: 'sdf', failures: 3}, ...]
-	c.JSON(http.StatusOK, statsValues)
+	// Return response with stored stats and calculated_at timestamp
+	response := models.TaskFailuresByDateResponse{
+		Date:         storedStats.Date,
+		Tasks:        storedStats.Tasks,
+		Total:        storedStats.Total,
+		CalculatedAt: storedStats.CalculatedAt,
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 // HandleExecutionTimedOut handles ExecutionTimedOut events

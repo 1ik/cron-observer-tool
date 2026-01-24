@@ -88,9 +88,20 @@ type TaskFailureStats struct {
 	Failures int    `json:"failures"` // Number of failed executions
 }
 
+// StoredTaskFailureStats represents pre-calculated task failure statistics stored in the database
+type StoredTaskFailureStats struct {
+	ID           primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	ProjectID    primitive.ObjectID `json:"project_id" bson:"project_id"`
+	Date         string             `json:"date" bson:"date"`                   // YYYY-MM-DD format
+	Tasks        []TaskFailureStats `json:"tasks" bson:"tasks"`                 // List of task failures
+	Total        int                `json:"total" bson:"total"`                 // Total failures across all tasks
+	CalculatedAt time.Time          `json:"calculated_at" bson:"calculated_at"` // When stats were calculated
+}
+
 // TaskFailuresByDateResponse represents the response for task failures by date
 type TaskFailuresByDateResponse struct {
-	Date  string             `json:"date"`  // YYYY-MM-DD format
-	Tasks []TaskFailureStats `json:"tasks"` // List of task failures
-	Total int                `json:"total"` // Total failures across all tasks
+	Date         string             `json:"date"`          // YYYY-MM-DD format
+	Tasks        []TaskFailureStats `json:"tasks"`         // List of task failures
+	Total        int                `json:"total"`         // Total failures across all tasks
+	CalculatedAt time.Time          `json:"calculated_at"` // When stats were last calculated
 }

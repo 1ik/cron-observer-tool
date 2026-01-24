@@ -1,6 +1,6 @@
 'use client'
 
-import { useExecutionsByTask, useProjects, useTaskFailuresByDate, useTaskGroupsByProject, useTasksByProject } from '@cron-observer/lib'
+import { useExecutionsByTask, useProjects, useTaskFailuresByDate as useTaskFailuresByDateHook, useTaskGroupsByProject, useTasksByProject } from '@cron-observer/lib'
 import { Box, Flex, Heading, Spinner, Text } from '@radix-ui/themes'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -47,16 +47,18 @@ export function ProjectPageContent({ projectId, selectedTaskId }: ProjectPageCon
   const { data: taskGroups = [], isLoading: isLoadingTaskGroups, error: taskGroupsError } = useTaskGroupsByProject(projectObjectId || '')
 
   // Fetch task failures for current date (polls every 10 seconds)
-  const { data: taskFailures = [] } = useTaskFailuresByDate(projectObjectId || null, currentDate)
+  const { data: taskFailuresResponse } = useTaskFailuresByDateHook(projectObjectId || null, currentDate)
 
   // Create a map of task UUID -> failures count for quick lookup
   const taskFailuresMap = useMemo(() => {
     const map = new Map<string, number>()
-    taskFailures.forEach((failure) => {
-      map.set(failure.taskId, failure.failures)
-    })
+    if (taskFailuresResponse?.tasks) {
+      taskFailuresResponse.tasks.forEach((failure) => {
+        map.set(failure.taskId, failure.failures)
+      })
+    }
     return map
-  }, [taskFailures])
+  }, [taskFailuresResponse])
 
   // Find the selected task to get its UUID (memoized to ensure proper updates)
   const selectedTask = useMemo(() => {

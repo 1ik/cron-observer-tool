@@ -516,12 +516,12 @@ export async function getExecutionStats(
  * Get task failures by date for a project
  * @param projectId - Project ID (MongoDB ObjectID)
  * @param date - Date in YYYY-MM-DD format
- * @returns Promise resolving to array of task failures
+ * @returns Promise resolving to task failures response with calculated_at timestamp
  */
 export async function getTaskFailuresByDate(
   projectId: string,
   date: string
-): Promise<Array<{ taskId: string; failures: number }>> {
+): Promise<{ date: string; tasks: Array<{ taskId: string; failures: number }>; total: number; calculated_at: string }> {
   if (!projectId) {
     throw new Error('Missing required parameter: projectId is required');
   }
