@@ -68,3 +68,16 @@ type FailedExecutionsStatsResponse struct {
 	Stats []FailedExecutionStats `json:"stats"`
 	Total int                    `json:"total"` // Total failures in the period
 }
+
+// ExecutionStats represents execution statistics grouped by date
+type ExecutionStats struct {
+	Date     string `json:"date"`     // YYYY-MM-DD format
+	Failures int    `json:"failures"` // Number of failed executions
+	Success  int    `json:"success"`  // Number of successful executions
+	Total    int    `json:"total"`    // Total executions
+}
+
+// ExecutionStatsResponse represents the response for execution statistics
+type ExecutionStatsResponse struct {
+	Stats []ExecutionStats `json:"stats"`
+}

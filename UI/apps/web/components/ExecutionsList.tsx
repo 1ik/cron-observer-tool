@@ -4,14 +4,14 @@ import { useTasksByProject, useTriggerTask } from '@cron-observer/lib'
 import { useToast } from '@cron-observer/ui'
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons'
 import * as Popover from '@radix-ui/react-popover'
-import { Box, Button, Flex, IconButton, Spinner, Text, Tooltip } from '@radix-ui/themes'
+import { Box, Button, Flex, IconButton, Spinner, Tabs, Text, Tooltip } from '@radix-ui/themes'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { DayPicker } from 'react-day-picker'
 import 'react-day-picker/dist/style.css'
 import { Execution } from '../lib/types/execution'
 import { ExecutionItem } from './ExecutionItem'
-import { FailedExecutionsStats } from './FailedExecutionsStats'
+import { ExecutionStatsTable } from './ExecutionStatsTable'
 
 interface ExecutionsListProps {
   executions: Execution[]
@@ -132,6 +132,7 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
   }
   
   const isTriggering = triggerTaskMutation.isPending
+  const [activeTab, setActiveTab] = useState('executions')
 
   return (
     <Flex
@@ -142,24 +143,36 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
         overflow: 'hidden',
       }}
     >
-      {/* Failure Statistics */}
-      <FailedExecutionsStats projectId={projectId || null} days={7} />
-
-      {/* Sticky header */}
+      {/* Tabs Header */}
       <Box
-        py="3"
-        pl="3"
-        pr="4"
         style={{
           flexShrink: 0,
           borderBottom: '1px solid var(--gray-6)',
         }}
       >
-        <Flex justify="between" align="center" gap="3">
-          <Flex align="center" gap="2">
-            <Text size="2" weight="medium" color="gray">
-              Executions
-            </Text>
+        <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
+          <Tabs.List>
+            <Tabs.Trigger value="executions">Executions</Tabs.Trigger>
+            <Tabs.Trigger value="stats">Stats</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
+      </Box>
+
+      {/* Tab Content */}
+      {activeTab === 'executions' && (
+        <>
+          {/* Sticky header */}
+          <Box
+            py="3"
+            pl="3"
+            pr="4"
+            style={{
+              flexShrink: 0,
+              borderBottom: '1px solid var(--gray-6)',
+            }}
+          >
+            <Flex justify="between" align="center" gap="3">
+              <Flex align="center" gap="2">
             <Popover.Root>
               <Popover.Trigger asChild>
                 <Button
@@ -393,6 +406,20 @@ export function ExecutionsList({ executions, isLoading = false, selectedTaskId, 
           </Box>
         )}
       </Flex>
+        </>
+      )}
+
+      {activeTab === 'stats' && (
+        <Box
+          style={{
+            flex: 1,
+            overflow: 'hidden',
+            minHeight: 0,
+          }}
+        >
+          <ExecutionStatsTable projectId={projectId || null} days={7} />
+        </Box>
+      )}
     </Flex>
   )
 }

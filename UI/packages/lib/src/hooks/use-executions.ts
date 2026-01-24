@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getExecutionsByTaskUUID, getFailedExecutionsStats } from '../api';
+import { getExecutionsByTaskUUID, getFailedExecutionsStats, getExecutionStats } from '../api';
 
 /**
  * Query keys for executions
@@ -72,6 +72,20 @@ export function useFailedExecutionsStats(projectId: string | null, days: number 
   return useQuery({
     queryKey: ['executions', 'failed-stats', projectId, days],
     queryFn: () => getFailedExecutionsStats(projectId!, days),
+    enabled: !!projectId,
+    staleTime: 30000, // 30 seconds
+  });
+}
+
+/**
+ * Hook to fetch execution statistics for a project
+ * @param projectId - Project ID (MongoDB ObjectID)
+ * @param days - Number of days to look back (default: 7)
+ */
+export function useExecutionStats(projectId: string | null, days: number = 7) {
+  return useQuery({
+    queryKey: ['execution-stats', projectId, days],
+    queryFn: () => getExecutionStats(projectId!, days),
     enabled: !!projectId,
     staleTime: 30000, // 30 seconds
   });

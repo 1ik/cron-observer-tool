@@ -589,6 +589,124 @@ func (r *MongoRepository) GetFailureStatsByProject(ctx context.Context, projectI
 	return result, total, nil
 }
 
+func (r *MongoRepository) GetExecutionStatsByProject(ctx context.Context, projectID primitive.ObjectID, days int) ([]*models.ExecutionStats, error) {
+	collection := r.db.Collection(database.CollectionExecutions)
+
+	// Calculate date range (last N days)
+	now := time.Now().UTC()
+	startDate := now.AddDate(0, 0, -days)
+	startOfDay := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, time.UTC)
+
+	// Get all tasks for this project
+	tasksCollection := r.db.Collection(database.CollectionTasks)
+	taskCursor, err := tasksCollection.Find(ctx, bson.M{"project_id": projectID})
+	if err != nil {
+		return nil, err
+	}
+	defer taskCursor.Close(ctx)
+
+	var tasks []models.Task
+	if err := taskCursor.All(ctx, &tasks); err != nil {
+		return nil, err
+	}
+
+	if len(tasks) == 0 {
+		return []*models.ExecutionStats{}, nil
+	}
+
+	// Get task IDs
+	taskIDs := make([]primitive.ObjectID, len(tasks))
+	for i, task := range tasks {
+		taskIDs[i] = task.ID
+	}
+
+	// Aggregate executions by date and status
+	pipeline := []bson.M{
+		{
+			"$match": bson.M{
+				"task_id": bson.M{"$in": taskIDs},
+				"started_at": bson.M{
+					"$gte": startOfDay,
+				},
+			},
+		},
+		{
+			"$group": bson.M{
+				"_id": bson.M{
+					"date": bson.M{
+						"$dateToString": bson.M{
+							"format": "%Y-%m-%d",
+							"date":   "$started_at",
+						},
+					},
+					"status": "$status",
+				},
+				"count": bson.M{"$sum": 1},
+			},
+		},
+		{
+			"$group": bson.M{
+				"_id": "$_id.date",
+				"statuses": bson.M{
+					"$push": bson.M{
+						"status": "$_id.status",
+						"count":  "$count",
+					},
+				},
+			},
+		},
+		{
+			"$sort": bson.M{"_id": -1},
+		},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	type aggregationResult struct {
+		ID       string `bson:"_id"`
+		Statuses []struct {
+			Status string `bson:"status"`
+			Count  int    `bson:"count"`
+		} `bson:"statuses"`
+	}
+
+	var results []aggregationResult
+	if err := cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+
+	// Convert to ExecutionStats format
+	stats := make([]*models.ExecutionStats, 0, len(results))
+	for _, result := range results {
+		stat := &models.ExecutionStats{
+			Date:     result.ID,
+			Failures: 0,
+			Success:  0,
+			Total:    0,
+		}
+
+		for _, statusCount := range result.Statuses {
+			count := statusCount.Count
+			stat.Total += count
+
+			switch models.ExecutionStatus(statusCount.Status) {
+			case models.ExecutionStatusFailed:
+				stat.Failures += count
+			case models.ExecutionStatusSuccess:
+				stat.Success += count
+			}
+		}
+
+		stats = append(stats, stat)
+	}
+
+	return stats, nil
+}
+
 func NewMongoRepository(db *mongo.Database) *MongoRepository {
 	return &MongoRepository{
 		db: db,

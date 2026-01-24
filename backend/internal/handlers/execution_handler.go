@@ -355,6 +355,71 @@ func (h *ExecutionHandler) GetFailedExecutionsStats(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// GetExecutionStats retrieves execution statistics for a project
+// @Summary      Get execution statistics for a project
+// @Description  Retrieve execution statistics grouped by date (failures, success, total) for the last N days
+// @Tags         executions
+// @Accept       json
+// @Produce      json
+// @Param        project_id path string true "Project ID"
+// @Param        days query int false "Number of days to look back (default: 7)"
+// @Success      200  {object}  models.ExecutionStatsResponse
+// @Failure      400  {object}  models.ErrorResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Router       /projects/{project_id}/executions/stats [get]
+func (h *ExecutionHandler) GetExecutionStats(c *gin.Context) {
+	projectIDParam := c.Param("project_id")
+	if projectIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "project_id is required in path",
+		})
+		return
+	}
+
+	// Parse project ID
+	projectID, err := primitive.ObjectIDFromHex(projectIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid project_id format",
+		})
+		return
+	}
+
+	// Parse optional days parameter (default: 7, max: 30)
+	days := 7
+	if daysParam := c.Query("days"); daysParam != "" {
+		if parsedDays, err := strconv.Atoi(daysParam); err == nil && parsedDays > 0 {
+			if parsedDays > 30 {
+				days = 30
+			} else {
+				days = parsedDays
+			}
+		}
+	}
+
+	// Get execution stats
+	stats, err := h.repo.GetExecutionStatsByProject(c.Request.Context(), projectID, days)
+	if err != nil {
+		log.Printf("Failed to get execution stats for project %s: %v", projectIDParam, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get execution statistics",
+		})
+		return
+	}
+
+	// Convert pointers to values
+	statsValues := make([]models.ExecutionStats, len(stats))
+	for i, stat := range stats {
+		statsValues[i] = *stat
+	}
+
+	response := models.ExecutionStatsResponse{
+		Stats: statsValues,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
 // HandleExecutionTimedOut handles ExecutionTimedOut events
 func (h *ExecutionHandler) HandleExecutionTimedOut(event events.Event) {
 	payload, ok := event.Payload.(events.ExecutionTimedOutPayload)
