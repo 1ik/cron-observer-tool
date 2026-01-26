@@ -22,7 +22,7 @@ tasks:
     desc: Start MongoDB and run migrations
     cmds:
       - echo "📦 Starting MongoDB..."
-      - docker-compose up -d
+      - docker-compose -f docker-compose.dev.yml up -d
       - echo "⏳ Waiting for MongoDB to be ready..."
       - sleep 3
       - echo "🔄 Running migrations..."
@@ -83,3 +83,9 @@ tasks:
         task ui &
         PIDS+=($!)
         wait
+
+  # Build and push Docker image
+  build:
+    desc: Build Docker image and optionally push to Docker Hub
+    cmds:
+      - bash scripts/build-and-push.sh {{.CLI_ARGS}}

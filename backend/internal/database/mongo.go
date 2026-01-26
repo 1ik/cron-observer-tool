@@ -43,13 +43,21 @@ func (d *Database) FindAll(ctx context.Context, collection string, filter interf
 // NewConnection creates a new MongoDB connection
 func NewConnection() (*Database, error) {
 	// Get connection string from environment or use default
-	uri := os.Getenv("MONGODB_URI")
+	// Check DATABASE_URI first (used by config system), then MONGODB_URI for backward compatibility
+	uri := os.Getenv("DATABASE_URI")
+	if uri == "" {
+		uri = os.Getenv("MONGODB_URI")
+	}
 	if uri == "" {
 		uri = "mongodb://localhost:27017"
 	}
 
 	// Get database name from environment or use default
-	dbName := os.Getenv("DB_NAME")
+	// Check DATABASE_NAME first (used by config system), then DB_NAME for backward compatibility
+	dbName := os.Getenv("DATABASE_NAME")
+	if dbName == "" {
+		dbName = os.Getenv("DB_NAME")
+	}
 	if dbName == "" {
 		dbName = "cronobserver"
 	}

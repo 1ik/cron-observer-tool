@@ -2,30 +2,37 @@ import { createApiClient } from './api-client';
 
 // Default API base URL - can be overridden via environment variable
 const getDefaultApiBaseUrl = (): string => {
-  // Check for environment variable first (for both client and server)
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const env = (globalThis as any).process?.env;
-    if (env?.NEXT_PUBLIC_API_BASE_URL) {
-      return env.NEXT_PUBLIC_API_BASE_URL;
-    }
-  } catch {
-    // process not available, continue
+  // Next.js embeds NEXT_PUBLIC_* variables at build time
+  // Access it directly - Next.js will replace this with the actual value
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const globalProcess = typeof globalThis !== 'undefined' ? (globalThis as any).process : undefined;
+  const envVar = globalProcess?.env?.NEXT_PUBLIC_API_BASE_URL;
+  
+  if (envVar) {
+    return envVar;
   }
 
-  // In browser, check for window.env or use default backend URL
+  // Fallback: Check window.__ENV__ (for custom runtime injection)
   if (typeof window !== 'undefined') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const windowEnv = (window as any).__ENV__;
     if (windowEnv?.NEXT_PUBLIC_API_BASE_URL) {
       return windowEnv.NEXT_PUBLIC_API_BASE_URL;
     }
-    // Default to backend server on port 8080
+    // For production/subdomain deployment, use relative path
+    // This works for both same-origin requests and subdomain deployments
+    return '/api/v1';
+  }
+
+  // Server-side default (when process.env is available but NEXT_PUBLIC_API_BASE_URL is not set)
+  // This case should ideally be covered by NEXT_PUBLIC_API_BASE_URL being set at build time
+  // but acts as a fallback for server-side rendering if not explicitly provided.
+  if (globalProcess?.env) {
     return 'http://localhost:8080/api/v1';
   }
 
-  // Server-side default
-  return 'http://localhost:8080/api/v1';
+  // Final fallback
+  return '/api/v1';
 };
 
 const DEFAULT_API_BASE_URL = getDefaultApiBaseUrl();

@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	_ "time/tzdata" // Embed IANA timezone database for timezone loading
+
 	"github.com/robfig/cron/v3"
 	"github.com/yourusername/cron-observer/backend/internal/events"
 	"github.com/yourusername/cron-observer/backend/internal/models"
@@ -25,7 +27,12 @@ type Scheduler struct {
 
 // New creates a new Scheduler instance
 func New(eventBus *events.EventBus, repo repositories.Repository) *Scheduler {
-	c := cron.New(cron.WithSeconds()) // Using WithSeconds for more precise scheduling
+	// Configure cron to use local timezone (container timezone, set to Asia/Dhaka)
+	// This allows cron expressions to be written in the container's local timezone
+	c := cron.New(
+		cron.WithSeconds(), // Using WithSeconds for more precise scheduling
+		// No WithLocation - uses system/local timezone (Asia/Dhaka in container)
+	)
 
 	return &Scheduler{
 		cron:      c,
@@ -407,14 +414,17 @@ func (s *Scheduler) registerGroupWindowJobs(taskGroup *models.TaskGroup) error {
 	// Convert start time to cron expression
 	startCron, err := timeToCronExpression(taskGroup.StartTime, taskGroup.Timezone)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to convert start time to cron: %w", err)
 	}
 
 	// Convert end time to cron expression
 	endCron, err := timeToCronExpression(taskGroup.EndTime, taskGroup.Timezone)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to convert end time to cron: %w", err)
 	}
+
+	log.Printf("[GROUP] Registering window jobs for group %s: start=%s (time: %s), end=%s (time: %s), timezone=%s",
+		taskGroup.UUID, startCron, taskGroup.StartTime, endCron, taskGroup.EndTime, taskGroup.Timezone)
 
 	// Create start job
 	startJob := &GroupStartJob{
@@ -528,30 +538,36 @@ func (s *Scheduler) calculateTaskGroupState(ctx context.Context, taskGroup *mode
 }
 
 // timeToCronExpression converts HH:MM time to daily cron expression
-// Assumes time is in the given timezone, converts to UTC for cron
+// Assumes time is in the given timezone, converts to container's local timezone (Asia/Dhaka)
 func timeToCronExpression(timeStr, timezone string) (string, error) {
 	// Parse time (HH:MM format)
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to load timezone %s: %w", timezone, err)
 	}
 
 	// Parse the time string
 	t, err := time.Parse("15:04", timeStr)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to parse time %s: %w", timeStr, err)
 	}
 
 	// Create a time for today in the group's timezone
-	now := time.Now().In(loc)
-	today := time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), 0, 0, loc)
+	now := time.Now()
+	nowInLoc := now.In(loc)
+	today := time.Date(nowInLoc.Year(), nowInLoc.Month(), nowInLoc.Day(), t.Hour(), t.Minute(), 0, 0, loc)
 
-	// Convert to UTC
-	utcTime := today.UTC()
+	// Convert to container's local timezone (Asia/Dhaka)
+	// The container TZ is set to Asia/Dhaka, so time.Now() uses that timezone
+	localTime := today.In(time.Local)
 
 	// Create cron expression: second minute hour day month weekday
 	// Format: "second minute hour * * *"
-	return fmt.Sprintf("%d %d %d * * *", utcTime.Second(), utcTime.Minute(), utcTime.Hour()), nil
+	cronExpr := fmt.Sprintf("%d %d %d * * *", localTime.Second(), localTime.Minute(), localTime.Hour())
+
+	log.Printf("[CRON] Converting time: %s %s -> Local %s (cron: %s)", timeStr, timezone, localTime.Format("15:04:05 MST"), cronExpr)
+
+	return cronExpr, nil
 }
 
 // parseTimeInLocation parses HH:MM time string in the given location for today
