@@ -36,7 +36,8 @@ export function StatusAndStateDots({ status, state, size = 6, tooltip }: StatusA
   const statusTooltipText = tooltip || getStatusTooltip(status)
 
   // State dot: Only show when RUNNING (blue)
-  const shouldShowStateDot = state === 'RUNNING'
+  // Temporarily disabled - blue marker for running within time window
+  // const shouldShowStateDot = state === 'RUNNING'
 
   return (
     <Flex align="center" gap="1">
@@ -54,7 +55,8 @@ export function StatusAndStateDots({ status, state, size = 6, tooltip }: StatusA
         />
       </Tooltip>
       {/* State dot (blue) - only show when RUNNING */}
-      {shouldShowStateDot && (
+      {/* Temporarily disabled - blue marker for running within time window */}
+      {/* {shouldShowStateDot && (
         <Tooltip content="Running (within time window)">
           <Box
             style={{
@@ -67,7 +69,7 @@ export function StatusAndStateDots({ status, state, size = 6, tooltip }: StatusA
             }}
           />
         </Tooltip>
-      )}
+      )} */}
     </Flex>
   )
 }
