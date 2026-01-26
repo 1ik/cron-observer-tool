@@ -5,7 +5,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongo-data:/data/db
+      - ./data/mongodb:/data/db
     environment:
       - MONGO_INITDB_DATABASE=cronobserver
     healthcheck:
@@ -33,7 +33,3 @@ services:
       mongodb:
         condition: service_healthy
     restart: unless-stopped
-
-volumes:
-  mongo-data:
-    driver: local
