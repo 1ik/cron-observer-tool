@@ -6,24 +6,23 @@ import (
 
 	"github.com/yourusername/cron-observer/backend/internal/models"
 	"github.com/yourusername/cron-observer/backend/internal/repositories"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // GroupStartJob represents a cron job that registers all tasks in a group
 type GroupStartJob struct {
-	TaskGroupID primitive.ObjectID
-	Scheduler   *Scheduler
-	Repo        repositories.Repository
+	TaskGroupUUID string // Use UUID instead of ObjectID to avoid zeroing issues
+	Scheduler     *Scheduler
+	Repo          repositories.Repository
 }
 
-// Run executes the group start job - registers all tasks in the group
+// Run executes the group start job - registers all tasks in a group
 func (j *GroupStartJob) Run() {
 	ctx := context.Background()
 
-	// Get the task group
-	taskGroup, err := j.Repo.GetTaskGroupByID(ctx, j.TaskGroupID)
+	// Get the task group by UUID (more reliable than ObjectID which can get zeroed)
+	taskGroup, err := j.Repo.GetTaskGroupByUUID(ctx, j.TaskGroupUUID)
 	if err != nil {
-		log.Printf("[GROUP] Failed to get task group %s: %v", j.TaskGroupID.Hex(), err)
+		log.Printf("[GROUP] Failed to get task group %s: %v", j.TaskGroupUUID, err)
 		return
 	}
 
@@ -38,8 +37,8 @@ func (j *GroupStartJob) Run() {
 		log.Printf("[GROUP] Failed to update group %s state to RUNNING: %v", taskGroup.UUID, err)
 	}
 
-	// Get all tasks in this group
-	tasks, err := j.Repo.GetTasksByGroupID(ctx, j.TaskGroupID)
+	// Get all tasks in this group (using the ObjectID from the retrieved task group)
+	tasks, err := j.Repo.GetTasksByGroupID(ctx, taskGroup.ID)
 	if err != nil {
 		log.Printf("[GROUP] Failed to get tasks for group %s: %v", taskGroup.UUID, err)
 		return
@@ -66,19 +65,19 @@ func (j *GroupStartJob) Run() {
 
 // GroupEndJob represents a cron job that unregisters all tasks in a group
 type GroupEndJob struct {
-	TaskGroupID primitive.ObjectID
-	Scheduler   *Scheduler
-	Repo        repositories.Repository
+	TaskGroupUUID string // Use UUID instead of ObjectID to avoid zeroing issues
+	Scheduler     *Scheduler
+	Repo          repositories.Repository
 }
 
 // Run executes the group end job - unregisters all tasks in the group
 func (j *GroupEndJob) Run() {
 	ctx := context.Background()
 
-	// Get the task group
-	taskGroup, err := j.Repo.GetTaskGroupByID(ctx, j.TaskGroupID)
+	// Get the task group by UUID (more reliable than ObjectID which can get zeroed)
+	taskGroup, err := j.Repo.GetTaskGroupByUUID(ctx, j.TaskGroupUUID)
 	if err != nil {
-		log.Printf("[GROUP] Failed to get task group %s: %v", j.TaskGroupID.Hex(), err)
+		log.Printf("[GROUP] Failed to get task group %s: %v", j.TaskGroupUUID, err)
 		return
 	}
 
@@ -87,8 +86,8 @@ func (j *GroupEndJob) Run() {
 		log.Printf("[GROUP] Failed to update group %s state to NOT_RUNNING: %v", taskGroup.UUID, err)
 	}
 
-	// Get all tasks in this group
-	tasks, err := j.Repo.GetTasksByGroupID(ctx, j.TaskGroupID)
+	// Get all tasks in this group (using the ObjectID from the retrieved task group)
+	tasks, err := j.Repo.GetTasksByGroupID(ctx, taskGroup.ID)
 	if err != nil {
 		log.Printf("[GROUP] Failed to get tasks for group %s: %v", taskGroup.UUID, err)
 		return

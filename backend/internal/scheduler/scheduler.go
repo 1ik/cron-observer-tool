@@ -426,22 +426,22 @@ func (s *Scheduler) registerGroupWindowJobs(taskGroup *models.TaskGroup) error {
 	log.Printf("[GROUP] Registering window jobs for group %s: start=%s (time: %s), end=%s (time: %s), timezone=%s",
 		taskGroup.UUID, startCron, taskGroup.StartTime, endCron, taskGroup.EndTime, taskGroup.Timezone)
 
-	// Create start job
+	// Create start job (use UUID instead of ObjectID to avoid zeroing issues)
 	startJob := &GroupStartJob{
-		TaskGroupID: taskGroup.ID,
-		Scheduler:   s,
-		Repo:        s.repo,
+		TaskGroupUUID: taskGroup.UUID,
+		Scheduler:     s,
+		Repo:          s.repo,
 	}
 	startEntryID, err := s.cron.AddJob(startCron, startJob)
 	if err != nil {
 		return err
 	}
 
-	// Create end job
+	// Create end job (use UUID instead of ObjectID to avoid zeroing issues)
 	endJob := &GroupEndJob{
-		TaskGroupID: taskGroup.ID,
-		Scheduler:   s,
-		Repo:        s.repo,
+		TaskGroupUUID: taskGroup.UUID,
+		Scheduler:     s,
+		Repo:          s.repo,
 	}
 	endEntryID, err := s.cron.AddJob(endCron, endJob)
 	if err != nil {
