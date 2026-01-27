@@ -33,3 +33,17 @@ services:
       mongodb:
         condition: service_healthy
     restart: unless-stopped
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: cron-observer-dozzle
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: --base /logs
+    ports:
+      - "127.0.0.1:8081:8080"
+    environment:
+      - DOZZLE_LEVEL=info
+      - DOZZLE_TAILSIZE=300
+      - DOZZLE_FILTER=name=cron-observer|name=cronobserver-mongodb
+    restart: unless-stopped
