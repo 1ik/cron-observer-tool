@@ -34,28 +34,28 @@ The delete flow is split into two phases:
 ### 2.1 Sequence diagram
 
 ```mermaid
-flowchart TD
-  client[ClientUI]
-  api[HTTP_DeleteTask]
-  repo[MongoRepository]
-  broker[MessageBroker]
-  worker[DeleteWorker]
-  sched[Scheduler]
-  eventBus[EventBus]
+sequenceDiagram
+    participant client as ClientUI
+    participant api as HTTP_DeleteTask
+    participant repo as MongoRepository
+    participant broker as MessageBroker
+    participant worker as DeleteWorker
+    participant sched as Scheduler
+    participant eventBus as EventBus
 
-  client -->|"DELETE /projects/{project_id}/tasks/{task_uuid}"| api
-  api -->|GetTaskByUUID| repo
-  api -->|"Update status=PENDING_DELETE"| repo
-  api -->|Publish DeleteTaskMessage| broker
-  api -->|"202 Accepted (\"PENDING_DELETE\")"| client
+    client->>api: DELETE /projects/{project_id}/tasks/{task_uuid}
+    api->>repo: GetTaskByUUID
+    api->>repo: Update status=PENDING_DELETE
+    api->>broker: Publish DeleteTaskMessage
+    api->>client: 202 Accepted (PENDING_DELETE)
 
-  broker -->|deliver DeleteTaskMessage| worker
-  worker -->|GetTaskByUUID| repo
-  worker -->|"UnregisterTask(task_uuid)"| sched
-  worker -->|"DeleteTask(task_uuid)"| repo
-  worker -->|Publish TaskDeleted| eventBus
-  eventBus -->|TaskDeleted| sched
-  worker -->|Ack message| broker
+    broker->>worker: deliver DeleteTaskMessage
+    worker->>repo: GetTaskByUUID
+    worker->>sched: UnregisterTask(task_uuid)
+    worker->>repo: DeleteTask(task_uuid)
+    worker->>eventBus: Publish TaskDeleted
+    eventBus->>sched: TaskDeleted
+    worker->>broker: Ack message
 ```
 
 ---
