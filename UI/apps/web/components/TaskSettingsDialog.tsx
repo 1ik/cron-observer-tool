@@ -156,7 +156,7 @@ export function TaskSettingsDialog({
                 size="3"
                 maxLength={255}
                 color={errors.name ? 'red' : undefined}
-                disabled={isReadOnly}
+                readOnly
               />
               {errors.name && (
                 <Text size="2" color="red">
