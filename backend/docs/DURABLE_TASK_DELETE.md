@@ -43,16 +43,16 @@ flowchart TD
   sched[Scheduler]
   eventBus[EventBus]
 
-  client -->|DELETE /projects/{project_id}/tasks/{task_uuid}| api
+  client -->|"DELETE /projects/{project_id}/tasks/{task_uuid}"| api
   api -->|GetTaskByUUID| repo
-  api -->|Update status=PENDING_DELETE| repo
+  api -->|"Update status=PENDING_DELETE"| repo
   api -->|Publish DeleteTaskMessage| broker
-  api -->|202 Accepted (\"PENDING_DELETE\")| client
+  api -->|"202 Accepted (\"PENDING_DELETE\")"| client
 
   broker -->|deliver DeleteTaskMessage| worker
   worker -->|GetTaskByUUID| repo
-  worker -->|UnregisterTask(task_uuid)| sched
-  worker -->|DeleteTask(task_uuid)| repo
+  worker -->|"UnregisterTask(task_uuid)"| sched
+  worker -->|"DeleteTask(task_uuid)"| repo
   worker -->|Publish TaskDeleted| eventBus
   eventBus -->|TaskDeleted| sched
   worker -->|Ack message| broker
