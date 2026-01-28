@@ -103,6 +103,7 @@ Cron Observer (Tracks & Displays)
 
 - **docs/MODULE_XX_*.md**: Phase-by-phase implementation guides
 - Each module is self-contained and can be implemented independently
+- **backend/docs/DURABLE_TASK_DELETE.md**: Design and flow for the durable, asynchronous task deletion pipeline (cron stop → hard delete → event/ack)
 
 ## Development Approach
 
