@@ -43,6 +43,18 @@ func (r *MongoRepository) GetProjectByID(ctx context.Context, projectID primitiv
 	return &project, nil
 }
 
+// GetProjectByName returns a project by name (case-insensitive). Returns mongo.ErrNoDocuments if not found.
+func (r *MongoRepository) GetProjectByName(ctx context.Context, name string) (*models.Project, error) {
+	collection := r.db.Collection(database.CollectionProjects)
+	opts := options.FindOne().SetCollation(&options.Collation{Locale: "en", Strength: 2})
+	var project models.Project
+	err := collection.FindOne(ctx, bson.M{"name": name}, opts).Decode(&project)
+	if err != nil {
+		return nil, err
+	}
+	return &project, nil
+}
+
 func (r *MongoRepository) GetUserProjects(ctx context.Context, email string) ([]*models.Project, error) {
 	collection := r.db.Collection(database.CollectionProjects)
 

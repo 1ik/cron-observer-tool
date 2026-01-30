@@ -78,6 +78,13 @@ func (d *Database) createProjectIndexes(ctx context.Context) error {
 			Options: options.Index().SetUnique(true).SetName("idx_api_key"),
 		},
 		{
+			Keys: bson.D{{Key: "name", Value: 1}},
+			Options: options.Index().
+				SetUnique(true).
+				SetName("idx_name_unique").
+				SetCollation(&options.Collation{Locale: "en", Strength: 2}), // case-insensitive
+		},
+		{
 			Keys:    bson.D{{Key: "created_at", Value: -1}},
 			Options: options.Index().SetName("idx_created_at"),
 		},

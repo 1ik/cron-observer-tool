@@ -32,7 +32,8 @@ go.work
 .DS_Store
 Thumbs.db
 
-# Docker volumes
+# Docker volumes / local DB data
+data/
 mongo-data/
 
 artifacts

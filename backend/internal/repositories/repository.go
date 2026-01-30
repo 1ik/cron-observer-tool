@@ -12,6 +12,7 @@ import (
 type Repository interface {
 	GetAllProjects(ctx context.Context) ([]*models.Project, error)
 	GetProjectByID(ctx context.Context, projectID primitive.ObjectID) (*models.Project, error)
+	GetProjectByName(ctx context.Context, name string) (*models.Project, error)
 	GetUserProjects(ctx context.Context, email string) ([]*models.Project, error)
 	CreateProject(ctx context.Context, project *models.Project) error
 	UpdateProject(ctx context.Context, projectID primitive.ObjectID, project *models.Project) error

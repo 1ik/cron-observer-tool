@@ -1,15 +1,12 @@
 import { createApiClient } from './api-client';
 
 // Default API base URL - can be overridden via environment variable
+// IMPORTANT: Use literal process.env.NEXT_PUBLIC_API_BASE_URL so Next.js can inline it at build time.
+// Dynamic access (e.g. globalThis.process?.env) is NOT replaced and breaks local dev.
 const getDefaultApiBaseUrl = (): string => {
-  // Next.js embeds NEXT_PUBLIC_* variables at build time
-  // Access it directly - Next.js will replace this with the actual value
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const globalProcess = typeof globalThis !== 'undefined' ? (globalThis as any).process : undefined;
-  const envVar = globalProcess?.env?.NEXT_PUBLIC_API_BASE_URL;
-  
-  if (envVar) {
-    return envVar;
+  // Next.js replaces this literal at build time with the value from .env.local / .env
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL;
   }
 
   // Fallback: Check window.__ENV__ (for custom runtime injection)
@@ -19,20 +16,12 @@ const getDefaultApiBaseUrl = (): string => {
     if (windowEnv?.NEXT_PUBLIC_API_BASE_URL) {
       return windowEnv.NEXT_PUBLIC_API_BASE_URL;
     }
-    // For production/subdomain deployment, use relative path
-    // This works for both same-origin requests and subdomain deployments
+    // Relative path for production when API is same-origin or behind proxy
     return '/api/v1';
   }
 
-  // Server-side default (when process.env is available but NEXT_PUBLIC_API_BASE_URL is not set)
-  // This case should ideally be covered by NEXT_PUBLIC_API_BASE_URL being set at build time
-  // but acts as a fallback for server-side rendering if not explicitly provided.
-  if (globalProcess?.env) {
-    return 'http://localhost:8080/api/v1';
-  }
-
-  // Final fallback
-  return '/api/v1';
+  // Server-side fallback when NEXT_PUBLIC_API_BASE_URL is not set
+  return 'http://localhost:8080/api/v1';
 };
 
 const DEFAULT_API_BASE_URL = getDefaultApiBaseUrl();

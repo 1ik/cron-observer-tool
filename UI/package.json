@@ -12,6 +12,7 @@
     "gen:api": "npx swagger2openapi ../backend/api-docs/swagger.json -o ../backend/api-docs/openapi.json && openapi-zod-client ../backend/api-docs/openapi.json -o ./packages/lib/src/api-client.ts"
   },
   "devDependencies": {
+    "@types/node": "^20.11.5",
     "openapi-zod-client": "^1.18.3",
     "swagger2openapi": "^7.0.8",
     "typescript": "^5.3.3"

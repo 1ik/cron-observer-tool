@@ -19,12 +19,12 @@ tasks:
 
   # Setup database (MongoDB + migrations)
   setup-db:
-    desc: Start MongoDB and run migrations
+    desc: Start MongoDB and run migrations (no auth for local dev)
     cmds:
       - echo "📦 Starting MongoDB..."
-      - docker-compose -f docker-compose.dev.yml up -d
+      - docker-compose up -d mongodb
       - echo "⏳ Waiting for MongoDB to be ready..."
-      - sleep 3
+      - sleep 5
       - echo "🔄 Running migrations..."
       - task: migrate
       - echo "✅ Database setup complete!"

@@ -65,40 +65,6 @@ External Systems (Execute actual work)
 Cron Observer (Tracks & Displays)
 ```
 
-## Scaling Strategy
-
-### Current: Single instance, MongoDB
-- Single backend instance
-- Direct MongoDB connection
-- In-memory event bus
-- Suitable for small to medium deployments
-
-### 10x Scale: Add Redis cache, connection pooling
-- **Redis caching**: Cache frequently accessed data (project configs, task definitions)
-- **Connection pooling**: Optimize database connections
-- **Query optimization**: Add database indexes for common queries
-- **Load balancing**: Multiple backend instances behind a load balancer
-
-### 100x Scale: Shard MongoDB, add read replicas
-- **MongoDB sharding**: Distribute data across multiple shards by project_id
-- **Read replicas**: Separate read and write operations
-- **Horizontal scaling**: Multiple backend instances
-- **Caching layer**: Redis for session management and frequently accessed data
-- **CDN**: Static asset delivery for frontend
-
-### 1000x Scale: Microservices, message queue, CDN
-- **Microservices architecture**: 
-  - Scheduler service (cron job management)
-  - Execution tracking service
-  - Notification service (alerts)
-  - API gateway
-- **Message queue**: Replace in-memory event bus with RabbitMQ/Kafka for guaranteed delivery
-- **Service mesh**: Inter-service communication and monitoring
-- **Database**: MongoDB cluster with automatic sharding
-- **CDN**: Global content delivery for frontend
-- **Monitoring**: Distributed tracing, metrics aggregation
-- **Auto-scaling**: Kubernetes-based auto-scaling based on load
-
 ## Documentation Structure
 
 - **docs/MODULE_XX_*.md**: Phase-by-phase implementation guides

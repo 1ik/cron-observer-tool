@@ -134,10 +134,21 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
 		return
 	}
 
+	// Check project name is unique (case-insensitive)
+	existing, getErr := h.repo.GetProjectByName(c.Request.Context(), strings.TrimSpace(req.Name))
+	if getErr == nil && existing != nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": "A project with this name already exists",
+		})
+		return
+	}
+
 	// Create project model from request
 	now := time.Now()
+	name := strings.TrimSpace(req.Name)
 	project := &models.Project{
-		Name:              req.Name,
+		ID:                primitive.NewObjectID(),
+		Name:              name,
 		Description:       req.Description,
 		ExecutionEndpoint: req.ExecutionEndpoint,
 		UUID:              uuid.New().String(),
@@ -231,7 +242,16 @@ func (h *ProjectHandler) UpdateProject(c *gin.Context) {
 
 	// Update fields if provided in request
 	if req.Name != "" {
-		updatedProject.Name = req.Name
+		newName := strings.TrimSpace(req.Name)
+		// Check name is unique (case-insensitive), excluding current project
+		existingByName, getErr := h.repo.GetProjectByName(c.Request.Context(), newName)
+		if getErr == nil && existingByName != nil && existingByName.ID != projectID {
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "A project with this name already exists",
+			})
+			return
+		}
+		updatedProject.Name = newName
 	}
 	if req.Description != "" {
 		updatedProject.Description = req.Description
