@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/yourusername/cron-observer/backend/internal/deletequeue"
 	"github.com/yourusername/cron-observer/backend/internal/events"
 	"github.com/yourusername/cron-observer/backend/internal/middleware"
 	"github.com/yourusername/cron-observer/backend/internal/models"
@@ -27,14 +28,16 @@ type TaskHandler struct {
 		UnregisterTask(taskUUID string)
 		IsWithinGroupWindow(ctx context.Context, taskGroup *models.TaskGroup) bool
 	}
-	superAdminMap map[string]bool
+	superAdminMap   map[string]bool
+	deletePublisher deletequeue.DeleteJobPublisher // optional until wired in main
 }
 
 func NewTaskHandler(repo repositories.Repository, eventBus *events.EventBus, scheduler interface {
 	RegisterTask(ctx context.Context, task *models.Task) error
 	UnregisterTask(taskUUID string)
 	IsWithinGroupWindow(ctx context.Context, taskGroup *models.TaskGroup) bool
-}, superAdmins []string) *TaskHandler {
+}, superAdmins []string, deletePublisher deletequeue.DeleteJobPublisher) *TaskHandler {
+
 	// Create a map for O(1) lookup
 	superAdminMap := make(map[string]bool)
 	for _, admin := range superAdmins {
@@ -45,10 +48,11 @@ func NewTaskHandler(repo repositories.Repository, eventBus *events.EventBus, sch
 	}
 
 	return &TaskHandler{
-		repo:          repo,
-		eventBus:      eventBus,
-		scheduler:     scheduler, // Can be nil if scheduler is not needed
-		superAdminMap: superAdminMap,
+		repo:            repo,
+		eventBus:        eventBus,
+		scheduler:       scheduler, // Can be nil if scheduler is not needed
+		superAdminMap:   superAdminMap,
+		deletePublisher: deletePublisher, // optional until wired in main
 	}
 }
 
@@ -459,22 +463,28 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	c.JSON(http.StatusOK, task)
 }
 
-// DeleteTask deletes a task
-// @Summary      Delete a task
-// @Description  Delete an existing scheduled task
+// DeleteTask schedules a task for deletion (async). Returns 202 Accepted with PENDING_DELETE or ALREADY_DELETED.
+// @Summary      Delete a task (async)
+// @Description  Schedule a task for deletion. Deletion is performed asynchronously; use 202 response and status in body.
 // @Tags         tasks
 // @Accept       json
 // @Produce      json
 // @Param        project_id path string true "Project ID"
 // @Param        task_uuid path string true "Task UUID"
-// @Success      204  "No Content"
+// @Success      202  {object}  models.DeleteTaskResponse "Task deletion scheduled"
 // @Failure      400  {object}  models.ErrorResponse
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /projects/{project_id}/tasks/{task_uuid} [delete]
 func (h *TaskHandler) DeleteTask(c *gin.Context) {
-	// Get task_uuid from path parameter
+	projectIDParam := c.Param("project_id")
 	taskUUIDParam := c.Param("task_uuid")
 
+	if projectIDParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "project_id is required in path",
+		})
+		return
+	}
 	if taskUUIDParam == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "task_uuid is required in path",
@@ -482,22 +492,63 @@ func (h *TaskHandler) DeleteTask(c *gin.Context) {
 		return
 	}
 
-	// Delete the task
-	err := h.repo.DeleteTask(c.Request.Context(), taskUUIDParam)
+	ctx := c.Request.Context()
+
+	// Idempotent: if task already gone, treat as success
+	task, err := h.repo.GetTaskByUUID(ctx, taskUUIDParam)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusAccepted, gin.H{
+				"status":    "ALREADY_DELETED",
+				"task_uuid": taskUUIDParam,
+				"message":   "Task already deleted or not found",
+			})
+			return
+		}
+		log.Printf("DeleteTask GetTaskByUUID error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to delete task",
+			"error": "Failed to load task",
 		})
 		return
 	}
 
-	// Publish TaskDeleted event
-	h.eventBus.Publish(events.Event{
-		Type:    events.TaskDeleted,
-		Payload: events.TaskDeletedPayload{TaskUUID: taskUUIDParam},
-	})
+	if h.deletePublisher == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Delete queue not configured",
+		})
+		return
+	}
 
-	c.Status(http.StatusNoContent)
+	// Mark as PENDING_DELETE before enqueueing
+	if err := h.repo.UpdateTaskStatus(ctx, taskUUIDParam, models.TaskStatusPendingDelete); err != nil {
+		log.Printf("DeleteTask UpdateTaskStatus error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to schedule deletion",
+		})
+		return
+	}
+
+	msg := deletequeue.DeleteTaskMessage{
+		TaskUUID:    task.UUID,
+		ProjectID:   projectIDParam,
+		RequestedAt: time.Now(),
+	}
+
+	if err := h.deletePublisher.PublishDeleteTask(ctx, msg); err != nil {
+		log.Printf("DeleteTask PublishDeleteTask error: %v", err)
+		// Rollback status to previous
+		_ = h.repo.UpdateTaskStatus(ctx, taskUUIDParam, task.Status)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to enqueue delete job",
+		})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{
+		"status":    "PENDING_DELETE",
+		"task_uuid": taskUUIDParam,
+		"message":   "Task deletion has been scheduled",
+	})
 }
 
 // UpdateTaskStatus updates a task's status

@@ -197,12 +197,15 @@ func (s *Scheduler) registerTask(ctx context.Context, task *models.Task) error {
 	return nil
 }
 
-// UnregisterTask removes a task's cron job (public method)
+// UnregisterTask removes a task's cron job so it no longer runs.
+// It is idempotent: safe to call multiple times for the same task UUID;
+// if the task is not registered, it returns without error.
+// Used by the delete worker and by handlers when setting a task to DISABLED.
 func (s *Scheduler) UnregisterTask(taskUUID string) {
 	s.unregisterTask(taskUUID)
 }
 
-// unregisterTask removes a task's cron job (internal)
+// unregisterTask removes a task's cron job (internal). Idempotent: no-op if task not in s.jobs.
 func (s *Scheduler) unregisterTask(taskUUID string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

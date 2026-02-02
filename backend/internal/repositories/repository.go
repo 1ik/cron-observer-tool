@@ -20,10 +20,12 @@ type Repository interface {
 	// tasks
 	CreateTask(ctx context.Context, projectID string, task *models.Task) error
 	GetAllActiveTasks(ctx context.Context) ([]*models.Task, error)
+	GetTasksByStatus(ctx context.Context, statuses []models.TaskStatus) ([]*models.Task, error) // Query tasks by status(es)
 	GetTasksByProjectID(ctx context.Context, projectID primitive.ObjectID) ([]*models.Task, error)
-	GetTaskByUUID(ctx context.Context, taskUUID string) (*models.Task, error)
+	GetTaskByUUID(ctx context.Context, taskUUID string) (*models.Task, error) // returns mongo.ErrNoDocuments when not found
 	UpdateTask(ctx context.Context, taskUUID string, task *models.Task) error
-	DeleteTask(ctx context.Context, taskUUID string) error
+	UpdateTaskStatus(ctx context.Context, taskUUID string, status models.TaskStatus) error
+	DeleteTask(ctx context.Context, taskUUID string) error // hard delete; removes document from MongoDB
 
 	// task groups
 	CreateTaskGroup(ctx context.Context, projectID string, taskGroup *models.TaskGroup) error
@@ -36,7 +38,6 @@ type Repository interface {
 	DeleteTaskGroup(ctx context.Context, taskGroupUUID string) error
 	GetTasksByGroupID(ctx context.Context, taskGroupID primitive.ObjectID) ([]*models.Task, error)
 	GetActiveTaskGroupsWithWindows(ctx context.Context) ([]*models.TaskGroup, error)
-	UpdateTaskStatus(ctx context.Context, taskUUID string, status models.TaskStatus) error
 	UpdateTaskState(ctx context.Context, taskUUID string, state models.TaskState) error
 
 	// executions

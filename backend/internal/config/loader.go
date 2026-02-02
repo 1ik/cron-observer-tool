@@ -68,6 +68,12 @@ func setDefaults(v *viper.Viper) {
 	// Database defaults (only for optional fields)
 	v.SetDefault("database.timeout", "10s")
 	v.SetDefault("database.max_conns", 100)
+
+	// Broker defaults
+	v.SetDefault("broker.amqp_url", "amqp://guest:guest@localhost:5672/")
+	v.SetDefault("broker.delete_queue_name", "task_delete_queue")
+	v.SetDefault("broker.reconciler_interval", "5m")
+	v.SetDefault("broker.reconciler_threshold", "10m")
 }
 
 // bindEnvVars binds environment variables to configuration keys
@@ -92,4 +98,10 @@ func bindEnvVars(v *viper.Viper) {
 	// Gmail environment variables
 	v.BindEnv("gmail.user", "GMAIL_USER")
 	v.BindEnv("gmail.password", "GMAIL_APP_PASSWORD")
+
+	// Broker environment variables
+	v.BindEnv("broker.amqp_url", "AMQP_URL")
+	v.BindEnv("broker.delete_queue_name", "DELETE_QUEUE_NAME")
+	v.BindEnv("broker.reconciler_interval", "DELETE_RECONCILER_INTERVAL")
+	v.BindEnv("broker.reconciler_threshold", "DELETE_RECONCILER_THRESHOLD")
 }

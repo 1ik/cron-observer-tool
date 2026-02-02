@@ -70,7 +70,6 @@ definitions:
         - $ref: '#/definitions/models.TaskStatus'
         enum:
         - ACTIVE
-        - RUNNING
         - DISABLED
       task_group_id:
         description: Optional task group ID
@@ -83,6 +82,21 @@ definitions:
     - project_id
     - schedule_config
     - schedule_type
+    type: object
+  models.DeleteTaskResponse:
+    properties:
+      message:
+        example: Task deletion has been scheduled
+        type: string
+      status:
+        enum:
+        - PENDING_DELETE
+        - ALREADY_DELETED
+        example: PENDING_DELETE
+        type: string
+      task_uuid:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
     type: object
   models.ErrorResponse:
     properties:
@@ -399,8 +413,9 @@ definitions:
         - $ref: '#/definitions/models.TaskStatus'
         enum:
         - ACTIVE
-        - RUNNING
         - DISABLED
+        - PENDING_DELETE
+        - DELETE_FAILED
         example: ACTIVE
       task_group_id:
         description: Optional reference to task group
@@ -510,10 +525,22 @@ definitions:
     enum:
     - ACTIVE
     - DISABLED
+    - PENDING_DELETE
+    - DELETE_FAILED
     type: string
+    x-enum-comments:
+      TaskStatusDeleteFailed: Delete attempt failed; record exists, needs attention.
+      TaskStatusPendingDelete: Delete requested; job enqueued or will be.
+    x-enum-descriptions:
+    - ""
+    - ""
+    - Delete requested; job enqueued or will be.
+    - Delete attempt failed; record exists, needs attention.
     x-enum-varnames:
     - TaskStatusActive
     - TaskStatusDisabled
+    - TaskStatusPendingDelete
+    - TaskStatusDeleteFailed
   models.TimeRange:
     properties:
       end:
@@ -616,7 +643,6 @@ definitions:
         - $ref: '#/definitions/models.TaskStatus'
         enum:
         - ACTIVE
-        - RUNNING
         - DISABLED
       task_group_id:
         description: Optional task group ID
@@ -1265,7 +1291,8 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Delete an existing scheduled task
+      description: Schedule a task for deletion. Deletion is performed asynchronously;
+        use 202 response and status in body.
       parameters:
       - description: Project ID
         in: path
@@ -1280,8 +1307,10 @@ paths:
       produces:
       - application/json
       responses:
-        "204":
-          description: No Content
+        "202":
+          description: Task deletion scheduled
+          schema:
+            $ref: '#/definitions/models.DeleteTaskResponse'
         "400":
           description: Bad Request
           schema:
@@ -1290,7 +1319,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
-      summary: Delete a task
+      summary: Delete a task (async)
       tags:
       - tasks
     put:

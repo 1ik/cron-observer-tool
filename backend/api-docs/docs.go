@@ -1019,7 +1019,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete an existing scheduled task",
+                "description": "Schedule a task for deletion. Deletion is performed asynchronously; use 202 response and status in body.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1029,7 +1029,7 @@ const docTemplate = `{
                 "tags": [
                     "tasks"
                 ],
-                "summary": "Delete a task",
+                "summary": "Delete a task (async)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1047,8 +1047,11 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content"
+                    "202": {
+                        "description": "Task deletion scheduled",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeleteTaskResponse"
+                        }
                     },
                     "400": {
                         "description": "Bad Request",
@@ -1366,7 +1369,6 @@ const docTemplate = `{
                 "status": {
                     "enum": [
                         "ACTIVE",
-                        "RUNNING",
                         "DISABLED"
                     ],
                     "allOf": [
@@ -1382,6 +1384,27 @@ const docTemplate = `{
                 "timeout_seconds": {
                     "type": "integer",
                     "minimum": 1
+                }
+            }
+        },
+        "models.DeleteTaskResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Task deletion has been scheduled"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "PENDING_DELETE",
+                        "ALREADY_DELETED"
+                    ],
+                    "example": "PENDING_DELETE"
+                },
+                "task_uuid": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 }
             }
         },
@@ -1836,8 +1859,9 @@ const docTemplate = `{
                 "status": {
                     "enum": [
                         "ACTIVE",
-                        "RUNNING",
-                        "DISABLED"
+                        "DISABLED",
+                        "PENDING_DELETE",
+                        "DELETE_FAILED"
                     ],
                     "allOf": [
                         {
@@ -1998,11 +2022,25 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "ACTIVE",
-                "DISABLED"
+                "DISABLED",
+                "PENDING_DELETE",
+                "DELETE_FAILED"
+            ],
+            "x-enum-comments": {
+                "TaskStatusDeleteFailed": "Delete attempt failed; record exists, needs attention.",
+                "TaskStatusPendingDelete": "Delete requested; job enqueued or will be."
+            },
+            "x-enum-descriptions": [
+                "",
+                "",
+                "Delete requested; job enqueued or will be.",
+                "Delete attempt failed; record exists, needs attention."
             ],
             "x-enum-varnames": [
                 "TaskStatusActive",
-                "TaskStatusDisabled"
+                "TaskStatusDisabled",
+                "TaskStatusPendingDelete",
+                "TaskStatusDeleteFailed"
             ]
         },
         "models.TimeRange": {
@@ -2161,7 +2199,6 @@ const docTemplate = `{
                 "status": {
                     "enum": [
                         "ACTIVE",
-                        "RUNNING",
                         "DISABLED"
                     ],
                     "allOf": [

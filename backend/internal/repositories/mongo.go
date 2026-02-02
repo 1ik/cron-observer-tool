@@ -155,6 +155,25 @@ func (r *MongoRepository) GetAllActiveTasks(ctx context.Context) ([]*models.Task
 	return tasks, nil
 }
 
+func (r *MongoRepository) GetTasksByStatus(ctx context.Context, statuses []models.TaskStatus) ([]*models.Task, error) {
+	collection := r.db.Collection(database.CollectionTasks)
+
+	filter := bson.M{"status": bson.M{"$in": statuses}}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var tasks []*models.Task
+	err = cursor.All(ctx, &tasks)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
 func (r *MongoRepository) GetTasksByProjectID(ctx context.Context, projectID primitive.ObjectID) ([]*models.Task, error) {
 	collection := r.db.Collection(database.CollectionTasks)
 
@@ -174,6 +193,7 @@ func (r *MongoRepository) GetTasksByProjectID(ctx context.Context, projectID pri
 	return tasks, nil
 }
 
+// GetTaskByUUID returns a task by UUID. Returns mongo.ErrNoDocuments when not found.
 func (r *MongoRepository) GetTaskByUUID(ctx context.Context, taskUUID string) (*models.Task, error) {
 	collection := r.db.Collection(database.CollectionTasks)
 
@@ -225,6 +245,7 @@ func (r *MongoRepository) UpdateTaskState(ctx context.Context, taskUUID string, 
 	return err
 }
 
+// DeleteTask performs a hard delete: removes the task document from MongoDB.
 func (r *MongoRepository) DeleteTask(ctx context.Context, taskUUID string) error {
 	collection := r.db.Collection(database.CollectionTasks)
 

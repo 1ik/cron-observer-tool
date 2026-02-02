@@ -127,7 +127,12 @@ const models_ScheduleConfig = z
   .passthrough();
 const models_ScheduleType = z.enum(["RECURRING", "ONEOFF"]);
 const models_TaskState = z.enum(["RUNNING", "NOT_RUNNING"]);
-const models_TaskStatus = z.enum(["ACTIVE", "DISABLED"]);
+const models_TaskStatus = z.enum([
+  "ACTIVE",
+  "DISABLED",
+  "PENDING_DELETE",
+  "DELETE_FAILED",
+]);
 const models_HTTPTriggerConfig = z
   .object({
     body: z.unknown().optional(),
@@ -186,6 +191,14 @@ const models_UpdateTaskRequest = z
     task_group_id: z.string().optional(),
     timeout_seconds: z.number().int().gte(1).optional(),
   })
+  .passthrough();
+const models_DeleteTaskResponse = z
+  .object({
+    message: z.string(),
+    status: z.enum(["PENDING_DELETE", "ALREADY_DELETED"]),
+    task_uuid: z.string(),
+  })
+  .partial()
   .passthrough();
 const models_LogEntry = z
   .object({ level: z.string(), message: z.string(), timestamp: z.string() })
@@ -254,6 +267,7 @@ export const schemas = {
   models_Task,
   models_CreateTaskRequest,
   models_UpdateTaskRequest,
+  models_DeleteTaskResponse,
   models_LogEntry,
   models_ExecutionStatus,
   models_Execution,
@@ -889,7 +903,7 @@ const endpoints = makeApi([
     method: "delete",
     path: "/projects/:project_id/tasks/:task_uuid",
     alias: "deleteProjectsProject_idtasksTask_uuid",
-    description: `Delete an existing scheduled task`,
+    description: `Schedule a task for deletion. Deletion is performed asynchronously; use 202 response and status in body.`,
     requestFormat: "json",
     parameters: [
       {
@@ -903,7 +917,7 @@ const endpoints = makeApi([
         schema: z.string(),
       },
     ],
-    response: z.void(),
+    response: models_DeleteTaskResponse,
     errors: [
       {
         status: 400,

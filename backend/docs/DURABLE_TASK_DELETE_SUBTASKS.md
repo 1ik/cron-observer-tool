@@ -99,8 +99,8 @@ This document breaks down the durable task delete implementation into small, seq
 **Dependencies**: Task 3
 
 ---
-
-## Task 5: Review Repository Methods for Delete Operations
+ 
+## Task 5: Review Repository Methods for Delete Operations [Done]
 
 **Goal**: Ensure repository has methods needed for delete workflow.
 
@@ -125,7 +125,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 6: Update TaskHandler.DeleteTask API Handler
+## Task 6: Update TaskHandler.DeleteTask API Handler  [Done]
 
 **Goal**: Modify the delete endpoint to schedule deletion instead of executing it immediately.
 
@@ -159,7 +159,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 7: Review Scheduler UnregisterTask Method
+## Task 7: Review Scheduler UnregisterTask Method [Done]
 
 **Goal**: Verify scheduler has `UnregisterTask` method and understand its behavior.
 
@@ -184,7 +184,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 8: Review EventBus for TaskDeleted Event
+## Task 8: Review EventBus for TaskDeleted Event [Done]
 
 **Goal**: Verify EventBus can publish `TaskDeleted` events.
 
@@ -208,7 +208,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 9: Implement Delete Worker Core Logic
+## Task 9: Implement Delete Worker Core Logic [Done]
 
 **Goal**: Create the worker that processes delete job messages.
 
@@ -243,7 +243,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 10: Implement Delete Job Consumer Start Method
+## Task 10: Implement Delete Job Consumer Start Method [Done]
 
 **Goal**: Implement the consumer that receives messages and calls the worker.
 
@@ -271,7 +271,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 11: Implement Delete Job Publisher
+## Task 11: Implement Delete Job Publisher [Done]
 
 **Goal**: Implement the publisher that sends delete job messages to the broker.
 
@@ -298,7 +298,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 12: Wire DeleteJobPublisher into TaskHandler
+## Task 12: Wire DeleteJobPublisher into TaskHandler [Done]
 
 **Goal**: Connect the publisher to the delete handler.
 
@@ -321,7 +321,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 13: Implement Delete Reconciler
+## Task 13: Implement Delete Reconciler [Done]
 
 **Goal**: Create periodic reconciler to handle stuck delete tasks.
 
@@ -353,7 +353,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 14: Wire Delete Worker and Consumer in Main
+## Task 14: Wire Delete Worker and Consumer in Main [Done]
 
 **Goal**: Start the delete worker and consumer in the main application.
 
@@ -377,7 +377,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 15: Wire Delete Reconciler in Main
+## Task 15: Wire Delete Reconciler in Main [Done]
 
 **Goal**: Start the delete reconciler in the main application.
 
@@ -400,7 +400,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 16: Add Configuration for Message Broker
+## Task 16: Add Configuration for Message Broker  [Done]
 
 **Goal**: Add configuration options for message broker connection and settings.
 
@@ -425,7 +425,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 17: Update API Response Types (if needed)
+## Task 17: Update API Response Types (if needed) [Done]
 
 **Goal**: Ensure API response types include new delete response structure.
 
@@ -447,7 +447,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 18: Add Unit Tests for Delete Worker
+## Task 18: Add Unit Tests for Delete Worker [Done]
 
 **Goal**: Write unit tests for delete worker logic.
 

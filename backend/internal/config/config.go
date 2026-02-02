@@ -8,6 +8,7 @@ type Config struct {
 	Database DatabaseConfig
 	Auth     AuthConfig
 	Gmail    GmailConfig
+	Broker   BrokerConfig
 }
 
 // ServerConfig holds HTTP server configuration
@@ -35,4 +36,12 @@ type AuthConfig struct {
 type GmailConfig struct {
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
+}
+
+// BrokerConfig holds message broker (RabbitMQ) configuration for delete queue
+type BrokerConfig struct {
+	AMQPURL           string        `mapstructure:"amqp_url"`
+	DeleteQueueName   string        `mapstructure:"delete_queue_name"`
+	ReconcilerInterval time.Duration `mapstructure:"reconciler_interval"`
+	ReconcilerThreshold time.Duration `mapstructure:"reconciler_threshold"`
 }

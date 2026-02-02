@@ -62,6 +62,50 @@ tasks:
     cmds:
       - ./scripts/generate-openapi.sh
 
+  # Generate gomock mocks
+  gen:mocks:
+    desc: Generate gomock mocks for interfaces
+    dir: "{{.BACKEND_DIR}}"
+    cmds:
+      - echo "🔨 Generating mocks..."
+      - go run go.uber.org/mock/mockgen@latest -source=internal/repositories/repository.go -destination=mocks/mock_repository.go -package=mocks
+      - go run go.uber.org/mock/mockgen@latest -source=internal/deleteworker/worker.go -destination=mocks/mock_worker.go -package=mocks
+      - echo "✅ Mocks generated successfully!"
+
+  # Run tests
+  test:
+    desc: Run all backend tests
+    dir: "{{.BACKEND_DIR}}"
+    preconditions:
+      - test -f go.mod
+    cmds:
+      - echo "Running tests..."
+      - go test ./... -v
+      - echo "Tests completed!"
+
+  # Run tests for a specific package
+  test:package:
+    desc: "Run tests for a specific package (usage: task test:package -- package-path)"
+    dir: "{{.BACKEND_DIR}}"
+    preconditions:
+      - test -f go.mod
+    cmds:
+      - echo "Running tests for {{.CLI_ARGS}}..."
+      - go test {{.CLI_ARGS}} -v
+      - echo "Tests completed!"
+
+  # Run tests with coverage
+  test:coverage:
+    desc: Run all tests with coverage report
+    dir: "{{.BACKEND_DIR}}"
+    preconditions:
+      - test -f go.mod
+    cmds:
+      - echo "Running tests with coverage..."
+      - go test ./... -v -coverprofile=coverage.out
+      - go tool cover -html=coverage.out -o coverage.html
+      - echo "Coverage report generated at coverage.html"
+
   # Cleanup: Kill all services and free ports
   cleanup:
     desc: Clean up all services and free ports

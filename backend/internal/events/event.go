@@ -8,7 +8,7 @@ type EventType string
 const (
 	TaskCreated       EventType = "task.created"
 	TaskUpdated       EventType = "task.updated"
-	TaskDeleted       EventType = "task.deleted"
+	TaskDeleted       EventType = "task.deleted" // Published after a task is hard-deleted (e.g. by delete worker); scheduler unregisters it.
 	TaskGroupCreated  EventType = "taskgroup.created"
 	TaskGroupUpdated  EventType = "taskgroup.updated"
 	TaskGroupDeleted  EventType = "taskgroup.deleted"
@@ -27,7 +27,7 @@ type TaskPayload struct {
 	Task *models.Task
 }
 
-// TaskDeletedPayload contains the task UUID for deleted events
+// TaskDeletedPayload contains the task UUID for TaskDeleted events. Used when publishing after a hard delete.
 type TaskDeletedPayload struct {
 	TaskUUID string
 }

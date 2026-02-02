@@ -165,6 +165,120 @@ go fmt ./...
 go vet ./...
 ```
 
+## Testing Strategy
+
+### Overview
+
+This project uses **gomock** for interface mocking. The testing strategy follows a two-step process:
+
+1. **Generate mocks** for interfaces first
+2. **Write tests** using the generated mocks
+
+### Why This Approach?
+
+- **Type Safety**: Generated mocks are type-safe and match interface signatures exactly
+- **Maintainability**: When interfaces change, regenerate mocks instead of manually updating test code
+- **Consistency**: All tests use the same mocking approach
+- **Less Boilerplate**: No need to write manual mock implementations
+
+### Step 1: Generate Mocks
+
+Before writing tests, generate mocks for the interfaces you need to mock:
+
+```bash
+# From project root
+task gen:mocks
+
+# Or manually from backend directory
+go run go.uber.org/mock/mockgen@latest \
+  -source=internal/repositories/repository.go \
+  -destination=mocks/mock_repository.go \
+  -package=mocks
+
+go run go.uber.org/mock/mockgen@latest \
+  -source=internal/deleteworker/worker.go \
+  -destination=mocks/mock_worker.go \
+  -package=mocks
+```
+
+**Important**: Always regenerate mocks after modifying interfaces to keep them in sync.
+
+### Step 2: Write Tests Using Generated Mocks
+
+Example test structure:
+
+```go
+package deleteworker
+
+import (
+    "context"
+    "testing"
+    "github.com/yourusername/cron-observer/backend/mocks"
+    "go.uber.org/mock/gomock"
+)
+
+func TestWorker_ProcessDeleteTask_Success(t *testing.T) {
+    // Step 1: Create gomock controller
+    ctrl := gomock.NewController(t)
+    defer ctrl.Finish()
+
+    // Step 2: Create mocks using generated mock constructors
+    repo := mocks.NewMockRepository(ctrl)
+    scheduler := mocks.NewMockTaskUnregisterer(ctrl)
+    eventPublisher := mocks.NewMockEventPublisher(ctrl)
+
+    // Step 3: Create unit under test with mocks
+    worker := NewWorker(repo, scheduler, eventPublisher)
+
+    // Step 4: Set expectations using EXPECT()
+    repo.EXPECT().
+        GetTaskByUUID(gomock.Any(), "test-uuid").
+        Return(task, nil).
+        Times(1)
+
+    scheduler.EXPECT().
+        UnregisterTask("test-uuid").
+        Times(1)
+
+    // Step 5: Execute and verify
+    err := worker.ProcessDeleteTask(context.Background(), msg)
+    if err != nil {
+        t.Errorf("Expected nil error, got: %v", err)
+    }
+}
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+task test
+
+# Run tests for a specific package
+task test:package -- ./internal/deleteworker/...
+
+# Run tests with coverage
+task test:coverage
+```
+
+### Best Practices
+
+1. **Always generate mocks first**: Don't write tests until mocks are generated
+2. **Regenerate after interface changes**: Keep mocks in sync with interfaces
+3. **Use `gomock.Any()`** for context and other parameters you don't need to verify
+4. **Use `.Times(n)`** to specify expected call counts
+5. **Use `Do()`** for side-effect verification (e.g., checking event payloads)
+6. **One controller per test**: Create `gomock.NewController(t)` at the start of each test
+7. **Defer `ctrl.Finish()`**: Ensures all expectations are verified
+
+### Mock File Location
+
+All generated mocks are stored in `backend/mocks/` directory:
+- `mocks/mock_repository.go` - Mock for `repositories.Repository` interface
+- `mocks/mock_worker.go` - Mocks for `deleteworker` package interfaces
+
+**Note**: The `mocks/` directory contains generated code and should not be edited manually. Always regenerate mocks when interfaces change.
+
 ## Docker Commands
 
 ```bash
