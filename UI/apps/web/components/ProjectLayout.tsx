@@ -1,10 +1,12 @@
 'use client'
 
-import { useCreateTask, useCreateTaskGroup, useUpdateProject, useUpdateTask, useUpdateTaskGroup } from '@cron-observer/lib'
+import { useCreateTask, useCreateTaskGroup, useDeleteTask, useUpdateProject, useUpdateTask, useUpdateTaskGroup } from '@cron-observer/lib'
+import { useToast } from '@cron-observer/ui'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { CaretDownIcon, GearIcon, PlusIcon } from '@radix-ui/react-icons'
 import { Box, Button, Flex, IconButton, Text } from '@radix-ui/themes'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useProjectRole } from '../contexts/ProjectRoleContext'
 import { Execution } from '../lib/types/execution'
@@ -13,6 +15,7 @@ import { CreateTaskRequest, Task, UpdateTaskRequest } from '../lib/types/task'
 import { CreateTaskGroupRequest, TaskGroup, UpdateTaskGroupRequest } from '../lib/types/taskgroup'
 import { CreateTaskDialog } from './CreateTaskDialog'
 import { CreateTaskGroupDialog } from './CreateTaskGroupDialog'
+import { DeleteTaskConfirmDialog } from './DeleteTaskConfirmDialog'
 import { ExecutionsList } from './ExecutionsList'
 import { ProjectSettingsDialog } from './ProjectSettingsDialog'
 import { ResizableSplitter } from './ResizableSplitter'
@@ -55,12 +58,16 @@ export function ProjectLayout({
   const [isCreateTaskGroupDialogOpen, setIsCreateTaskGroupDialogOpen] = useState(false)
   const [selectedTaskGroupForCreate, setSelectedTaskGroupForCreate] = useState<TaskGroup | null>(null)
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
 
+  const router = useRouter()
+  const toast = useToast()
   const createTaskGroupMutation = useCreateTaskGroup(project.id)
   const createTaskMutation = useCreateTask(project.id)
   const updateProjectMutation = useUpdateProject(project.id)
   const updateTaskGroupMutation = useUpdateTaskGroup(project.id)
   const updateTaskMutation = useUpdateTask(project.id)
+  const deleteTaskMutation = useDeleteTask(project.id)
 
   const handleTaskGroupSettingsClick = (taskGroup: TaskGroup) => {
     setSelectedTaskGroup(taskGroup)
@@ -173,6 +180,56 @@ export function ProjectLayout({
       onError: (error: Error) => {
         // TODO: Add error toast/notification
         console.error('Failed to update project:', error)
+      },
+    })
+  }
+
+  const handleTaskDeleteClick = () => {
+    // Close settings dialog and open confirmation dialog
+    setIsTaskSettingsOpen(false)
+    setIsDeleteConfirmOpen(true)
+  }
+
+  const handleTaskDeleteConfirm = () => {
+    if (!selectedTask) return
+
+    const taskUuid = selectedTask.uuid || selectedTask.id
+    if (!taskUuid) {
+      console.error('Task missing both uuid and id:', selectedTask)
+      return
+    }
+
+    deleteTaskMutation.mutate(taskUuid, {
+      onSuccess: (response) => {
+        // Show success toast
+        if (response.status === 'PENDING_DELETE') {
+          toast.success('Your task delete request has been accepted and will be deleted.')
+        } else if (response.status === 'ALREADY_DELETED') {
+          toast.success('Task already deleted.')
+        }
+
+        // Close dialogs
+        setIsDeleteConfirmOpen(false)
+        setSelectedTask(null)
+
+        // Navigate to first task in the list (or project root if no tasks)
+        // Wait a bit for the query to refetch
+        setTimeout(() => {
+          const remainingTasks = tasks.filter((t) => (t.uuid || t.id) !== taskUuid)
+          if (remainingTasks.length > 0) {
+            const firstTask = remainingTasks[0]
+            const firstTaskUuid = firstTask.uuid || firstTask.id
+            router.push(`/projects/${project.uuid}/tasks/${firstTaskUuid}`)
+          } else {
+            // No tasks left, go to project root
+            router.push(`/projects/${project.uuid}`)
+          }
+        }, 100)
+      },
+      onError: (error: Error) => {
+        toast.error('An error occurred while deleting the task.')
+        console.error('Failed to delete task:', error)
+        setIsDeleteConfirmOpen(false)
       },
     })
   }
@@ -345,7 +402,19 @@ export function ProjectLayout({
           onOpenChange={setIsTaskSettingsOpen}
           task={selectedTask}
           onSubmit={handleTaskSettingsSubmit}
+          onDelete={handleTaskDeleteClick}
+          isDeleting={deleteTaskMutation.isPending}
           isReadOnly={isReadOnly}
+        />
+      )}
+
+      {selectedTask && (
+        <DeleteTaskConfirmDialog
+          open={isDeleteConfirmOpen}
+          onOpenChange={setIsDeleteConfirmOpen}
+          taskName={selectedTask.name}
+          onConfirm={handleTaskDeleteConfirm}
+          isDeleting={deleteTaskMutation.isPending}
         />
       )}
 

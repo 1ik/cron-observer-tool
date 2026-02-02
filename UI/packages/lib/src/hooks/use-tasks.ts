@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
-import { createTask, getTasksByProject, triggerTask, updateTask, updateTaskStatus } from '../api';
+import { createTask, deleteTask, getTasksByProject, triggerTask, updateTask, updateTaskStatus } from '../api';
 import { schemas } from '../api-client';
 
 // Infer the Task type from the Zod schema
@@ -115,6 +115,27 @@ export function useTriggerTask(projectId: string, taskUUID: string) {
       // Invalidate executions to show the new triggered execution
       queryClient.invalidateQueries({ queryKey: ['executions'] });
     },
+  });
+}
+
+/**
+ * Hook to delete a task (async)
+ * @param projectId - The ID of the project
+ */
+export function useDeleteTask(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (taskUUID: string) => {
+      return deleteTask(projectId, taskUUID);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch tasks for this project
+      queryClient.invalidateQueries({ queryKey: taskKeys.list(projectId) });
+      // Also invalidate all task queries
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
+    },
+    retry: false, // Disable retries
   });
 }
 

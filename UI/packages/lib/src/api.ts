@@ -374,6 +374,44 @@ export async function triggerTask(projectId: string, taskUUID: string) {
   return response.json();
 }
 
+/**
+ * Delete a task (instant deletion)
+ * @param projectId - Project ID (MongoDB ObjectID)
+ * @param taskUUID - Task UUID
+ * @returns Promise resolving to the delete response with status
+ */
+export async function deleteTask(projectId: string, taskUUID: string) {
+  if (!projectId || !taskUUID) {
+    throw new Error('Missing required parameters: projectId and taskUUID are required');
+  }
+  
+  // Use fetch directly to ensure path parameters are correctly substituted
+  // Zodios may have issues with DELETE requests without body
+  const baseUrl = getDefaultApiBaseUrl();
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
+  // Construct URL with actual parameter values
+  const url = `${baseUrl}/projects/${encodeURIComponent(projectId)}/tasks/${encodeURIComponent(taskUUID)}`;
+  
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers,
+  });
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to delete task' }));
+    throw new Error(error.error || `HTTP ${response.status}: Failed to delete task`);
+  }
+  
+  return response.json();
+}
+
 // ============================================================================
 // Executions API
 // ============================================================================

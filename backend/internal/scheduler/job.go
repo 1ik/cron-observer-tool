@@ -156,7 +156,11 @@ func ExecuteTask(ctx context.Context, task *models.Task, repo repositories.Repos
 // Run executes the task job
 func (j *TaskJob) Run() {
 	ctx := context.Background()
-	log.Printf("[CRON] Task triggered: %s (UUID: %s)", j.Task.Name, j.Task.UUID)
+	// ANSI color codes for task name decoration
+	// \033[46m = cyan background, \033[1;30m = bold black text, \033[0m = reset
+	const colorReset = "\033[0m"
+	const colorTaskName = "\033[46;1;30m" // Cyan background with bold black text
+	log.Printf("[CRON] Task triggered: %s%s%s (UUID: %s)", colorTaskName, j.Task.Name, colorReset, j.Task.UUID)
 
 	_, err := ExecuteTask(ctx, j.Task, j.Repo, j.EventBus, "CRON")
 	if err != nil {

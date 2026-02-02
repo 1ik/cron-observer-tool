@@ -17,6 +17,8 @@ interface TaskSettingsDialogProps {
   onOpenChange: (open: boolean) => void
   task: Task
   onSubmit: (data: UpdateTaskRequest) => void
+  onDelete?: () => void
+  isDeleting?: boolean
   isReadOnly?: boolean
 }
 
@@ -25,6 +27,8 @@ export function TaskSettingsDialog({
   onOpenChange,
   task,
   onSubmit,
+  onDelete,
+  isDeleting = false,
   isReadOnly = false,
 }: TaskSettingsDialogProps) {
   const {
@@ -94,6 +98,12 @@ export function TaskSettingsDialog({
   const handleCancel = () => {
     reset()
     onOpenChange(false)
+  }
+
+  const handleDeleteClick = () => {
+    // Close settings dialog and trigger delete confirmation in parent
+    onOpenChange(false)
+    onDelete?.()
   }
 
   const getStatusDotColor = (s: TaskStatus) => {
@@ -377,21 +387,37 @@ export function TaskSettingsDialog({
             borderTop: '1px solid var(--gray-6)',
           }}
         >
-          <Flex gap="3" justify="end">
-            <Dialog.Close asChild>
-              <Button type="button" variant="soft" onClick={handleCancel}>
-                {isReadOnly ? 'Close' : 'Cancel'}
-              </Button>
-            </Dialog.Close>
-            {!isReadOnly && (
+          <Flex gap="3" justify="between">
+            {/* Delete button on the left */}
+            {!isReadOnly && onDelete && (
               <Button
-                type="submit"
+                type="button"
                 variant="solid"
-                onClick={handleSubmit(onFormSubmit)}
+                color="red"
+                onClick={handleDeleteClick}
               >
-                Save Changes
+                Delete Task
               </Button>
             )}
+            {isReadOnly && <Box />}
+            
+            {/* Action buttons on the right */}
+            <Flex gap="3">
+              <Dialog.Close asChild>
+                <Button type="button" variant="soft" onClick={handleCancel}>
+                  {isReadOnly ? 'Close' : 'Cancel'}
+                </Button>
+              </Dialog.Close>
+              {!isReadOnly && (
+                <Button
+                  type="submit"
+                  variant="solid"
+                  onClick={handleSubmit(onFormSubmit)}
+                >
+                  Save Changes
+                </Button>
+              )}
+            </Flex>
           </Flex>
         </Box>
       </StyledDialogContent>

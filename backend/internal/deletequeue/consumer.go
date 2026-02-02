@@ -96,14 +96,14 @@ func (c *RabbitMQConsumer) Start(ctx context.Context, handler func(context.Conte
 			// Deserialize message
 			var deleteMsg DeleteTaskMessage
 			if err := json.Unmarshal(msg.Body, &deleteMsg); err != nil {
-				log.Printf("[deletequeue] Failed to unmarshal message: %v", err)
+				log.Printf("[Consumer] Failed to unmarshal message: %v", err)
 				msg.Nack(false, false) // reject, don't requeue (malformed message)
 				continue
 			}
 
 			// Process message
 			if err := handler(ctx, deleteMsg); err != nil {
-				log.Printf("[deletequeue] Handler error for task %s: %v (will retry)", deleteMsg.TaskUUID, err)
+				log.Printf("[Consumer] Handler error for task %s: %v (will retry)", deleteMsg.TaskUUID, err)
 				// Nack with requeue=true to retry
 				msg.Nack(false, true)
 				continue
@@ -111,7 +111,7 @@ func (c *RabbitMQConsumer) Start(ctx context.Context, handler func(context.Conte
 
 			// Success: ack the message
 			msg.Ack(false)
-			log.Printf("[deletequeue] Successfully processed delete job for task %s", deleteMsg.TaskUUID)
+			log.Printf("[Consumer] Successfully processed delete job for task %s", deleteMsg.TaskUUID)
 		}
 	}
 }

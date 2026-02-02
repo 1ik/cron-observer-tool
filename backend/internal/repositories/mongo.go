@@ -177,7 +177,14 @@ func (r *MongoRepository) GetTasksByStatus(ctx context.Context, statuses []model
 func (r *MongoRepository) GetTasksByProjectID(ctx context.Context, projectID primitive.ObjectID) ([]*models.Task, error) {
 	collection := r.db.Collection(database.CollectionTasks)
 
-	filter := bson.M{"project_id": projectID}
+	// Exclude PENDING_DELETE and DELETE_FAILED tasks from public API
+	// These are internal orchestration states and should not be visible to clients
+	filter := bson.M{
+		"project_id": projectID,
+		"status": bson.M{
+			"$nin": []string{string(models.TaskStatusPendingDelete), string(models.TaskStatusDeleteFailed)},
+		},
+	}
 
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
@@ -196,12 +203,14 @@ func (r *MongoRepository) GetTasksByProjectID(ctx context.Context, projectID pri
 // GetTaskByUUID returns a task by UUID. Returns mongo.ErrNoDocuments when not found.
 func (r *MongoRepository) GetTaskByUUID(ctx context.Context, taskUUID string) (*models.Task, error) {
 	collection := r.db.Collection(database.CollectionTasks)
+	filter := bson.M{"uuid": taskUUID}
 
 	var task models.Task
-	err := collection.FindOne(ctx, bson.M{"uuid": taskUUID}).Decode(&task)
+	err := collection.FindOne(ctx, filter).Decode(&task)
 	if err != nil {
 		return nil, err
 	}
+
 	return &task, nil
 }
 
@@ -248,9 +257,19 @@ func (r *MongoRepository) UpdateTaskState(ctx context.Context, taskUUID string, 
 // DeleteTask performs a hard delete: removes the task document from MongoDB.
 func (r *MongoRepository) DeleteTask(ctx context.Context, taskUUID string) error {
 	collection := r.db.Collection(database.CollectionTasks)
+	filter := bson.M{"uuid": taskUUID}
 
-	_, err := collection.DeleteOne(ctx, bson.M{"uuid": taskUUID})
-	return err
+	result, err := collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+
+	// Verify that a document was actually deleted
+	if result.DeletedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
+
+	return nil
 }
 
 // TaskGroup repository methods
@@ -355,7 +374,14 @@ func (r *MongoRepository) DeleteTaskGroup(ctx context.Context, taskGroupUUID str
 func (r *MongoRepository) GetTasksByGroupID(ctx context.Context, taskGroupID primitive.ObjectID) ([]*models.Task, error) {
 	collection := r.db.Collection(database.CollectionTasks)
 
-	filter := bson.M{"task_group_id": taskGroupID}
+	// Exclude PENDING_DELETE and DELETE_FAILED tasks from public API
+	// These are internal orchestration states and should not be visible to clients
+	filter := bson.M{
+		"task_group_id": taskGroupID,
+		"status": bson.M{
+			"$nin": []string{string(models.TaskStatusPendingDelete), string(models.TaskStatusDeleteFailed)},
+		},
+	}
 
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {

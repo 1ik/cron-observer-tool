@@ -463,21 +463,50 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	c.JSON(http.StatusOK, task)
 }
 
-// DeleteTask schedules a task for deletion (async). Returns 202 Accepted with PENDING_DELETE or ALREADY_DELETED.
-// @Summary      Delete a task (async)
-// @Description  Schedule a task for deletion. Deletion is performed asynchronously; use 202 response and status in body.
+// DeleteTask deletes a task instantly using the worker logic (synchronously).
+// @Summary      Delete a task
+// @Description  Delete a task immediately using the worker. Stops cron scheduling and removes the task from the database.
 // @Tags         tasks
 // @Accept       json
 // @Produce      json
 // @Param        project_id path string true "Project ID"
 // @Param        task_uuid path string true "Task UUID"
-// @Success      202  {object}  models.DeleteTaskResponse "Task deletion scheduled"
+// @Success      200  {object}  models.DeleteTaskResponse "Task deleted successfully"
 // @Failure      400  {object}  models.ErrorResponse
+// @Failure      404  {object}  models.ErrorResponse
 // @Failure      500  {object}  models.ErrorResponse
 // @Router       /projects/{project_id}/tasks/{task_uuid} [delete]
 func (h *TaskHandler) DeleteTask(c *gin.Context) {
 	projectIDParam := c.Param("project_id")
 	taskUUIDParam := c.Param("task_uuid")
+	
+	// Try alternative extraction methods if Gin params aren't working
+	if projectIDParam == "" || projectIDParam == ":project_id" || strings.HasPrefix(projectIDParam, ":") {
+		// Manually parse the path: /api/v1/projects/{project_id}/tasks/{task_uuid}
+		pathParts := strings.Split(strings.TrimPrefix(c.Request.URL.Path, "/api/v1/projects/"), "/")
+		
+		if len(pathParts) >= 3 {
+			// pathParts[0] should be project_id, pathParts[1] should be "tasks", pathParts[2] should be task_uuid
+			if pathParts[1] == "tasks" {
+				if projectIDParam == "" || strings.HasPrefix(projectIDParam, ":") {
+					projectIDParam = pathParts[0]
+				}
+				if taskUUIDParam == "" || strings.HasPrefix(taskUUIDParam, ":") {
+					taskUUIDParam = pathParts[2]
+				}
+			}
+		}
+		
+		// Also try c.Params directly
+		for _, param := range c.Params {
+			if param.Key == "project_id" && !strings.HasPrefix(param.Value, ":") {
+				projectIDParam = param.Value
+			}
+			if param.Key == "task_uuid" && !strings.HasPrefix(param.Value, ":") {
+				taskUUIDParam = param.Value
+			}
+		}
+	}
 
 	if projectIDParam == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -498,56 +527,49 @@ func (h *TaskHandler) DeleteTask(c *gin.Context) {
 	task, err := h.repo.GetTaskByUUID(ctx, taskUUIDParam)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.JSON(http.StatusAccepted, gin.H{
+			c.JSON(http.StatusOK, gin.H{
 				"status":    "ALREADY_DELETED",
 				"task_uuid": taskUUIDParam,
 				"message":   "Task already deleted or not found",
 			})
 			return
 		}
-		log.Printf("DeleteTask GetTaskByUUID error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to load task",
 		})
 		return
 	}
 
+	// Check if RabbitMQ publisher is available
 	if h.deletePublisher == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Delete queue not configured",
+			"error": "Delete queue not available",
 		})
 		return
 	}
 
-	// Mark as PENDING_DELETE before enqueueing
-	if err := h.repo.UpdateTaskStatus(ctx, taskUUIDParam, models.TaskStatusPendingDelete); err != nil {
-		log.Printf("DeleteTask UpdateTaskStatus error: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to schedule deletion",
-		})
-		return
-	}
-
+	// Publish delete message to RabbitMQ queue
 	msg := deletequeue.DeleteTaskMessage{
 		TaskUUID:    task.UUID,
 		ProjectID:   projectIDParam,
 		RequestedAt: time.Now(),
 	}
-
+	
 	if err := h.deletePublisher.PublishDeleteTask(ctx, msg); err != nil {
-		log.Printf("DeleteTask PublishDeleteTask error: %v", err)
-		// Rollback status to previous
-		_ = h.repo.UpdateTaskStatus(ctx, taskUUIDParam, task.Status)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to enqueue delete job",
 		})
 		return
 	}
 
+	log.Printf("[Handler] Accepted delete request and pushed to RabbitMQ: TaskUUID=%s, TaskName=%s", 
+		task.UUID, task.Name)
+
+	// Return 202 Accepted - deletion is async
 	c.JSON(http.StatusAccepted, gin.H{
 		"status":    "PENDING_DELETE",
 		"task_uuid": taskUUIDParam,
-		"message":   "Task deletion has been scheduled",
+		"message":   "Delete request accepted and queued",
 	})
 }
 

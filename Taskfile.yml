@@ -21,8 +21,8 @@ tasks:
   setup-db:
     desc: Start MongoDB and run migrations (no auth for local dev)
     cmds:
-      - echo "📦 Starting MongoDB..."
-      - docker-compose up -d mongodb
+      - echo "📦 Starting MongoDB and RabbitMQ..."
+      - docker-compose -f docker-compose.localdev.yml up -d mongodb rabbitmq
       - echo "⏳ Waiting for MongoDB to be ready..."
       - sleep 5
       - echo "🔄 Running migrations..."
