@@ -35,12 +35,18 @@ const (
 	ScheduleTypeOneOff    ScheduleType = "ONEOFF"
 )
 
-// TaskStatus defines the status of a task
+// TaskStatus defines the status of a task.
+// Public APIs accept only ACTIVE and DISABLED from clients.
+// PENDING_DELETE and DELETE_FAILED are internal orchestration states set by the backend.
 type TaskStatus string
 
 const (
 	TaskStatusActive   TaskStatus = "ACTIVE"
 	TaskStatusDisabled TaskStatus = "DISABLED"
+
+	// Internal-only: set by backend during durable delete flow. Not accepted from external clients.
+	TaskStatusPendingDelete TaskStatus = "PENDING_DELETE" // Delete requested; job enqueued or will be.
+	TaskStatusDeleteFailed  TaskStatus = "DELETE_FAILED"  // Delete attempt failed; record exists, needs attention.
 )
 
 // TaskState defines the runtime state of a task (system-controlled)
