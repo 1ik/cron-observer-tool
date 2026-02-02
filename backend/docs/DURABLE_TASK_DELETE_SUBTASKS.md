@@ -50,7 +50,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 3: Create Delete Queue Message Structure
+## Task 3: Create Delete Queue Message Structure 
 
 **Goal**: Define the message structure for delete job messages.
 
