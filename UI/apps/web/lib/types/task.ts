@@ -1,4 +1,7 @@
-export type TaskStatus = 'ACTIVE' | 'DISABLED'
+// TaskStatus includes all possible statuses from the API
+// Note: PENDING_DELETE and DELETE_FAILED are internal orchestration statuses
+// that are filtered out by the backend and should not appear in the UI
+export type TaskStatus = 'ACTIVE' | 'DISABLED' | 'PENDING_DELETE' | 'DELETE_FAILED'
 export type TaskState = 'RUNNING' | 'NOT_RUNNING' // System-controlled: based on time window
 export type ScheduleType = 'RECURRING' | 'ONEOFF'
 export type FrequencyUnit = 's' | 'm' | 'h'

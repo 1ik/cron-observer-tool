@@ -43,7 +43,8 @@ export function TaskSettingsDialog({
     defaultValues: {
       name: task.name,
       description: task.description || '',
-      status: task.status,
+      // Filter status to only allow ACTIVE or DISABLED (form validation requirement)
+      status: task.status === 'ACTIVE' || task.status === 'DISABLED' ? task.status : 'DISABLED',
       schedule_config: {
         ...task.schedule_config,
         timezone: task.schedule_config?.timezone || 'Asia/Dhaka',
@@ -69,7 +70,8 @@ export function TaskSettingsDialog({
       reset({
         name: task.name,
         description: task.description || '',
-        status: task.status,
+        // Filter status to only allow ACTIVE or DISABLED (form validation requirement)
+        status: task.status === 'ACTIVE' || task.status === 'DISABLED' ? task.status : 'DISABLED',
         schedule_config: {
           ...task.schedule_config,
           timezone: task.schedule_config?.timezone || 'Asia/Dhaka',
@@ -112,6 +114,10 @@ export function TaskSettingsDialog({
         return 'var(--green-9)'
       case 'DISABLED':
         return 'var(--gray-9)'
+      case 'PENDING_DELETE':
+        return 'var(--orange-9)'
+      case 'DELETE_FAILED':
+        return 'var(--red-9)'
       default:
         return 'var(--gray-9)'
     }

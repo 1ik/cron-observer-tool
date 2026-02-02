@@ -17,10 +17,16 @@ interface StatusAndStateDotsProps {
  * State dot shows system-controlled state: Blue = RUNNING (only shown when RUNNING)
  */
 export function StatusAndStateDots({ status, state, size = 6, tooltip }: StatusAndStateDotsProps) {
-  // Status dot: Green for ACTIVE, Grey for DISABLED
+  // Status dot: Green for ACTIVE, Grey for DISABLED, Orange for PENDING_DELETE, Red for DELETE_FAILED
   const getStatusColor = (status: TaskStatus | TaskGroupStatus): string => {
     if (status === 'ACTIVE') {
       return 'var(--green-9)'
+    }
+    if (status === 'PENDING_DELETE') {
+      return 'var(--orange-9)'
+    }
+    if (status === 'DELETE_FAILED') {
+      return 'var(--red-9)'
     }
     return 'var(--gray-9)'
   }
@@ -28,6 +34,12 @@ export function StatusAndStateDots({ status, state, size = 6, tooltip }: StatusA
   const getStatusTooltip = (status: TaskStatus | TaskGroupStatus): string => {
     if (status === 'ACTIVE') {
       return 'Active'
+    }
+    if (status === 'PENDING_DELETE') {
+      return 'Pending Delete'
+    }
+    if (status === 'DELETE_FAILED') {
+      return 'Delete Failed'
     }
     return 'Disabled'
   }

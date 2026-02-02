@@ -6,11 +6,53 @@ import { schemas } from '../api-client';
 // Infer the Task type from the Zod schema
 export type Task = z.infer<typeof schemas.models_Task>;
 
-// CreateTaskRequest type inferred from schema
-type CreateTaskRequest = z.infer<typeof schemas.models_CreateTaskRequest>;
+// Create restricted status type (exclude internal orchestration statuses)
+type UserTaskStatus = 'ACTIVE' | 'DISABLED';
 
-// UpdateTaskRequest type inferred from schema
-type UpdateTaskRequest = z.infer<typeof schemas.models_UpdateTaskRequest>;
+// CreateTaskRequest type matching the API function signature
+type CreateTaskRequest = {
+  project_id: string;
+  task_group_id?: string;
+  name: string;
+  description?: string;
+  schedule_type: 'RECURRING' | 'ONEOFF';
+  status?: UserTaskStatus;
+  schedule_config: {
+    cron_expression?: string;
+    timezone: string;
+    time_range?: {
+      start: string;
+      end: string;
+      frequency: { value: number; unit: 's' | 'm' | 'h' };
+    };
+    days_of_week?: number[];
+    exclusions?: number[];
+  };
+  metadata?: Record<string, unknown>;
+  timeout_seconds?: number;
+};
+
+// UpdateTaskRequest type matching the API function signature
+type UpdateTaskRequest = {
+  name: string;
+  description?: string;
+  schedule_type: 'RECURRING' | 'ONEOFF';
+  status?: UserTaskStatus;
+  schedule_config: {
+    cron_expression?: string;
+    timezone: string;
+    time_range?: {
+      start: string;
+      end: string;
+      frequency: { value: number; unit: 's' | 'm' | 'h' };
+    };
+    days_of_week?: number[];
+    exclusions?: number[];
+  };
+  metadata?: Record<string, unknown>;
+  task_group_id?: string;
+  timeout_seconds?: number;
+};
 
 /**
  * Query keys for tasks
