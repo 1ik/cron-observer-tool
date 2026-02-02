@@ -16,7 +16,7 @@ type Task struct {
 	Name           string                 `json:"name" bson:"name" example:"Daily Backup"`
 	Description    string                 `json:"description,omitempty" bson:"description,omitempty" example:"Backup database daily"`
 	ScheduleType   ScheduleType           `json:"schedule_type" bson:"schedule_type" enums:"RECURRING,ONEOFF" example:"RECURRING"`
-	Status         TaskStatus             `json:"status" bson:"status" enums:"ACTIVE,RUNNING,DISABLED" example:"ACTIVE"`
+	Status         TaskStatus             `json:"status" bson:"status" enums:"ACTIVE,DISABLED,PENDING_DELETE,DELETE_FAILED" example:"ACTIVE"`
 	State          TaskState              `json:"state" bson:"state" enums:"RUNNING,NOT_RUNNING" example:"NOT_RUNNING"` // System-controlled: based on time window
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" bson:"schedule_config"`
 	TriggerConfig  TriggerConfig          `json:"trigger_config,omitempty" bson:"trigger_config,omitempty"`                             // Deprecated: Tasks now use project's execution_endpoint
@@ -91,27 +91,29 @@ type TimeRange struct {
 	Frequency *Frequency `json:"frequency" bson:"frequency" binding:"required"`     // Frequency with value and unit (e.g., {value: 15, unit: "m"})
 }
 
-// CreateTaskRequest represents the request DTO for creating a task
+// CreateTaskRequest represents the request DTO for creating a task.
+// Status: only ACTIVE and DISABLED are accepted from clients. PENDING_DELETE and DELETE_FAILED are backend-only.
 type CreateTaskRequest struct {
 	ProjectID      string                 `json:"project_id" binding:"required,objectid"`
 	TaskGroupID    string                 `json:"task_group_id,omitempty" binding:"omitempty,objectid"` // Optional task group ID
 	Name           string                 `json:"name" binding:"required,min=1,max=255"`
 	Description    string                 `json:"description,omitempty" binding:"omitempty,max=1000"`
 	ScheduleType   ScheduleType           `json:"schedule_type" binding:"required,oneof=RECURRING ONEOFF"`
-	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE RUNNING DISABLED"`
+	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE DISABLED"`
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" binding:"required"`
 	TimeoutSeconds *int                   `json:"timeout_seconds,omitempty" binding:"omitempty,min=1"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 }
 
-// UpdateTaskRequest represents the request DTO for full task update (PUT)
-// Same structure as CreateTaskRequest but without ProjectID (comes from path parameter)
+// UpdateTaskRequest represents the request DTO for full task update (PUT).
+// Same structure as CreateTaskRequest but without ProjectID (comes from path parameter).
+// Status: only ACTIVE and DISABLED are accepted from clients. PENDING_DELETE and DELETE_FAILED are backend-only.
 type UpdateTaskRequest struct {
 	TaskGroupID    string                 `json:"task_group_id,omitempty" binding:"omitempty,objectid"` // Optional task group ID
 	Name           string                 `json:"name" binding:"required,min=1,max=255"`
 	Description    string                 `json:"description,omitempty" binding:"omitempty,max=1000"`
 	ScheduleType   ScheduleType           `json:"schedule_type" binding:"required,oneof=RECURRING ONEOFF"`
-	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE RUNNING DISABLED"`
+	Status         TaskStatus             `json:"status,omitempty" binding:"omitempty,oneof=ACTIVE DISABLED"`
 	ScheduleConfig ScheduleConfig         `json:"schedule_config" binding:"required"`
 	TimeoutSeconds *int                   `json:"timeout_seconds,omitempty" binding:"omitempty,min=1"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`

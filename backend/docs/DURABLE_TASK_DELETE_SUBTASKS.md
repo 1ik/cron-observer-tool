@@ -4,7 +4,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 1: Extend TaskStatus Enum with Internal Delete States
+## Task 1: Extend TaskStatus Enum with Internal Delete States [Done]
 
 **Goal**: Add `PENDING_DELETE` and `DELETE_FAILED` status values to the TaskStatus enum.
 
@@ -27,7 +27,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 2: Review and Update Status Validation Logic
+## Task 2: Review and Update Status Validation Logic [Done]
 
 **Goal**: Ensure external APIs reject `PENDING_DELETE` and `DELETE_FAILED` statuses from clients.
 

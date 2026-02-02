@@ -159,7 +159,7 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		return
 	}
 
-	// Set default status if not provided
+	// Set default status if not provided. Binding restricts client input to ACTIVE/DISABLED only (PENDING_DELETE/DELETE_FAILED are backend-only).
 	status := req.Status
 	if status == "" {
 		status = models.TaskStatusActive
@@ -310,7 +310,7 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 		return
 	}
 
-	// Set default status if not provided
+	// Set default status if not provided. Binding restricts client input to ACTIVE/DISABLED only (PENDING_DELETE/DELETE_FAILED are backend-only).
 	status := req.Status
 	if status == "" {
 		status = existingTask.Status
@@ -542,7 +542,7 @@ func (h *TaskHandler) UpdateTaskStatus(c *gin.Context) {
 		return
 	}
 
-	// Parse request body
+	// Parse request body. Only ACTIVE and DISABLED are accepted; PENDING_DELETE/DELETE_FAILED are backend-only.
 	var req struct {
 		Status models.TaskStatus `json:"status" binding:"required,oneof=ACTIVE DISABLED"`
 	}
