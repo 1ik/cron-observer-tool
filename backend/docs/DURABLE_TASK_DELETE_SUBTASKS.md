@@ -50,7 +50,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 3: Create Delete Queue Message Structure 
+## Task 3: Create Delete Queue Message Structure [Done]
 
 **Goal**: Define the message structure for delete job messages.
 
@@ -76,7 +76,7 @@ This document breaks down the durable task delete implementation into small, seq
 
 ---
 
-## Task 4: Create Delete Queue Interface Abstractions
+## Task 4: Create Delete Queue Interface Abstractions  [Done]
 
 **Goal**: Define broker-agnostic interfaces for publishing and consuming delete jobs.
 
